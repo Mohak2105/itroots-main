@@ -1,0 +1,530 @@
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+}
+
+/* Hero */
+.hero {
+    background: var(--gradient-hero);
+    height: 280px;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: var(--white);
+}
+
+.hero h1 {
+    font-size: var(--text-4xl);
+    color: var(--white);
+    margin-bottom: var(--space-4);
+}
+
+.hero p {
+    font-size: var(--text-lg);
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Stats Section */
+.statsSection {
+    padding: var(--space-12) 0;
+    background: var(--white);
+    margin-top: 0;
+    position: relative;
+    z-index: 10;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-6);
+}
+
+.statCard {
+    text-align: center;
+    padding: var(--space-6);
+    background: var(--white);
+    border: 1px solid rgba(8, 129, 236, 0.16);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.statCard:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.statIconBox {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto var(--space-4);
+    border-radius: 16px;
+    background: #ee9602;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.statIconBox svg {
+    color: var(--white);
+}
+
+.statCard svg {
+    margin-bottom: 0;
+}
+
+.statValue {
+    font-family: var(--font-heading);
+    font-size: var(--text-4xl);
+    font-weight: 800;
+    color: var(--primary-deep-blue);
+    margin-bottom: var(--space-2);
+}
+
+.statLabel {
+    font-size: var(--text-sm);
+    color: var(--gray);
+    font-weight: 500;
+}
+
+/* Section Header */
+.sectionHeader {
+    text-align: center;
+    margin-bottom: var(--space-10);
+}
+
+.sectionHeader h2 {
+    font-size: var(--text-3xl);
+    margin-bottom: var(--space-3);
+}
+
+.sectionHeader p {
+    font-size: var(--text-lg);
+    color: var(--gray);
+}
+
+/* Stories Section */
+.storiesSection {
+    padding: var(--space-16) 0;
+    background: var(--off-white);
+}
+
+.storiesGrid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-6);
+}
+
+.storyCard {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    box-shadow: var(--shadow-sm);
+}
+
+.storyHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    margin-bottom: var(--space-4);
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    background: #ffffff;
+    color: #333333;
+    border: 2px solid #e5e5e5;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-lg);
+    font-weight: 600;
+}
+
+.authorInfo {
+    display: flex;
+    flex-direction: column;
+}
+
+.authorInfo strong {
+    font-size: var(--text-base);
+    color: var(--text-dark);
+}
+
+.authorInfo span {
+    font-size: var(--text-sm);
+    color: var(--gray);
+}
+
+.rating {
+    display: flex;
+    gap: 2px;
+    margin-bottom: var(--space-4);
+}
+
+.storyCard>p {
+    font-size: var(--text-sm);
+    color: var(--text-dark);
+    line-height: 1.7;
+    font-style: italic;
+    margin-bottom: var(--space-4);
+}
+
+.placement {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--text-sm);
+    color: var(--gray);
+    margin-bottom: var(--space-2);
+}
+
+.placement svg {
+    color: var(--primary-blue);
+}
+
+.placement strong {
+    color: var(--text-dark);
+}
+
+.salary {
+    padding: var(--space-2) var(--space-3);
+    background: rgba(59, 153, 149, 0.1);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    color: var(--teal-accent);
+    display: inline-block;
+}
+
+.salary strong {
+    color: var(--teal);
+}
+
+/* Partners Section */
+.partnersSection {
+    padding: var(--space-16) 0;
+    background: var(--white);
+}
+
+.partnersGrid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: var(--space-4);
+}
+
+.partnerCard {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 112px;
+    padding: var(--space-4);
+    background: var(--off-white);
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(8, 129, 236, 0.12);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.partnerCard:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.partnerLogoImage {
+    width: 100%;
+    max-width: 170px;
+    height: auto;
+    object-fit: contain;
+    transition: filter var(--transition-fast), opacity var(--transition-fast);
+}
+
+.partnerCard:hover .partnerLogoImage {
+    opacity: 1;
+}
+
+/* CTA Section */
+.ctaSection {
+    padding: var(--space-20) 0;
+    background: var(--white);
+}
+
+.ctaBox {
+    background: var(--gradient-hero);
+    border-radius: 24px;
+    padding: var(--space-16) var(--space-12);
+    position: relative;
+    overflow: hidden;
+    text-align: center;
+}
+
+.ctaBox::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 500px;
+    height: 500px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.ctaBox::after {
+    content: "";
+    position: absolute;
+    bottom: -40%;
+    left: -10%;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(238, 150, 2, 0.1) 0%, transparent 70%);
+    border-radius: 50%;
+}
+
+.ctaContent {
+    position: relative;
+    z-index: 1;
+    max-width: 640px;
+    margin: 0 auto;
+}
+
+.ctaContent h2 {
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    color: var(--white);
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: var(--space-4);
+}
+
+.ctaContent p {
+    font-size: var(--text-base);
+    color: rgba(255, 255, 255, 0.8);
+    line-height: 1.7;
+    margin-bottom: var(--space-8);
+}
+
+.ctaButtons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    flex-wrap: wrap;
+}
+
+.ctaBtnPrimary {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 14px 32px;
+    background: var(--white);
+    color: var(--primary-blue);
+    font-size: var(--text-base);
+    font-weight: 600;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    transition: all var(--transition-base);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+}
+
+.ctaBtnPrimary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    color: var(--primary-blue);
+}
+
+.ctaBtnOutline {
+    display: inline-flex;
+    align-items: center;
+    padding: 14px 32px;
+    background: transparent;
+    color: var(--white);
+    font-size: var(--text-base);
+    font-weight: 600;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    transition: all var(--transition-base);
+}
+
+.ctaBtnOutline:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--white);
+    color: var(--white);
+}
+
+/* Data Science CTA Redesign (used globally) */
+.ctaBoxDS {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 60px;
+    padding: var(--space-16) var(--space-12) !important;
+    min-height: 400px;
+}
+
+.ctaBoxDS .ctaContent {
+    margin-bottom: 0 !important;
+    max-width: 600px;
+}
+
+.ctaBoxDS .ctaButtons {
+    justify-content: center;
+}
+
+.ctaImageWrapper {
+    flex-shrink: 0;
+    display: flex;
+    align-items: flex-end;
+    align-self: stretch;
+    justify-content: center;
+    margin-bottom: calc(-1 * var(--space-16));
+}
+
+.ctaImage {
+    width: 100%;
+    max-width: 450px;
+    height: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 -10px 30px rgba(0, 0, 0, 0.15));
+    display: block;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .statsGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .storiesGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .partnersGrid {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+@media (max-width: 768px) {
+    .hero h1 {
+        font-size: var(--text-3xl);
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .storiesGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .partnersGrid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 0 var(--space-4);
+    }
+
+    .hero {
+        padding: 80px 0 40px;
+        min-height: 200px;
+        height: auto;
+    }
+
+    .hero h1 {
+        font-size: var(--text-2xl);
+    }
+
+    .hero p {
+        font-size: var(--text-base);
+        padding: 0 var(--space-4);
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-4);
+    }
+
+    .statCard {
+        padding: var(--space-2);
+    }
+
+    .statValue {
+        font-size: var(--text-2xl);
+    }
+
+    .statLabel {
+        font-size: var(--text-xs);
+    }
+
+    .storiesSection,
+    .partnersSection {
+        padding: var(--space-8) 0;
+    }
+
+    .sectionHeader h2 {
+        font-size: var(--text-xl);
+    }
+
+    .sectionHeader p {
+        font-size: var(--text-sm);
+    }
+
+    .storyCard {
+        padding: var(--space-4);
+    }
+
+    .partnersGrid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-3);
+    }
+
+    .partnerCard {
+        min-height: 88px;
+        padding: var(--space-3);
+    }
+
+    .partnerLogoImage {
+        max-width: 130px;
+    }
+
+    .ctaBoxDS {
+        flex-direction: column;
+        align-items: center;
+        text-align: center !important;
+        padding: var(--space-12) var(--space-8) 0 !important;
+    }
+
+    .ctaBoxDS .ctaContent {
+        max-width: 100%;
+        margin-bottom: 30px !important;
+    }
+
+    .ctaBoxDS .ctaButtons {
+        justify-content: center;
+    }
+
+    .ctaImage {
+        max-width: 300px;
+    }
+
+    .ctaSection {
+        padding: var(--space-10) 0;
+    }
+
+    .ctaSection h2 {
+        font-size: var(--text-xl);
+    }
+
+    .ctaBtnPrimary,
+    .ctaBtnOutline {
+        padding: var(--space-3) var(--space-6);
+        font-size: var(--text-sm);
+        width: 100%;
+        max-width: 280px;
+        justify-content: center;
+    }
+}

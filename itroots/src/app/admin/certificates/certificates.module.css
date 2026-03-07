@@ -1,0 +1,519 @@
+﻿.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 2.25rem;
+    border-radius: 24px;
+    color: #fff;
+    background: radial-gradient(circle at top right, rgba(255,255,255,0.1), transparent 28%), linear-gradient(135deg, #0b2744 0%, #0f4c81 52%, #c7941d 100%);
+    box-shadow: 0 18px 44px rgba(12, 45, 76, 0.2);
+}
+
+.eyebrow {
+    margin: 0 0 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.76rem;
+    color: rgba(255,255,255,0.72);
+}
+
+.hero h1 {
+    margin: 0;
+    max-width: 720px;
+    font-size: 2rem;
+    line-height: 1.15;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+}
+
+.heroText {
+    margin: 0.9rem 0 0;
+    max-width: 720px;
+    color: rgba(255,255,255,0.82);
+    line-height: 1.7;
+}
+
+.heroBadge {
+    min-width: 220px;
+    padding: 1.25rem 1.1rem;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.16);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.65rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.statCard {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    padding: 1.15rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.statIcon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #eff6ff, #fef3c7);
+    color: #0f4c81;
+}
+
+.statValue {
+    font-size: 1.55rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.statLabel {
+    color: #64748b;
+    font-size: 0.84rem;
+    margin-top: 0.15rem;
+}
+
+.mainGrid {
+    display: grid;
+    grid-template-columns: minmax(340px, 430px) minmax(0, 1fr);
+    gap: 1.5rem;
+}
+
+.formPanel,
+.previewPanel,
+.historySection {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    overflow: hidden;
+}
+
+.panelHeader {
+    padding: 1.35rem 1.5rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.panelHeader h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: #0f172a;
+}
+
+.panelHeader p {
+    margin: 0.35rem 0 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.form {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.field span {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #334155;
+}
+
+.field input,
+.field select {
+    width: 100%;
+    padding: 0.88rem 0.95rem;
+    border-radius: 14px;
+    border: 1px solid #cbd5e1;
+    font-size: 0.95rem;
+    background: #fff;
+    color: #0f172a;
+    box-sizing: border-box;
+}
+
+.field input:focus,
+.field select:focus {
+    outline: none;
+    border-color: #0f4c81;
+    box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.1);
+}
+
+.inlineFields {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.formHint {
+    padding: 0.95rem 1rem;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #64748b;
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
+.formActions,
+.historyActions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.primaryButton,
+.secondaryButton,
+.downloadButton {
+    border: none;
+    border-radius: 999px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+
+.primaryButton:hover,
+.secondaryButton:hover,
+.downloadButton:hover {
+    transform: translateY(-1px);
+}
+
+.primaryButton {
+    background: linear-gradient(135deg, #0b2744, #0f4c81);
+    color: #fff;
+    padding: 0.9rem 1.2rem;
+    box-shadow: 0 10px 24px rgba(15, 76, 129, 0.18);
+}
+
+.primaryButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.secondaryButton {
+    background: #f8fafc;
+    color: #0f4c81;
+    border: 1px solid #cbd5e1;
+    padding: 0.9rem 1.2rem;
+}
+
+.downloadButton {
+    background: #eff6ff;
+    color: #0f4c81;
+    border: 1px solid #bfdbfe;
+    padding: 0.75rem 1rem;
+}
+
+.certificateCanvas {
+    padding: 1.5rem;
+}
+
+.certificateInner {
+    min-height: 640px;
+    border-radius: 22px;
+    border: 6px solid #12395b;
+    background: linear-gradient(135deg, #fffdf7, #f7f0d8);
+    box-shadow: inset 0 0 0 2px #d1a23f, 0 18px 40px rgba(18, 57, 91, 0.12);
+    padding: 2.6rem 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.certificateInner::before,
+.certificateInner::after {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(209,162,63,0.14), transparent 66%);
+}
+
+.certificateInner::before {
+    top: -60px;
+    right: -40px;
+}
+
+.certificateInner::after {
+    bottom: -80px;
+    left: -60px;
+}
+
+.brand {
+    text-align: center;
+    color: #12395b;
+    letter-spacing: 0.28em;
+    font-weight: 800;
+    font-size: 0.98rem;
+}
+
+.brandSub {
+    margin-top: 0.55rem;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.92rem;
+}
+
+.certificateTitle {
+    margin-top: 2.3rem;
+    text-align: center;
+    color: #b68a25;
+    font-size: 2.2rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+}
+
+.certificateDivider {
+    width: 240px;
+    height: 1px;
+    margin: 1rem auto 0;
+    background: #d1a23f;
+}
+
+.presented {
+    margin-top: 2rem;
+    text-align: center;
+    color: #475569;
+    font-size: 1.08rem;
+}
+
+.recipient {
+    margin-top: 1rem;
+    text-align: center;
+    color: #0f172a;
+    font-size: 3rem;
+    font-weight: 800;
+    font-family: Georgia, serif;
+    line-height: 1.2;
+}
+
+.statement,
+.metaLine,
+.certificateNumber {
+    text-align: center;
+    color: #334155;
+}
+
+.statement {
+    margin-top: 1.6rem;
+    font-size: 1.15rem;
+}
+
+.courseName {
+    margin-top: 0.75rem;
+    text-align: center;
+    color: #12395b;
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.metaLine {
+    margin-top: 0.7rem;
+    font-size: 1rem;
+}
+
+.certificateNumber {
+    margin-top: 2rem;
+    font-size: 0.95rem;
+    color: #64748b;
+}
+
+.signatureRow {
+    margin-top: 4rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1.2rem;
+}
+
+.signatureBlock {
+    width: 240px;
+    text-align: center;
+}
+
+.signatureLine {
+    border-top: 1px solid #12395b;
+    margin-bottom: 0.6rem;
+}
+
+.signatureName {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.signatureRole {
+    margin-top: 0.25rem;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+
+.emptyPreview,
+.emptyHistory {
+    min-height: 220px;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: #64748b;
+    text-align: center;
+}
+
+.historySection {
+    padding-bottom: 1.35rem;
+}
+
+.historyGrid {
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+}
+
+.historyCard {
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 1.2rem;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+}
+
+.historyTop {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+}
+
+.historyTop h3 {
+    margin: 0.35rem 0 0;
+    font-size: 1.05rem;
+    color: #0f172a;
+}
+
+.historyNumber {
+    color: #64748b;
+    font-size: 0.8rem;
+    letter-spacing: 0.04em;
+}
+
+.historyBadge {
+    white-space: nowrap;
+    border-radius: 999px;
+    padding: 0.45rem 0.7rem;
+    background: #eff6ff;
+    color: #0f4c81;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.historyCourse {
+    margin-top: 1rem;
+    color: #12395b;
+    font-weight: 800;
+    font-size: 1rem;
+}
+
+.historyMeta {
+    margin-top: 0.45rem;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+@media (max-width: 1200px) {
+    .mainGrid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 900px) {
+    .statsGrid,
+    .inlineFields {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .heroBadge {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 640px) {
+    .hero,
+    .form,
+    .certificateCanvas,
+    .historyGrid {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .hero {
+        padding-top: 1.5rem;
+        padding-bottom: 1.5rem;
+    }
+
+    .certificateInner {
+        padding: 1.4rem 1.1rem;
+        min-height: 0;
+    }
+
+    .certificateTitle {
+        font-size: 1.5rem;
+        letter-spacing: 0.1em;
+    }
+
+    .recipient {
+        font-size: 2rem;
+    }
+
+    .courseName {
+        font-size: 1.45rem;
+    }
+
+    .signatureRow {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .signatureBlock {
+        width: 100%;
+        max-width: 240px;
+    }
+}

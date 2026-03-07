@@ -1,0 +1,6 @@
+<svg width="45" height="45" viewBox="0 0 45 45" xmlns="http://www.w3.org/2000/svg">
+  <rect x="2" y="2" width="41" height="41" rx="8" fill="#ffffff" stroke="#0c2d4c" stroke-width="2"/>
+  <text x="22.5" y="18" font-family="Arial, sans-serif" font-size="12" font-weight="900" fill="#0c2d4c" text-anchor="middle">ISO</text>
+  <text x="22.5" y="27" font-family="Arial, sans-serif" font-size="6" font-weight="bold" fill="#ee9602" text-anchor="middle">9001:2015</text>
+  <text x="22.5" y="35" font-family="Arial, sans-serif" font-size="5" font-weight="bold" fill="#0c2d4c" text-anchor="middle">CERTIFIED</text>
+</svg>

@@ -1,0 +1,305 @@
+/* ─── Student Dashboard ─────────────────────────────────── */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* ── Banner ── */
+.banner {
+    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
+    border-radius: 16px;
+    padding: 1.75rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #fff;
+    overflow: hidden;
+}
+
+.bannerTitle {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.bannerSub {
+    font-size: 0.875rem;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* ── Stats Grid ── */
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+.statCard {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    border: 1px solid #f0f4f8;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.statCard:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.10);
+}
+
+.statIcon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.statIconBlue  { background: #eff6ff; color: #0881ec; }
+.statIconGreen { background: #f0fdf4; color: #10b981; }
+.statIconOrange{ background: #fff7ed; color: #ee9602; }
+.statIconPurple{ background: #faf5ff; color: #8b5cf6; }
+
+.statInfo { flex: 1; min-width: 0; }
+
+.statValue {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+}
+
+.statLabel {
+    font-size: 0.78rem;
+    color: #6b7280;
+    margin-top: 0.3rem;
+    font-weight: 500;
+}
+
+/* ── Two Column Layout ── */
+.twoCol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+/* ── Section Card ── */
+.section {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    border: 1px solid #f0f4f8;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.sectionTitle {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.viewAll {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.8rem;
+    color: #0881ec;
+    text-decoration: none;
+    font-weight: 500;
+    transition: gap 0.2s;
+}
+.viewAll:hover { gap: 0.5rem; }
+
+/* ── Batch List ── */
+.batchList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.batchCard {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.875rem 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.2s;
+}
+.batchCard:hover {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+.batchAvatar {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #0c2d4c, #0881ec);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.batchInfo { flex: 1; min-width: 0; }
+
+.batchName {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.batchCourse {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 2px;
+    margin-bottom: 0.5rem;
+}
+
+.progressBar {
+    height: 5px;
+    background: #e5e7eb;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, #0881ec, #06b6d4);
+    border-radius: 99px;
+    transition: width 0.5s ease;
+}
+
+/* ── Announcements ── */
+.annList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.annCard {
+    display: flex;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    border-left: 3px solid #0881ec;
+}
+
+.annIcon { flex-shrink: 0; margin-top: 2px; }
+
+.annContent { flex: 1; min-width: 0; }
+
+.annTitle {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.25rem;
+}
+
+.annBody {
+    font-size: 0.78rem;
+    color: #6b7280;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.annMeta {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-top: 0.35rem;
+}
+
+/* ── Empty & Skeleton ── */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2.5rem 1rem;
+    gap: 0.75rem;
+    color: #94a3b8;
+    font-size: 0.875rem;
+    text-align: center;
+}
+
+.ctaBtn {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    background: #0881ec;
+    color: #fff;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    margin-top: 0.25rem;
+    transition: background 0.2s;
+}
+.ctaBtn:hover { background: #0669c9; }
+
+.skeletonList { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.skeleton {
+    height: 64px;
+    background: linear-gradient(90deg, #f0f4f8 25%, #e5eaf0 50%, #f0f4f8 75%);
+    background-size: 200% 100%;
+    border-radius: 12px;
+    animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1200px) {
+    .statsGrid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+    .twoCol { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+    .banner { padding: 1.5rem; flex-direction: column; align-items: flex-start; }
+}
+
+@media (max-width: 480px) {
+    .statsGrid { grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+}

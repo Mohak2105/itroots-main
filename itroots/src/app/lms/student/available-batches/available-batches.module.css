@@ -1,0 +1,136 @@
+.header {
+    margin-bottom: 2rem;
+}
+
+.backBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #64748b;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    margin-bottom: 1.5rem;
+    transition: all 0.2s;
+}
+
+.backBtn:hover {
+    color: #0ea5e9;
+}
+
+.titleInfo h1 {
+    font-size: 2.2rem;
+    font-weight: 900;
+    color: #0f172a;
+    font-family: 'Outfit';
+    margin-bottom: 0.5rem;
+}
+
+.titleInfo p {
+    font-size: 1.1rem;
+    color: #64748b;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.batchCard {
+    background: #fff;
+    border-radius: 28px;
+    padding: 2rem;
+    border: 1.5px solid #e2e8f0;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+
+.batchCard:hover {
+    transform: translateY(-8px);
+    border-color: #0ea5e9;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.06);
+}
+
+.cardHeader {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.25rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.courseName {
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0ea5e9;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.cardHeader h3 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+    font-family: 'Outfit';
+}
+
+.details {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+    flex: 1;
+}
+
+.detailItem {
+    display: flex;
+    gap: 1rem;
+}
+
+.detailItem div span {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #94a3b8;
+    margin-bottom: 0.1rem;
+}
+
+.detailItem div p {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #334155;
+}
+
+.enrollBtn {
+    width: 100%;
+    padding: 1.1rem;
+    background: #0f172a;
+    color: #fff;
+    border: none;
+    border-radius: 16px;
+    font-weight: 800;
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    transition: all 0.2s;
+}
+
+.enrollBtn:hover {
+    background: #0ea5e9;
+    box-shadow: 0 10px 20px rgba(14, 165, 233, 0.3);
+}
+
+.empty {
+    grid-column: 1/-1;
+    text-align: center;
+    padding: 4rem;
+    background: #fff;
+    border-radius: 20px;
+    color: #64748b;
+    border: 2px dashed #cbd5e1;
+}

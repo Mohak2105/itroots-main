@@ -1,0 +1,220 @@
+/* ─── Attendance Page ───────────────────────────────────── */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+/* ── Banner ── */
+.banner {
+    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
+    border-radius: 16px;
+    padding: 1.75rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    color: #fff;
+    overflow: hidden;
+}
+
+.bannerTitle {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.35rem;
+}
+
+.bannerSub {
+    font-size: 0.875rem;
+    color: rgba(255,255,255,0.75);
+    max-width: 480px;
+}
+
+/* ── Batch Grid ── */
+.batchGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.25rem;
+}
+
+/* ── Batch Card ── */
+.batchCard {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.batchHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.batchTitle {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 0.2rem;
+}
+
+.batchSubtitle {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+.percentageCircle {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+    color: #fff;
+    flex-shrink: 0;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+}
+
+/* ── Warning Banner ── */
+.warningBanner {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #fee2e2;
+    color: #b91c1c;
+    padding: 0.75rem 1rem;
+    border-radius: 10px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+/* ── Stats Row ── */
+.statsRow {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.stat { text-align: center; }
+
+.statValue {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #111827;
+    margin-bottom: 0.2rem;
+}
+
+.statLabel {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.stat.present .statValue { color: #10b981; }
+.stat.absent  .statValue { color: #ef4444; }
+.stat.late    .statValue { color: #f59e0b; }
+
+/* ── History ── */
+.historySection h3 {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #374151;
+    margin-bottom: 0.75rem;
+}
+
+.historyList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 220px;
+    overflow-y: auto;
+    padding-right: 0.25rem;
+}
+
+.historyList::-webkit-scrollbar { width: 5px; }
+.historyList::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+.historyList::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+.historyItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 0.875rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    font-size: 0.83rem;
+}
+
+.historyDate { font-weight: 600; color: #374151; }
+
+.historyStatus {
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    text-transform: capitalize;
+}
+
+.historyStatus.present { background: #dcfce7; color: #166534; }
+.historyStatus.absent  { background: #fee2e2; color: #991b1b; }
+.historyStatus.late    { background: #fef3c7; color: #92400e; }
+
+/* ── Empty State ── */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    background: #fff;
+    border-radius: 16px;
+    border: 2px dashed #e2e8f0;
+    text-align: center;
+    gap: 0.75rem;
+}
+
+.emptyState h3 {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0;
+}
+
+.emptyState p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+/* ── Skeleton ── */
+.skeleton {
+    height: 320px;
+    background: linear-gradient(90deg, #f0f4f8 25%, #e5eaf0 50%, #f0f4f8 75%);
+    background-size: 200% 100%;
+    border-radius: 16px;
+    animation: shimmer 1.4s infinite;
+}
+
+@keyframes shimmer {
+    0%   { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+    .banner { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+    .batchGrid { grid-template-columns: 1fr; }
+}

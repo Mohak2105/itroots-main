@@ -1,0 +1,13 @@
+﻿.next/types/validator.ts(105,39): error TS2307: Cannot find module '../../src/app/lms/admin/approvals/page.js' or its corresponding type declarations.
+.next/types/validator.ts(114,39): error TS2307: Cannot find module '../../src/app/lms/admin/batches/page.js' or its corresponding type declarations.
+.next/types/validator.ts(123,39): error TS2307: Cannot find module '../../src/app/lms/admin/dashboard/page.js' or its corresponding type declarations.
+.next/types/validator.ts(132,39): error TS2307: Cannot find module '../../src/app/lms/admin/login/page.js' or its corresponding type declarations.
+.next/types/validator.ts(141,39): error TS2307: Cannot find module '../../src/app/lms/admin/payments/page.js' or its corresponding type declarations.
+.next/types/validator.ts(150,39): error TS2307: Cannot find module '../../src/app/lms/admin/settings/page.js' or its corresponding type declarations.
+.next/types/validator.ts(159,39): error TS2307: Cannot find module '../../src/app/lms/admin/students/page.js' or its corresponding type declarations.
+.next/types/validator.ts(168,39): error TS2307: Cannot find module '../../src/app/lms/admin/teachers/page.js' or its corresponding type declarations.
+.next/types/validator.ts(177,39): error TS2307: Cannot find module '../../src/app/lms/cms/dashboard/page.js' or its corresponding type declarations.
+.next/types/validator.ts(186,39): error TS2307: Cannot find module '../../src/app/lms/cms/login/page.js' or its corresponding type declarations.
+src/app/about/page.tsx(8,5): error TS2305: Module '"@phosphor-icons/react"' has no exported member 'Award'.
+src/app/lms/teacher/batches/[batchId]/page.tsx(111,55): error TS2339: Property 'BASE' does not exist on type '{ MY_BATCHES: string; BATCH_DATA: string; ADD_CONTENT: string; CREATE_TEST: string; TEST_RESULTS: string; ANNOUNCEMENTS: string; }'.
+src/app/lms/teacher/batches/[batchId]/page.tsx(134,55): error TS2339: Property 'BASE' does not exist on type '{ MY_BATCHES: string; BATCH_DATA: string; ADD_CONTENT: string; CREATE_TEST: string; TEST_RESULTS: string; ANNOUNCEMENTS: string; }'.

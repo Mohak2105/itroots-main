@@ -1,0 +1,108 @@
+.selectWrapper {
+    position: relative;
+    width: 100%;
+}
+
+.selectButton {
+    width: 100%;
+    padding: var(--space-4);
+    background: var(--white);
+    border: 1px solid var(--light-gray);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-base);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    transition: all var(--transition-fast);
+}
+
+.selectButton:hover {
+    border-color: var(--primary-blue);
+}
+
+.selectButton:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(8, 129, 236, 0.1);
+}
+
+.selectButton.open {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(8, 129, 236, 0.1);
+}
+
+.placeholderText {
+    color: var(--gray);
+}
+
+.selectedText {
+    color: var(--text-dark);
+}
+
+.chevron {
+    color: var(--gray);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.optionsList {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: var(--white);
+    border: 1px solid var(--light-gray);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+    list-style: none;
+    padding: var(--space-2) 0;
+    margin: 0;
+    z-index: 100;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.option {
+    padding: var(--space-3) var(--space-4);
+    cursor: pointer;
+    font-size: var(--text-base);
+    color: var(--text-dark);
+    transition: background var(--transition-fast);
+}
+
+.option:hover {
+    background: var(--off-white);
+}
+
+.option.selected {
+    background: rgba(8, 129, 236, 0.08);
+    color: var(--primary-blue);
+    font-weight: 500;
+}
+
+/* Scrollbar styling */
+.optionsList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.optionsList::-webkit-scrollbar-track {
+    background: var(--off-white);
+    border-radius: 3px;
+}
+
+.optionsList::-webkit-scrollbar-thumb {
+    background: var(--light-gray);
+    border-radius: 3px;
+}
+
+.optionsList::-webkit-scrollbar-thumb:hover {
+    background: var(--gray);
+}

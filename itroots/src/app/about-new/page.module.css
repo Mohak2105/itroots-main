@@ -1,0 +1,756 @@
+/* ============================================================
+   ITROOTS — New "ThemeForest" Inspired About Us Page
+   Premium Web Design Aesthetic
+   ============================================================ */
+
+.main {
+    font-family: var(--font-body);
+    overflow: hidden;
+    position: relative;
+    background-color: var(--white);
+}
+
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 var(--space-6);
+}
+
+/* ─── Typography & Shared Utilities ────────────────────────── */
+.sectionEyebrow {
+    display: inline-block;
+    font-size: var(--text-xs);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--accent-orange);
+    background: rgba(238, 150, 2, 0.1);
+    padding: 6px 16px;
+    border-radius: 100px;
+    margin-bottom: var(--space-4);
+    position: relative;
+}
+
+.sectionEyebrow::before {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 12px;
+    height: 2px;
+    background: var(--accent-orange);
+    opacity: 0.5;
+}
+
+.sectionHeaderCenter {
+    text-align: center;
+    margin-bottom: var(--space-12);
+}
+
+.sectionHeaderCenter h2 {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+    font-weight: 800;
+    color: var(--primary-deep-blue);
+    margin-bottom: var(--space-4);
+    line-height: 1.2;
+}
+
+.sectionHeaderCenter p {
+    font-size: var(--text-lg);
+    color: var(--gray);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+/* Primary Button Style */
+.primaryBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: 16px 36px;
+    background: linear-gradient(135deg, var(--primary-blue) 0%, #1a5f96 100%);
+    color: var(--white);
+    font-size: var(--text-base);
+    font-weight: 700;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(12, 45, 76, 0.25);
+    position: relative;
+    overflow: hidden;
+}
+
+.primaryBtn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 50%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transform: skewX(-20deg);
+    transition: 0.5s;
+}
+
+.primaryBtn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(12, 45, 76, 0.35);
+    color: var(--white);
+}
+
+.primaryBtn:hover::before {
+    left: 150%;
+}
+
+/* ─── 1. Hero Section (Ultra Premium) ──────────────────────── */
+.heroSection {
+    padding: 180px 0 120px;
+    background: #f8fafc;
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+}
+
+.heroShape1 {
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle, rgba(12, 45, 76, 0.04) 0%, transparent 60%);
+    border-radius: 50%;
+    z-index: -1;
+}
+
+.heroShape2 {
+    position: absolute;
+    bottom: -20%;
+    left: -10%;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(238, 150, 2, 0.05) 0%, transparent 60%);
+    border-radius: 50%;
+    z-index: -1;
+}
+
+.heroContent {
+    max-width: 840px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.heroBadge {
+    display: inline-block;
+    background: var(--white);
+    padding: 8px 24px;
+    border-radius: 100px;
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--primary-blue);
+    box-shadow: 0 4px 16px rgba(12, 45, 76, 0.08);
+    margin-bottom: var(--space-6);
+    border: 1px solid rgba(12, 45, 76, 0.05);
+}
+
+.heroSection h1 {
+    font-size: clamp(2.5rem, 5vw, 4.2rem);
+    font-weight: 900;
+    color: var(--primary-deep-blue);
+    line-height: 1.15;
+    margin-bottom: var(--space-6);
+    letter-spacing: -0.02em;
+}
+
+.heroSection h1 span {
+    background: linear-gradient(135deg, var(--accent-orange), #ff6b00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: inline-block;
+    position: relative;
+}
+
+.heroSection p {
+    font-size: clamp(1.1rem, 2vw, 1.3rem);
+    color: var(--gray);
+    line-height: 1.7;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+/* ─── 2. Overlapping Stats ─────────────────────────────────── */
+.statsSection {
+    position: relative;
+    margin-top: -60px;
+    z-index: 10;
+}
+
+.statsWrapper {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-6);
+    background: var(--white);
+    padding: var(--space-8);
+    border-radius: 24px;
+    box-shadow: 0 20px 60px rgba(12, 45, 76, 0.08);
+    border: 1px solid rgba(12, 45, 76, 0.03);
+}
+
+.statCard {
+    text-align: center;
+    padding: var(--space-4);
+    position: relative;
+}
+
+.statCard::after {
+    content: '';
+    position: absolute;
+    right: -12px;
+    top: 20%;
+    height: 60%;
+    width: 1px;
+    background: var(--light-gray);
+}
+
+.statCard:last-child::after {
+    display: none;
+}
+
+.statCard h2 {
+    font-family: var(--font-heading);
+    font-size: 3.5rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: var(--space-2);
+}
+
+/* Color Modifiers for Stats */
+.statCard.orange h2 {
+    color: var(--accent-orange);
+}
+
+.statCard.blue h2 {
+    color: var(--primary-blue);
+}
+
+.statCard.teal h2 {
+    color: var(--teal-accent);
+}
+
+.statCard.purple h2 {
+    color: #8b5cf6;
+}
+
+.statCard p {
+    font-size: var(--text-sm);
+    font-weight: 700;
+    color: var(--text-dark);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+/* ─── 3. Split Image & Content Section ─────────────────────── */
+.aboutSplitSection {
+    padding: 160px 0 100px;
+    background: var(--white);
+}
+
+.splitGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+}
+
+.splitImages {
+    position: relative;
+}
+
+.imageMain {
+    position: relative;
+    border-radius: 30px;
+    overflow: hidden;
+    box-shadow: 0 30px 60px rgba(12, 45, 76, 0.15);
+}
+
+.coverImg {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    transform: scale(1.02);
+    transition: transform 0.7s ease;
+}
+
+.splitImages:hover .coverImg {
+    transform: scale(1.05);
+}
+
+.playButton {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    background: var(--white);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-blue);
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+}
+
+.playButton::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    left: -10px;
+    right: -10px;
+    bottom: -10px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1.4);
+        opacity: 0;
+    }
+}
+
+.playButton:hover {
+    background: var(--accent-orange);
+    color: var(--white);
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+.imageFloat {
+    position: absolute;
+    bottom: -30px;
+    right: -30px;
+    background: var(--white);
+    padding: var(--space-6);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(12, 45, 76, 0.1);
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+    0% {
+        transform: translateY(0px);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
+
+    100% {
+        transform: translateY(0px);
+    }
+}
+
+.floatCard {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.floatText h4 {
+    font-size: var(--text-xl);
+    font-weight: 800;
+    color: var(--primary-deep-blue);
+    margin: 0;
+}
+
+.floatText p {
+    font-size: var(--text-sm);
+    color: var(--gray);
+    margin: 0;
+}
+
+/* Split Content */
+.splitContent h2 {
+    font-size: clamp(2rem, 3vw, 2.8rem);
+    font-weight: 800;
+    color: var(--primary-deep-blue);
+    line-height: 1.2;
+    margin-bottom: var(--space-6);
+}
+
+.splitContent h2 span {
+    color: var(--accent-orange);
+}
+
+.leadText {
+    font-size: var(--text-lg);
+    font-weight: 500;
+    color: var(--text-dark);
+    line-height: 1.7;
+    margin-bottom: var(--space-4);
+}
+
+.subText {
+    font-size: var(--text-base);
+    color: var(--gray);
+    line-height: 1.7;
+    margin-bottom: var(--space-8);
+}
+
+.featuresList {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 var(--space-8);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.featuresList li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    font-size: var(--text-base);
+    font-weight: 600;
+    color: var(--primary-deep-blue);
+}
+
+.checkIcon {
+    width: 36px;
+    height: 36px;
+    background: rgba(12, 45, 76, 0.05);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-blue);
+}
+
+/* ─── 4. Values Section (Grid Layout) ──────────────────────── */
+.valuesSection {
+    padding: 100px 0;
+    background: #fdfdfd;
+}
+
+.valuesGrid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-8);
+}
+
+.valueCard {
+    background: var(--white);
+    border: 1px solid rgba(12, 45, 76, 0.06);
+    border-radius: 20px;
+    padding: var(--space-8);
+    transition: all 0.4s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.valueCard:hover {
+    box-shadow: 0 24px 48px rgba(12, 45, 76, 0.08);
+    transform: translateY(-5px);
+    border-color: rgba(12, 45, 76, 0.15);
+}
+
+.valueCard:hover .valueIcon {
+    border-radius: 50%;
+    transform: scale(1.1);
+}
+
+.valueIcon {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: var(--space-6);
+    transition: all 0.4s ease;
+}
+
+.valueCard h3 {
+    font-size: var(--text-xl);
+    font-weight: 800;
+    color: var(--primary-deep-blue);
+    margin-bottom: var(--space-3);
+}
+
+.valueCard p {
+    font-size: var(--text-base);
+    color: var(--gray);
+    line-height: 1.7;
+    margin: 0;
+}
+
+/* ─── 5. Leadership / Team Grid ────────────────────────────── */
+.teamSection {
+    padding: 120px 0;
+    background: #f8fafc;
+}
+
+.teamHeaderRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: var(--space-12);
+}
+
+.teamTitleArea h2 {
+    font-size: clamp(2rem, 3vw, 2.5rem);
+    font-weight: 800;
+    color: var(--primary-deep-blue);
+    line-height: 1.2;
+    margin: 0;
+}
+
+.teamDesc {
+    max-width: 480px;
+    font-size: var(--text-lg);
+    color: var(--gray);
+    margin: 0;
+}
+
+.teamGrid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-6);
+}
+
+.teamMemberCard {
+    background: var(--white);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.03);
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    transition: all 0.4s ease;
+}
+
+.teamMemberCard:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(12, 45, 76, 0.1);
+}
+
+.memberAvatarDrop {
+    background: linear-gradient(180deg, rgba(12, 45, 76, 0.05) 0%, rgba(12, 45, 76, 0) 100%);
+    padding: var(--space-8) var(--space-6) 0;
+    display: flex;
+    justify-content: center;
+}
+
+.initialsAvatar {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary-blue), var(--teal-accent));
+    color: var(--white);
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 15px 30px rgba(12, 45, 76, 0.2);
+    border: 4px solid var(--white);
+    transform: translateY(20px);
+}
+
+.memberInfo {
+    text-align: center;
+    padding: var(--space-10) var(--space-6) var(--space-8);
+    background: var(--white);
+}
+
+.memberInfo h3 {
+    font-size: var(--text-lg);
+    font-weight: 800;
+    color: var(--primary-deep-blue);
+    margin-bottom: var(--space-1);
+}
+
+.memberInfo span {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--accent-orange);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* ─── 6. Call to Action Banner ──────────────────────────────── */
+.ctaBanner {
+    position: relative;
+    padding: 100px 0;
+    overflow: hidden;
+}
+
+.ctaBackdrop {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 95%;
+    max-width: 1400px;
+    height: 100%;
+    background: var(--gradient-hero);
+    border-radius: 40px;
+    z-index: -1;
+    overflow: hidden;
+}
+
+.ctaPattern {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+    background-size: 30px 30px;
+    opacity: 0.4;
+}
+
+.ctaContentWrapper {
+    max-width: 700px;
+    margin: 0 auto;
+    text-align: center;
+    color: var(--white);
+}
+
+.ctaContentWrapper h2 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 900;
+    margin-bottom: var(--space-4);
+    line-height: 1.2;
+}
+
+.ctaContentWrapper p {
+    font-size: var(--text-lg);
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: var(--space-8);
+}
+
+.ctaButtons {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+}
+
+.btnSolid {
+    background: var(--accent-orange);
+    color: var(--white);
+    padding: 16px 36px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: var(--text-base);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 20px rgba(238, 150, 2, 0.3);
+}
+
+.btnSolid:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px rgba(238, 150, 2, 0.45);
+}
+
+.btnOutline {
+    background: transparent;
+    color: var(--white);
+    padding: 14px 36px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: var(--text-base);
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.btnOutline:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* ─── Responsive Adjustments ───────────────────────────────── */
+@media (max-width: 1024px) {
+    .statsWrapper {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-8) var(--space-4);
+    }
+
+    .statCard::after {
+        display: none;
+    }
+
+    .splitGrid {
+        grid-template-columns: 1fr;
+        gap: 60px;
+    }
+
+    .teamGrid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .teamHeaderRow {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-4);
+    }
+}
+
+@media (max-width: 768px) {
+    .heroSection {
+        padding: 140px 0 80px;
+    }
+
+    .valuesGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .imageFloat {
+        right: 0;
+        bottom: -20px;
+        padding: var(--space-4);
+        transform: scale(0.9);
+    }
+
+    .ctaBackdrop {
+        width: 100%;
+        border-radius: 0;
+    }
+
+    .ctaButtons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .btnSolid,
+    .btnOutline {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .statsWrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .teamGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .heroSection h1 {
+        font-size: 2.2rem;
+    }
+}
