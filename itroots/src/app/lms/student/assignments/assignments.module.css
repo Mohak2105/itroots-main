@@ -1,4 +1,4 @@
-/* ─── Assignments Page ──────────────────────────────────── */
+﻿/* â”€â”€â”€ Assignments Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .page {
     display: flex;
@@ -6,7 +6,7 @@
     gap: 1.5rem;
 }
 
-/* ── Banner ── */
+/* â”€â”€ Banner â”€â”€ */
 .banner {
     background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
     border-radius: 16px;
@@ -30,7 +30,7 @@
     color: rgba(255,255,255,0.75);
 }
 
-/* ── Tabs ── */
+/* â”€â”€ Tabs â”€â”€ */
 .tabs {
     display: flex;
     gap: 0.5rem;
@@ -73,14 +73,14 @@
     color: #374151;
 }
 
-/* ── List ── */
+/* â”€â”€ List â”€â”€ */
 .assignmentsList {
     display: flex;
     flex-direction: column;
     gap: 1rem;
 }
 
-/* ── Card ── */
+/* â”€â”€ Card â”€â”€ */
 .assignmentCard {
     background: #fff;
     border-radius: 14px;
@@ -249,7 +249,7 @@
 
 .submitBtn:disabled { opacity: 0.65; cursor: not-allowed; }
 
-/* ── Empty State ── */
+/* â”€â”€ Empty State â”€â”€ */
 .emptyState {
     display: flex;
     flex-direction: column;
@@ -273,11 +273,81 @@
 
 .emptyState p { font-size: 0.875rem; color: #6b7280; margin: 0; }
 
-/* ── Responsive ── */
+/* â”€â”€ Responsive â”€â”€ */
 @media (max-width: 600px) {
     .assignmentCard { flex-direction: column; }
     .cardLeft { border-right: none; border-bottom: 1px solid #e5e7eb; padding: 1rem; }
     .cardTop  { flex-direction: column; align-items: flex-start; }
     .cardMeta { flex-direction: column; gap: 0.5rem; }
     .banner { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+}
+
+.chipBlue { background: #dbeafe; color: #1d4ed8; }
+
+.linkRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 0.9rem;
+}
+
+.openBtn,
+.secondaryLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+.openBtn {
+    color: #0881ec;
+}
+
+.secondaryLink {
+    color: #0f766e;
+}
+
+.submitPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.fileName {
+    font-size: 0.82rem;
+    color: #0f172a;
+    font-weight: 600;
+}
+
+.notesInput {
+    width: 100%;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.84rem;
+    font-family: inherit;
+    resize: vertical;
+    outline: none;
+}
+
+.submissionInfo {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    font-size: 0.82rem;
+    color: #475569;
+    padding-top: 0.75rem;
+    border-top: 1px solid #f3f4f6;
+}
+
+.submissionInfo span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
 }

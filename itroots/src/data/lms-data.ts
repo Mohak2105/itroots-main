@@ -2,7 +2,7 @@
 //  ITROOTS LMS — Central Mock Data
 // ─────────────────────────────────────────────
 
-export type Role = "student" | "teacher" | "admin";
+export type Role = "student" | "Faculty" | "admin";
 
 export interface User {
     id: string;
@@ -40,7 +40,7 @@ export interface Course {
     slug: string;
     description: string;
     thumbnail: string;
-    teacherId: string;
+    FacultyId: string;
     totalLessons: number;
     totalDuration: string;
     modules: Module[];
@@ -50,7 +50,7 @@ export interface Batch {
     id: string;
     name: string;
     courseId: string;
-    teacherId: string;
+    FacultyId: string;
     studentIds: string[];
     schedule: string; // e.g. "Mon, Wed, Fri — 10:00 AM"
     startDate: string;
@@ -70,7 +70,7 @@ export interface Enrollment {
 export interface Assignment {
     id: string;
     courseId: string;
-    teacherId: string;
+    FacultyId: string;
     title: string;
     description: string;
     dueDate: string;
@@ -115,7 +115,7 @@ export interface TestAttempt {
 export interface Announcement {
     id: string;
     batchId: string;
-    teacherId: string;
+    FacultyId: string;
     message: string;
     createdAt: string;
     iconType?: "confetti" | "pin" | "holiday" | "wave";
@@ -158,9 +158,9 @@ export const USERS: User[] = [
     {
         id: "t1",
         name: "Dr. Anitha Reddy",
-        email: "teacher@itroots.com",
-        password: "teacher123",
-        role: "teacher",
+        email: "Faculty@itroots.com",
+        password: "Faculty123",
+        role: "Faculty",
         avatar: "AR",
         phone: "+91 91234 56789",
         joinedAt: "2024-06-01",
@@ -169,8 +169,8 @@ export const USERS: User[] = [
         id: "t2",
         name: "Prof. Suresh Nair",
         email: "suresh@itroots.com",
-        password: "teacher123",
-        role: "teacher",
+        password: "Faculty123",
+        role: "Faculty",
         avatar: "SN",
         phone: "+91 92345 67890",
         joinedAt: "2024-07-15",
@@ -197,7 +197,7 @@ export const COURSES: Course[] = [
         slug: "data-science-ai",
         description: "Master Data Science and Artificial Intelligence from scratch with real-world projects.",
         thumbnail: "/images/courses/data-science.jpg",
-        teacherId: "t1",
+        FacultyId: "t1",
         totalLessons: 12,
         totalDuration: "24h 30m",
         modules: [
@@ -296,7 +296,7 @@ export const COURSES: Course[] = [
         slug: "full-stack-java",
         description: "Become a full-stack developer with Java, Spring Boot, and React from beginner to job-ready.",
         thumbnail: "/images/courses/java.jpg",
-        teacherId: "t2",
+        FacultyId: "t2",
         totalLessons: 10,
         totalDuration: "20h 15m",
         modules: [
@@ -351,7 +351,7 @@ export const COURSES: Course[] = [
         slug: "cyber-security",
         description: "Learn ethical hacking, network security, and cyber defense strategies.",
         thumbnail: "/images/courses/cybersecurity.jpg",
-        teacherId: "t1",
+        FacultyId: "t1",
         totalLessons: 8,
         totalDuration: "16h 00m",
         modules: [
@@ -393,7 +393,7 @@ export const BATCHES: Batch[] = [
         id: "b1",
         name: "DS-AI Morning Batch",
         courseId: "c1",
-        teacherId: "t1",
+        FacultyId: "t1",
         studentIds: ["u1", "u2"],
         schedule: "Mon, Wed, Fri — 10:00 AM",
         startDate: "2025-01-20",
@@ -403,7 +403,7 @@ export const BATCHES: Batch[] = [
         id: "b2",
         name: "Java Evening Batch",
         courseId: "c2",
-        teacherId: "t2",
+        FacultyId: "t2",
         studentIds: ["u3"],
         schedule: "Tue, Thu, Sat — 6:00 PM",
         startDate: "2025-02-01",
@@ -451,7 +451,7 @@ export const ASSIGNMENTS: Assignment[] = [
     {
         id: "a1",
         courseId: "c1",
-        teacherId: "t1",
+        FacultyId: "t1",
         title: "Python Basics Exercise",
         description: "Write a Python script that reads a CSV file, calculates the mean of a numeric column, and plots a histogram using Matplotlib.",
         dueDate: "2025-03-10",
@@ -460,7 +460,7 @@ export const ASSIGNMENTS: Assignment[] = [
     {
         id: "a2",
         courseId: "c1",
-        teacherId: "t1",
+        FacultyId: "t1",
         title: "Pandas Data Analysis",
         description: "Perform exploratory data analysis on the provided Titanic dataset. Answer 5 questions using Pandas groupby and pivot tables.",
         dueDate: "2025-03-20",
@@ -469,7 +469,7 @@ export const ASSIGNMENTS: Assignment[] = [
     {
         id: "a3",
         courseId: "c1",
-        teacherId: "t1",
+        FacultyId: "t1",
         title: "Linear Regression Project",
         description: "Build a linear regression model to predict house prices using the provided dataset. Include model evaluation metrics.",
         dueDate: "2025-04-01",
@@ -478,7 +478,7 @@ export const ASSIGNMENTS: Assignment[] = [
     {
         id: "a4",
         courseId: "c2",
-        teacherId: "t2",
+        FacultyId: "t2",
         title: "Java OOP Assignment",
         description: "Create a Java program implementing a Bank Account system with classes for SavingsAccount, CurrentAccount, and Overdraft handling.",
         dueDate: "2025-03-15",
@@ -657,7 +657,7 @@ export const ANNOUNCEMENTS: Announcement[] = [
     {
         id: "an1",
         batchId: "b1",
-        teacherId: "t1",
+        FacultyId: "t1",
         message: "Welcome to the Data Science + AI batch! Classes start Monday at 10 AM. Please join the WhatsApp group shared via email.",
         createdAt: "2025-01-18",
         iconType: "confetti"
@@ -665,7 +665,7 @@ export const ANNOUNCEMENTS: Announcement[] = [
     {
         id: "an2",
         batchId: "b1",
-        teacherId: "t1",
+        FacultyId: "t1",
         message: "Reminder: Python Basics Assignment (Assignment 1) is due by March 10. Submit your .py file via the portal.",
         createdAt: "2025-03-05",
         iconType: "pin"
@@ -673,7 +673,7 @@ export const ANNOUNCEMENTS: Announcement[] = [
     {
         id: "an3",
         batchId: "b1",
-        teacherId: "t1",
+        FacultyId: "t1",
         message: "No class this Friday (March 14) — National Holiday. Classes resume Monday as usual.",
         createdAt: "2025-03-12",
         iconType: "holiday"
@@ -681,7 +681,7 @@ export const ANNOUNCEMENTS: Announcement[] = [
     {
         id: "an4",
         batchId: "b2",
-        teacherId: "t2",
+        FacultyId: "t2",
         message: "Welcome to the Full Stack Java evening batch! Please ensure you have JDK 17 installed before Thursday's class.",
         createdAt: "2025-02-02",
         iconType: "wave"
@@ -733,8 +733,8 @@ export function getAnnouncementsForBatch(batchId: string): Announcement[] {
     );
 }
 
-export function getCoursesForTeacher(teacherId: string): Course[] {
-    return COURSES.filter((c) => c.teacherId === teacherId);
+export function getCoursesForFaculty(FacultyId: string): Course[] {
+    return COURSES.filter((c) => c.FacultyId === FacultyId);
 }
 
 export function getAllLessonsFlat(course: Course): Lesson[] {

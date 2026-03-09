@@ -13,22 +13,16 @@ interface CourseInfo {
     title: string;
 }
 
-interface TeacherInfo {
-    id: string;
-    name: string;
-    specialization?: string;
-}
-
 interface BatchRecord {
     id: string;
     name: string;
     courseId: string;
-    teacherId: string;
+    FacultyId: string;
     schedule: string;
     startDate: string;
     endDate: string;
     course?: { title: string };
-    teacher?: { name: string; specialization?: string };
+    Faculty?: { name: string; specialization?: string };
     students?: Array<{ id: string }>;
 }
 
@@ -36,7 +30,7 @@ const EMPTY_BATCH = {
     id: "",
     name: "",
     courseId: "",
-    teacherId: "",
+    FacultyId: "",
     schedule: "",
     startDate: "",
     endDate: "",
@@ -49,23 +43,19 @@ export default function AdminBatchesPage() {
     const router = useRouter();
     const [batches, setBatches] = useState<BatchRecord[]>([]);
     const [courses, setCourses] = useState<CourseInfo[]>([]);
-    const [teachers, setTeachers] = useState<TeacherInfo[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [batchForm, setBatchForm] = useState(EMPTY_BATCH);
 
     const fetchData = useCallback(async () => {
         if (!token) return;
-        try {
-            const [bRes, cRes, tRes] = await Promise.all([
+        try {            const [bRes, cRes] = await Promise.all([
                 fetch(ENDPOINTS.ADMIN.BATCHES, { headers: { Authorization: `Bearer ${token}` } }),
                 fetch(ENDPOINTS.ADMIN.COURSES, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(ENDPOINTS.ADMIN.TEACHERS, { headers: { Authorization: `Bearer ${token}` } }),
             ]);
 
-            const [bData, cData, tData] = await Promise.all([bRes.json(), cRes.json(), tRes.json()]);
+            const [bData, cData] = await Promise.all([bRes.json(), cRes.json()]);
             setBatches(Array.isArray(bData) ? bData : []);
             setCourses(Array.isArray(cData) ? cData : []);
-            setTeachers(Array.isArray(tData) ? tData : []);
         } catch (err) {
             console.error("Fetch error:", err);
         }
@@ -87,7 +77,7 @@ export default function AdminBatchesPage() {
         setBatchForm({
             ...EMPTY_BATCH,
             courseId: courses[0]?.id || "",
-            teacherId: teachers[0]?.id || "",
+            FacultyId: "",
         });
         setIsModalOpen(true);
     };
@@ -97,7 +87,7 @@ export default function AdminBatchesPage() {
             id: batch.id,
             name: batch.name,
             courseId: batch.courseId || "",
-            teacherId: batch.teacherId || "",
+            FacultyId: batch.FacultyId || "",
             schedule: batch.schedule || "",
             startDate: formatDate(batch.startDate),
             endDate: formatDate(batch.endDate),
@@ -124,7 +114,7 @@ export default function AdminBatchesPage() {
                 body: JSON.stringify({
                     name: batchForm.name,
                     courseId: batchForm.courseId,
-                    teacherId: batchForm.teacherId,
+                    FacultyId: batchForm.FacultyId,
                     schedule: batchForm.schedule,
                     startDate: batchForm.startDate,
                     endDate: batchForm.endDate,
@@ -161,10 +151,11 @@ export default function AdminBatchesPage() {
 
     return (
         <LMSShell pageTitle="Batch Schedule">
-            <div className={styles.welcome} style={{ marginBottom: "2rem" }}>
+            <div className={styles.pageStack}>
+                <div className={styles.welcome}>
                 <div>
                     <h2>Batch Schedule</h2>
-                    <p>Manage session schedules, instructor assignments, and cohort timelines.</p>
+                    <p>Manage session schedules and cohort timelines.</p>
                 </div>
                 <button
                     onClick={openCreateModal}
@@ -193,8 +184,8 @@ export default function AdminBatchesPage() {
 
                             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1.5rem", flex: 1 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                                    <span style={{ color: "#94a3b8", fontSize: "0.8rem", minWidth: "72px" }}>Teacher:</span>
-                                    <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1e293b" }}>{batch.teacher?.name || "Unassigned"}</span>
+                                    <span style={{ color: "#94a3b8", fontSize: "0.8rem", minWidth: "72px" }}>Faculty:</span>
+                                    <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1e293b" }}>{batch.Faculty?.name || "Unassigned"}</span>
                                 </div>
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                                     <span style={{ color: "#94a3b8", fontSize: "0.8rem", minWidth: "72px" }}>Schedule:</span>
@@ -249,14 +240,6 @@ export default function AdminBatchesPage() {
                             </div>
 
                             <div>
-                                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "#334155" }}>Assign Teacher</label>
-                                <select required value={batchForm.teacherId} onChange={(e) => setBatchForm({ ...batchForm, teacherId: e.target.value })} style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }}>
-                                    <option value="">Select a teacher</option>
-                                    {teachers.map((teacher) => <option key={teacher.id} value={teacher.id}>{teacher.name}{teacher.specialization ? ` - ${teacher.specialization}` : ""}</option>)}
-                                </select>
-                            </div>
-
-                            <div>
                                 <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "#334155" }}>Schedule Timing</label>
                                 <input type="text" required value={batchForm.schedule} onChange={(e) => setBatchForm({ ...batchForm, schedule: e.target.value })} placeholder="Mon, Wed, Fri - 7:00 PM" style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }} />
                             </div>
@@ -279,6 +262,9 @@ export default function AdminBatchesPage() {
                     </div>
                 </div>
             ) : null}
+            </div>
         </LMSShell>
     );
 }
+
+

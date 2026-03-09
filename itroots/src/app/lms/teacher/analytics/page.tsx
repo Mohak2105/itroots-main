@@ -8,7 +8,7 @@ import { UsersThree, ChatTeardropText, ArrowLineDown, ChartBar, Warning } from "
 import { ENDPOINTS } from "@/config/api";
 import styles from "./analytics.module.css";
 
-export default function TeacherAnalyticsPage() {
+export default function FacultyAnalyticsPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
     const [batches, setBatches] = useState<any[]>([]);
@@ -18,14 +18,14 @@ export default function TeacherAnalyticsPage() {
     const [loadingStudents, setLoadingStudents] = useState(false);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "TEACHER")) {
+        if (!isLoading && (!user || user.role !== "Faculty")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
 
     useEffect(() => {
         if (!token) return;
-        fetch(ENDPOINTS.TEACHER.MY_BATCHES, {
+        fetch(ENDPOINTS.Faculty.MY_BATCHES, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then(r => r.json())
@@ -43,7 +43,7 @@ export default function TeacherAnalyticsPage() {
         if (!token || !selectedBatchId) return;
         setLoadingStudents(true);
         // Fix: BATCH_DATA is a string base URL, append the batchId
-        fetch(`${ENDPOINTS.TEACHER.BATCH_DATA}/${selectedBatchId}`, {
+        fetch(`${ENDPOINTS.Faculty.BATCH_DATA}/${selectedBatchId}`, {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then(r => r.json())

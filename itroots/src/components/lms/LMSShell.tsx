@@ -1,10 +1,11 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
+import { ENDPOINTS } from "@/config/api";
 import styles from "./lms-shell.module.css";
 import {
     SquaresFour,
@@ -30,7 +31,6 @@ import {
 const ICON_MAP: Record<string, React.ElementType> = {
     "Dashboard": SquaresFour,
     "Course Overview": ChalkboardTeacher,
-    "Student Management": UsersThree,
     "Analytics & Reporting": ChartBar,
     "Event Calendar": CalendarDots,
     "Grades": Trophy,
@@ -38,24 +38,44 @@ const ICON_MAP: Record<string, React.ElementType> = {
     "Assignments": PencilSimpleLine,
     "Notifications": Bell,
     "My Learning": GraduationCap,
-    "Browse Batches": UsersThree,
     "Online Exams": Exam,
     "Attendance": CalendarDots,
     "Resources": BookOpen,
-    "Analytics": ChartBar,
     "Performance": ChartBar,
     "Profile Settings": Gear,
-    "My Batches": ChalkboardTeacher,
-    "Schedule": CalendarDots,
-    "Marks Analysis": ChartBar,
     "Admin Analytics": ChartBar,
     "Manage Students": UsersThree,
     "Manage Teachers": ChalkboardTeacher,
-    "Batch Schedule": CalendarDots,
-    "Course Library": BookOpen,
-    "Revenue & Fees": CreditCard,
+    "Batch Manage": CalendarDots,
+    "Course Manage": BookOpen,
+    "Fees Management": CreditCard,
     "Portal Settings": Gear,
     "Certificates": Scroll,
+};
+
+const ICON_COLOR_MAP: Record<string, string> = {
+    "Dashboard": "#f59e0b",
+    "Course Overview": "#0ea5e9",
+    "Analytics & Reporting": "#ef4444",
+    "Event Calendar": "#14b8a6",
+    "Grades": "#f59e0b",
+    "Students Engagement": "#ec4899",
+    "Assignments": "#f97316",
+    "Notifications": "#06b6d4",
+    "My Learning": "#3b82f6",
+    "Online Exams": "#ef4444",
+    "Attendance": "#14b8a6",
+    "Resources": "#6366f1",
+    "Performance": "#ec4899",
+    "Profile Settings": "#64748b",
+    "Admin Analytics": "#f59e0b",
+    "Manage Students": "#8b5cf6",
+    "Manage Teachers": "#0ea5e9",
+    "Batch Manage": "#14b8a6",
+    "Course Manage": "#3b82f6",
+    "Fees Management": "#22c55e",
+    "Portal Settings": "#64748b",
+    "Certificates": "#f59e0b",
 };
 
 const STUDENT_NAV = [
@@ -80,7 +100,6 @@ const TEACHER_NAV = [
         section: "",
         items: [
             { href: "/dashboard", label: "Course Overview" },
-            { href: "/students", label: "Student Management" },
             { href: "/analytics", label: "Analytics & Reporting" },
             { href: "/calendar", label: "Event Calendar" },
             { href: "/grades", label: "Grades" },
@@ -98,9 +117,10 @@ const ADMIN_NAV = [
             { href: "/dashboard", label: "Admin Analytics" },
             { href: "/students", label: "Manage Students" },
             { href: "/teachers", label: "Manage Teachers" },
-            { href: "/batches", label: "Batch Schedule" },
-            { href: "/courses", label: "Course Library" },
+            { href: "/batches", label: "Batch Manage" },
+            { href: "/courses", label: "Course Manage" },
             { href: "/payments", label: "Fees Management" },
+            { href: "/notifications", label: "Notifications" },
             { href: "/certificates", label: "Certificates" },
         ],
     },
@@ -145,8 +165,14 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
     };
 
     const userInitials = user?.name
-        ? user.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2)
+        ? user.name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
         : "S";
+
+    const profileImageUrl = user?.profileImage
+        ? (user.profileImage.startsWith("http://") || user.profileImage.startsWith("https://")
+            ? user.profileImage
+            : `${new URL(ENDPOINTS.AUTH.ME).origin}${user.profileImage}`)
+        : "";
 
     const normalizedPathname = (() => {
         if (!pathname) return "/";
@@ -203,6 +229,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                             {group.items.map((item) => {
                                 const isActive = normalizedPathname === item.href || normalizedPathname.startsWith(item.href + "/");
                                 const IconComponent = ICON_MAP[item.label] || SquaresFour;
+                                const iconColor = isActive ? "#ffffff" : (ICON_COLOR_MAP[item.label] || "#0881ec");
                                 return (
                                     <Link
                                         key={item.href}
@@ -211,7 +238,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                         onClick={() => setSidebarOpen(false)}
                                     >
                                         <span className={styles.navIcon}>
-                                            <IconComponent size={20} weight={isActive ? "fill" : "regular"} />
+                                            <IconComponent size={20} weight={isActive ? "fill" : "duotone"} color={iconColor} />
                                         </span>
                                         {item.label}
                                     </Link>
@@ -265,7 +292,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                 aria-expanded={profileDropdownOpen}
                                 aria-haspopup="true"
                             >
-                                <div className={styles.userAvatar}>{userInitials}</div>
+                                <div className={styles.userAvatar}>{profileImageUrl ? <img src={profileImageUrl} alt={user?.name || "User"} className={styles.avatarImage} /> : userInitials}</div>
                                 <CaretDown
                                     size={14}
                                     weight="bold"
@@ -277,7 +304,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                             {profileDropdownOpen && (
                                 <div className={styles.profileDropdown}>
                                     <div className={styles.dropdownHeader}>
-                                        <div className={styles.dropdownAvatar}>{userInitials}</div>
+                                        <div className={styles.dropdownAvatar}>{profileImageUrl ? <img src={profileImageUrl} alt={user?.name || "User"} className={styles.dropdownAvatarImage} /> : userInitials}</div>
                                         <div>
                                             <div className={styles.dropdownName}>{user?.role === "TEACHER" ? "Teacher" : user?.role === "SUPER_ADMIN" ? "Admin" : "Student"}</div>
                                             <div className={styles.dropdownEmail}>{user?.email}</div>
@@ -288,7 +315,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                     <div className={styles.dropdownDivider} />
 
                                     <Link
-                                        href={user?.role === "TEACHER" ? "/dashboard" : user?.role === "SUPER_ADMIN" ? "/dashboard" : "/settings"}
+                                        href={user?.role === "SUPER_ADMIN" ? "/dashboard" : "/settings"}
                                         className={styles.dropdownItem}
                                         onClick={() => setProfileDropdownOpen(false)}
                                     >
@@ -326,4 +353,3 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
         </div>
     );
 }
-

@@ -77,12 +77,12 @@ export default function StudentLearningPage() {
                                 </div>
                                 <div className={styles.cardBody}>
                                     <h3 className={styles.batchName}>{item.batch?.name || "Batch"}</h3>
-                                    <div className={styles.teacherRow}>
-                                        <div className={styles.teacherAvatar}>
-                                            {item.batch?.teacher?.name?.charAt(0) || "T"}
+                                    <div className={styles.FacultyRow}>
+                                        <div className={styles.FacultyAvatar}>
+                                            {item.batch?.Faculty?.name?.charAt(0) || "T"}
                                         </div>
-                                        <span className={styles.teacherName}>
-                                            {item.batch?.teacher?.name || "Senior Faculty"}
+                                        <span className={styles.FacultyName}>
+                                            {item.batch?.Faculty?.name || "Senior Faculty"}
                                         </span>
                                     </div>
                                     {item.batch?.schedule && (

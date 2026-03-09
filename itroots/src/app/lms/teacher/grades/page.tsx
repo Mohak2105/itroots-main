@@ -14,7 +14,7 @@ function seededScore(seed: string, min: number, max: number) {
     return min + (hash % range);
 }
 
-export default function TeacherGradesPage() {
+export default function FacultyGradesPage() {
     const { user, isLoading } = useLMSAuth();
     const router = useRouter();
     const [batches, setBatches] = useState<any[]>([]);
@@ -24,23 +24,23 @@ export default function TeacherGradesPage() {
     const [loadingStudents, setLoadingStudents] = useState(false);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "TEACHER")) {
+        if (!isLoading && (!user || user.role !== "Faculty")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
 
     useEffect(() => {
-        if (!user || user.role !== "TEACHER") return;
+        if (!user || user.role !== "Faculty") return;
 
-        const teacherBatches = BATCHES
-            .filter((batch) => batch.teacherId === user.id)
+        const FacultyBatches = BATCHES
+            .filter((batch) => batch.FacultyId === user.id)
             .map((batch) => ({
                 ...batch,
                 course: COURSES.find((course) => course.id === batch.courseId),
             }));
 
-        setBatches(teacherBatches);
-        setSelectedBatchId(teacherBatches[0]?.id || "");
+        setBatches(FacultyBatches);
+        setSelectedBatchId(FacultyBatches[0]?.id || "");
         setLoadingBatches(false);
     }, [user]);
 

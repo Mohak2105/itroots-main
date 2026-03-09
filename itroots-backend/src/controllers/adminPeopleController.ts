@@ -7,7 +7,7 @@ import Batch from '../models/Batch';
 import Course from '../models/Course';
 import Enrollment from '../models/Enrollment';
 import Payment from '../models/Payment';
-import { generateRandomPassword, generateUsername } from '../utils/credentials';
+import { generateRandomPassword } from '../utils/credentials';
 import { sendWelcomeEmail } from '../services/mailer';
 
 const sanitizeUser = (user: any) => ({
@@ -22,6 +22,12 @@ const sanitizeUser = (user: any) => ({
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
 });
+
+const normalizeEmail = (email: string) => String(email || '').trim().toLowerCase();
+
+const buildLoginIdentifiers = (username: string, email: string) => Array.from(new Set([username, email].filter(Boolean)));
+
+const buildEmailUsername = (email: string) => normalizeEmail(email);
 
 const resolveCourseAndBatch = async (courseId?: string, batchId?: string) => {
     let resolvedCourseId = courseId;
@@ -52,14 +58,14 @@ const assignStudentToBatch = async (studentId: string, batchId?: string, transac
     return enrollment;
 };
 
-const ensureRole = async (userId: string, role: 'STUDENT' | 'TEACHER') => {
+const ensureRole = async (userId: string, role: 'STUDENT' | 'Faculty') => {
     const user = await User.findByPk(userId);
-    if (!user || user.role !== role) throw new Error(role === 'STUDENT' ? 'Student not found' : 'Teacher not found');
+    if (!user || user.role !== role) throw new Error(role === 'STUDENT' ? 'Student not found' : 'Faculty not found');
     return user;
 };
 
-const assignTeacherToResources = async (
-    teacherId: string,
+const assignFacultyToResources = async (
+    FacultyId: string,
     assignedCourseId?: string,
     assignedBatchId?: string,
     transaction?: any
@@ -80,12 +86,12 @@ const assignTeacherToResources = async (
     if (resolvedCourseId) {
         course = await Course.findByPk(resolvedCourseId, transaction ? { transaction } : undefined);
         if (!course) throw new Error('Assigned course not found');
-        course.instructorId = teacherId;
+        course.instructorId = FacultyId;
         await course.save(transaction ? { transaction } : undefined);
     }
 
     if (batch) {
-        batch.teacherId = teacherId;
+        batch.FacultyId = FacultyId;
         await batch.save(transaction ? { transaction } : undefined);
     }
 
@@ -107,6 +113,36 @@ const getStudentFeeSummary = async (studentId: string) => {
     return { totalCourseFees, totalPaid, pendingFees: Math.max(totalCourseFees - totalPaid, 0) };
 };
 
+const issueWelcomeCredentials = async (user: any) => {
+    if (!user.email) {
+        throw new Error('User email is required to send welcome mail');
+    }
+
+    const normalizedEmail = normalizeEmail(user.email);
+    const username = buildEmailUsername(normalizedEmail);
+    const plainPassword = generateRandomPassword();
+    const hashedPassword = await bcrypt.hash(plainPassword, 10);
+
+    user.email = normalizedEmail;
+    user.username = username;
+    user.password = hashedPassword;
+    await user.save();
+
+    await sendWelcomeEmail({
+        to: normalizedEmail,
+        name: user.name,
+        username,
+        password: plainPassword,
+        role: user.role,
+    });
+
+    return {
+        username,
+        password: plainPassword,
+        loginWith: buildLoginIdentifiers(username, normalizedEmail),
+    };
+};
+
 export const createStudent = async (req: Request, res: Response) => {
     const transaction = await sequelize.transaction();
     try {
@@ -116,27 +152,28 @@ export const createStudent = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'name, email and phone are required' });
         }
 
-        const existingUser = await User.findOne({ where: { [Op.or]: [{ email }, { phone }] }, transaction });
+        const normalizedEmail = normalizeEmail(email);
+        const existingUser = await User.findOne({ where: { [Op.or]: [{ email: normalizedEmail }, { phone }, { username: normalizedEmail }] }, transaction });
         if (existingUser) {
             await transaction.rollback();
             return res.status(400).json({ message: 'A student with this email or phone already exists' });
         }
 
-        const username = await generateUsername(name, email);
+        const username = buildEmailUsername(normalizedEmail);
         const plainPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(plainPassword, 10);
         const { resolvedCourseId, batch } = await resolveCourseAndBatch(courseId, batchId);
 
-        const student = await User.create({ username, name, email, phone, password: hashedPassword, role: 'STUDENT', isActive: true }, { transaction });
+        const student = await User.create({ username, name, email: normalizedEmail, phone, password: hashedPassword, role: 'STUDENT', isActive: true }, { transaction });
         await assignStudentToBatch(student.id, batch?.id, transaction);
         await transaction.commit();
 
-        await sendWelcomeEmail({ to: email, name, username, password: plainPassword, role: 'STUDENT' });
+        await sendWelcomeEmail({ to: normalizedEmail, name, username, password: plainPassword, role: 'STUDENT' });
 
         res.status(201).json({
             message: 'Student created successfully',
             student: sanitizeUser(student),
-            credentials: { username, password: plainPassword, loginWith: [username, email] },
+            credentials: { username, password: plainPassword, loginWith: buildLoginIdentifiers(username, normalizedEmail) },
             assignedCourseId: resolvedCourseId || null,
             assignedBatchId: batch?.id || null,
         });
@@ -160,7 +197,7 @@ export const assignStudentBatch = async (req: Request, res: Response) => {
     }
 };
 
-export const createTeacher = async (req: Request, res: Response) => {
+export const createFaculty = async (req: Request, res: Response) => {
     const transaction = await sequelize.transaction();
     try {
         const { name, email, phone, specialization, assignedCourseId, assignedBatchId } = req.body;
@@ -169,49 +206,71 @@ export const createTeacher = async (req: Request, res: Response) => {
             return res.status(400).json({ message: 'name, email, phone and specialization are required' });
         }
 
-        const existingUser = await User.findOne({ where: { [Op.or]: [{ email }, { phone }] }, transaction });
+        const normalizedEmail = normalizeEmail(email);
+        const existingUser = await User.findOne({ where: { [Op.or]: [{ email: normalizedEmail }, { phone }, { username: normalizedEmail }] }, transaction });
         if (existingUser) {
             await transaction.rollback();
-            return res.status(400).json({ message: 'A teacher with this email or phone already exists' });
+            return res.status(400).json({ message: 'A Faculty with this email or phone already exists' });
         }
 
-        const username = await generateUsername(name, email);
+        const username = buildEmailUsername(normalizedEmail);
         const plainPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-        const teacher = await User.create({ username, name, email, phone, password: hashedPassword, role: 'TEACHER', specialization, isActive: true }, { transaction });
-        const assignment = await assignTeacherToResources(teacher.id, assignedCourseId, assignedBatchId, transaction);
+        const Faculty = await User.create({ username, name, email: normalizedEmail, phone, password: hashedPassword, role: 'Faculty', specialization, isActive: true }, { transaction });
+        const assignment = await assignFacultyToResources(Faculty.id, assignedCourseId, assignedBatchId, transaction);
         await transaction.commit();
 
-        await sendWelcomeEmail({ to: email, name, username, password: plainPassword, role: 'TEACHER' });
+        await sendWelcomeEmail({ to: normalizedEmail, name, username, password: plainPassword, role: 'Faculty' });
 
         res.status(201).json({
-            message: 'Teacher created successfully',
-            teacher: sanitizeUser(teacher),
-            credentials: { username, password: plainPassword, loginWith: [username, email] },
+            message: 'Faculty created successfully',
+            Faculty: sanitizeUser(Faculty),
+            credentials: { username, password: plainPassword, loginWith: buildLoginIdentifiers(username, normalizedEmail) },
             assignedCourseId: assignment.assignedCourseId,
             assignedBatchId: assignment.assignedBatchId,
         });
     } catch (error: any) {
         await transaction.rollback();
-        res.status(500).json({ message: error.message || 'Server error during teacher creation' });
+        res.status(500).json({ message: error.message || 'Server error during Faculty creation' });
     }
 };
 
-export const assignTeacherResources = async (req: Request, res: Response) => {
+export const assignFacultyResources = async (req: Request, res: Response) => {
     try {
-        const teacherId = req.params.id as string;
-        await ensureRole(teacherId, 'TEACHER');
+        const FacultyId = req.params.id as string;
+        await ensureRole(FacultyId, 'Faculty');
         const { assignedCourseId, assignedBatchId } = req.body;
-        const assignment = await assignTeacherToResources(teacherId, assignedCourseId, assignedBatchId);
+        const assignment = await assignFacultyToResources(FacultyId, assignedCourseId, assignedBatchId);
 
         res.json({
-            message: 'Teacher assignments updated successfully',
+            message: 'Faculty assignments updated successfully',
             assignedCourseId: assignment.assignedCourseId,
             assignedBatchId: assignment.assignedBatchId,
         });
     } catch (error: any) {
-        res.status(500).json({ message: error.message || 'Server error during teacher assignment' });
+        res.status(500).json({ message: error.message || 'Server error during Faculty assignment' });
+    }
+};
+
+export const sendUserWelcomeMail = async (req: Request, res: Response) => {
+    try {
+        const userId = req.params.id as string;
+        const user = await User.findByPk(userId);
+
+        if (!user || !['STUDENT', 'Faculty'].includes(user.role)) {
+            return res.status(404).json({ message: 'Student or Faculty not found' });
+        }
+
+        const credentials = await issueWelcomeCredentials(user);
+
+        res.json({
+            message: 'Welcome mail sent successfully',
+            user: sanitizeUser(user),
+            credentials,
+        });
+    } catch (error: any) {
+        res.status(500).json({ message: error.message || 'Server error while sending welcome mail' });
     }
 };
 

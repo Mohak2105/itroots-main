@@ -1,15 +1,19 @@
-"use client";
+﻿"use client";
 
-import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { ENDPOINTS, FRONTEND_ONLY_MODE } from "@/config/api";
 import { USERS } from "@/data/lms-data";
 
-export type UserRole = "SUPER_ADMIN" | "CMS_MANAGER" | "TEACHER" | "STUDENT";
+export type UserRole = "SUPER_ADMIN" | "CMS_MANAGER" | "Faculty" | "STUDENT";
 
 export interface User {
     id: string;
+    username?: string;
     name: string;
     email: string;
+    phone?: string;
+    profileImage?: string;
+    specialization?: string;
     role: UserRole;
     isActive: boolean;
 }
@@ -19,6 +23,7 @@ interface AuthContextType {
     login: (email: string, password: string) => Promise<{ success: boolean; message: string; user?: User }>;
     register: (name: string, email: string, password: string, role: string) => Promise<{ success: boolean; message: string }>;
     logout: () => void;
+    refreshUser: () => Promise<User | null>;
     isLoading: boolean;
     token: string | null;
 }
@@ -40,7 +45,7 @@ type MockUser = {
 function toPortalRole(role: string): UserRole {
     const normalizedRole = role.toUpperCase();
 
-    if (normalizedRole === "TEACHER") return "TEACHER";
+    if (normalizedRole === "Faculty") return "Faculty";
     if (normalizedRole === "SUPER_ADMIN" || normalizedRole === "ADMIN") return "SUPER_ADMIN";
     if (normalizedRole === "CMS_MANAGER" || normalizedRole === "CMS") return "CMS_MANAGER";
     return "STUDENT";
@@ -78,6 +83,48 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const persistAuthState = useCallback((nextUser: User | null, nextToken?: string | null) => {
+        setUser(nextUser);
+
+        if (typeof nextToken !== "undefined") {
+            setToken(nextToken);
+        }
+
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        if (nextUser) {
+            localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
+        } else {
+            localStorage.removeItem(SESSION_KEY);
+        }
+
+        if (typeof nextToken !== "undefined") {
+            if (nextToken) {
+                localStorage.setItem(TOKEN_KEY, nextToken);
+            } else {
+                localStorage.removeItem(TOKEN_KEY);
+            }
+        }
+    }, []);
+
+    const fetchCurrentUser = useCallback(async (authToken: string) => {
+        const response = await fetch(ENDPOINTS.AUTH.ME, {
+            headers: {
+                Authorization: `Bearer ${authToken}`,
+            },
+        });
+
+        if (!response.ok) {
+            throw new Error("Session expired");
+        }
+
+        const data = await response.json();
+        persistAuthState(data.user, authToken);
+        return data.user as User;
+    }, [persistAuthState]);
+
     useEffect(() => {
         if (typeof window === "undefined") {
             setIsLoading(false);
@@ -102,30 +149,14 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
-        void fetch(ENDPOINTS.AUTH.ME, {
-            headers: {
-                Authorization: `Bearer ${savedToken}`,
-            },
-        })
-            .then(async (response) => {
-                if (!response.ok) {
-                    throw new Error("Session expired");
-                }
-
-                const data = await response.json();
-                setUser(data.user);
-                localStorage.setItem(SESSION_KEY, JSON.stringify(data.user));
-            })
+        void fetchCurrentUser(savedToken)
             .catch(() => {
-                setUser(null);
-                setToken(null);
-                localStorage.removeItem(SESSION_KEY);
-                localStorage.removeItem(TOKEN_KEY);
+                persistAuthState(null, null);
             })
             .finally(() => {
                 setIsLoading(false);
             });
-    }, []);
+    }, [fetchCurrentUser, persistAuthState]);
 
     const login = useCallback(async (email: string, password: string) => {
         if (!FRONTEND_ONLY_MODE) {
@@ -146,11 +177,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
                     };
                 }
 
-                setUser(data.user);
-                setToken(data.token);
-                localStorage.setItem(SESSION_KEY, JSON.stringify(data.user));
-                localStorage.setItem(TOKEN_KEY, data.token);
-
+                persistAuthState(data.user, data.token);
                 return { success: true, message: "Login successful", user: data.user };
             } catch {
                 return { success: false, message: "Backend API is not running on http://localhost:5000" };
@@ -168,6 +195,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
 
         const portalUser: User = {
             id: matchedUser.id,
+            username: matchedUser.email,
             name: matchedUser.name,
             email: matchedUser.email,
             role: toPortalRole(matchedUser.role),
@@ -175,13 +203,10 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
         };
 
         const mockToken = `mock-token-${matchedUser.id}-${Date.now()}`;
-        setUser(portalUser);
-        setToken(mockToken);
-        localStorage.setItem(SESSION_KEY, JSON.stringify(portalUser));
-        localStorage.setItem(TOKEN_KEY, mockToken);
+        persistAuthState(portalUser, mockToken);
 
         return { success: true, message: "Login successful", user: portalUser };
-    }, []);
+    }, [persistAuthState]);
 
     const register = useCallback(async (name: string, email: string, password: string, role: string) => {
         if (!FRONTEND_ONLY_MODE) {
@@ -211,7 +236,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
             return { success: false, message: "Email already registered" };
         }
 
-        const safeRole = role.toUpperCase() === "TEACHER" ? "TEACHER" : "STUDENT";
+        const safeRole = role.toUpperCase() === "Faculty" ? "Faculty" : "STUDENT";
         const savedUsers = getSavedMockUsers();
         savedUsers.push({
             id: `mock-${Date.now()}`,
@@ -225,15 +250,25 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
         return { success: true, message: "Registration successful. You can sign in now." };
     }, []);
 
+    const refreshUser = useCallback(async () => {
+        if (FRONTEND_ONLY_MODE || !token) {
+            return user;
+        }
+
+        try {
+            return await fetchCurrentUser(token);
+        } catch {
+            persistAuthState(null, null);
+            return null;
+        }
+    }, [fetchCurrentUser, persistAuthState, token, user]);
+
     const logout = useCallback(() => {
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem(SESSION_KEY);
-        localStorage.removeItem(TOKEN_KEY);
-    }, []);
+        persistAuthState(null, null);
+    }, [persistAuthState]);
 
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, isLoading, token }}>
+        <AuthContext.Provider value={{ user, login, register, logout, refreshUser, isLoading, token }}>
             {children}
         </AuthContext.Provider>
     );

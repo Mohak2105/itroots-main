@@ -11,10 +11,10 @@ const normalizeCourseStatus = (status?: string) => {
     return normalized as 'ACTIVE' | 'DRAFT' | 'ARCHIVED';
 };
 
-const ensureTeacher = async (teacherId: string) => {
-    const teacher = await User.findByPk(teacherId);
-    if (!teacher || teacher.role !== 'TEACHER') throw new Error('Teacher not found');
-    return teacher;
+const ensureFaculty = async (FacultyId: string) => {
+    const Faculty = await User.findByPk(FacultyId);
+    if (!Faculty || Faculty.role !== 'Faculty') throw new Error('Faculty not found');
+    return Faculty;
 };
 
 export const getAllCourses = async (req: Request, res: Response) => {
@@ -32,9 +32,10 @@ export const getAllCourses = async (req: Request, res: Response) => {
 export const createCourse = async (req: Request, res: Response) => {
     try {
         const { title, price, duration, category, instructorId, status } = req.body;
-        if (!title || !instructorId) return res.status(400).json({ message: 'title and instructorId are required' });
+        if (!title) return res.status(400).json({ message: 'title is required' });
 
-        await ensureTeacher(instructorId as string);
+        const normalizedInstructorId = instructorId || null;
+        if (normalizedInstructorId) await ensureFaculty(normalizedInstructorId as string);
         const normalizedStatus = normalizeCourseStatus(status);
         const slugBase = slugify(title, { lower: true, strict: true, replacement: '-' });
         let slug = slugBase;
@@ -49,7 +50,7 @@ export const createCourse = async (req: Request, res: Response) => {
             price: price || 0,
             duration,
             category,
-            instructorId,
+            instructorId: normalizedInstructorId,
             status: normalizedStatus,
             isPublished: normalizedStatus === 'ACTIVE',
             slug,
@@ -75,11 +76,13 @@ export const updateCourse = async (req: Request, res: Response) => {
             price: req.body.price,
             duration: req.body.duration,
             category: req.body.category,
-            instructorId: req.body.instructorId,
             status: req.body.status,
         };
+        if (Object.prototype.hasOwnProperty.call(req.body, 'instructorId')) {
+            updates.instructorId = req.body.instructorId || null;
+        }
         Object.keys(updates).forEach((key) => updates[key] === undefined && delete updates[key]);
-        if (updates.instructorId) await ensureTeacher(updates.instructorId as string);
+        if (updates.instructorId) await ensureFaculty(updates.instructorId as string);
         if (updates.title) {
             const slugBase = slugify(updates.title, { lower: true, strict: true, replacement: '-' });
             let slug = slugBase;
@@ -122,7 +125,7 @@ export const updateBatch = async (req: Request, res: Response) => {
         const batch = await Batch.findByPk(batchId);
         if (!batch) return res.status(404).json({ message: 'Batch not found' });
 
-        if (req.body.teacherId) await ensureTeacher(req.body.teacherId as string);
+        if (req.body.FacultyId) await ensureFaculty(req.body.FacultyId as string);
         if (req.body.courseId) {
             const course = await Course.findByPk(req.body.courseId as string);
             if (!course) return res.status(404).json({ message: 'Course not found' });
@@ -132,7 +135,7 @@ export const updateBatch = async (req: Request, res: Response) => {
         const updated = await Batch.findByPk(batchId, {
             include: [
                 { model: Course, as: 'course' },
-                { model: User, as: 'teacher', attributes: ['id', 'username', 'name', 'email', 'specialization'] },
+                { model: User, as: 'Faculty', attributes: ['id', 'username', 'name', 'email', 'specialization'] },
             ],
         });
         res.json({ message: 'Batch updated successfully', batch: updated });

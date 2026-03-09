@@ -17,7 +17,7 @@ export function middleware(request: NextRequest) {
 
     const isAdminSubdomain = hostname.startsWith('admin.') || hostname.startsWith('admin.localhost');
     const isStudentSubdomain = hostname.startsWith('student.') || hostname.startsWith('student.localhost');
-    const isTeacherSubdomain = hostname.startsWith('teacher.') || hostname.startsWith('teacher.localhost');
+    const isFacultyubdomain = hostname.startsWith('Faculty.') || hostname.startsWith('Faculty.localhost');
 
     // ── Admin subdomain: admin.itroots.com → /admin/* ──────────────────────
     if (isAdminSubdomain) {
@@ -46,19 +46,19 @@ export function middleware(request: NextRequest) {
         return NextResponse.rewrite(url);
     }
 
-    // ── Teacher subdomain: teacher.itroots.com → /lms/teacher/* ────────────
-    if (isTeacherSubdomain) {
+    // ── Faculty subdomain: Faculty.itroots.com → /lms/Faculty/* ────────────
+    if (isFacultyubdomain) {
         // Allow already-correct internal paths
         if (pathname.startsWith('/lms/')) return NextResponse.next();
         if (isStaticPath(pathname)) return NextResponse.next();
 
-        // / or /login → teacher login page; everything else → /lms/teacher/*
-        const teacherPath =
+        // / or /login → Faculty login page; everything else → /lms/Faculty/*
+        const FacultyPath =
             pathname === '/' || pathname === '/login'
-                ? '/lms/teacher/login'
-                : `/lms/teacher${pathname}`;
+                ? '/lms/Faculty/login'
+                : `/lms/Faculty${pathname}`;
         const url = request.nextUrl.clone();
-        url.pathname = teacherPath;
+        url.pathname = FacultyPath;
         return NextResponse.rewrite(url);
     }
 

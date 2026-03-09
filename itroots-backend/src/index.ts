@@ -1,14 +1,15 @@
-﻿import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
 import cors from 'cors';
+import path from 'path';
 import { connectDB } from './config/database';
 
 import authRoutes from './routes/authRoutes';
 import cmsRoutes from './routes/cmsRoutes';
 import adminRoutes from './routes/adminRoutes';
-import teacherRoutes from './routes/teacherRoutes';
+import FacultyRoutes from './routes/FacultyRoutes';
 import studentRoutes from './routes/studentRoutes';
 import publicRoutes from './routes/publicRoutes';
 
@@ -28,12 +29,14 @@ import './models/Notification';
 import './models/NotificationRecipient';
 import './models/LiveClass';
 import './models/Certificate';
+import './models/AssignmentSubmission';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '25mb' }));
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
 app.get('/', (req, res) => {
     res.json({
@@ -43,7 +46,7 @@ app.get('/', (req, res) => {
             auth: '/api/v1/auth',
             cms: '/api/v1/cms',
             admin: '/api/v1/admin',
-            teacher: '/api/v1/teacher',
+            Faculty: '/api/v1/Faculty',
             student: '/api/v1/student',
             public: '/api/v1/public',
         },
@@ -54,7 +57,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/cms', cmsRoutes);
 app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/teacher', teacherRoutes);
+app.use('/api/v1/Faculty', FacultyRoutes);
 app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/public', publicRoutes);
 

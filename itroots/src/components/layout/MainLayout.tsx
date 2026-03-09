@@ -24,7 +24,7 @@ const MOCK_USERS_KEY = "itroots_mock_users";
 const SESSION_KEY = "itroots_session";
 
 function toPortalRole(role: string) {
-    if (role === "TEACHER" || role === "teacher") return "TEACHER";
+    if (role === "Faculty" || role === "Faculty") return "Faculty";
     if (role === "SUPER_ADMIN" || role === "admin") return "SUPER_ADMIN";
     if (role === "CMS_MANAGER" || role === "cms") return "CMS_MANAGER";
     return "STUDENT";
@@ -51,12 +51,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     // Immediately detectable via path — no header/footer needed
     const isAppPath = pathname?.startsWith("/lms") || pathname?.startsWith("/admin");
 
-    // Hostname-based detection (admin / student / teacher subdomains)
+    // Hostname-based detection (admin / student / Faculty subdomains)
     const [isAppHost, setIsAppHost] = useState(false);
 
     useEffect(() => {
         const h = window.location.hostname;
-        if (h.startsWith("admin") || h.startsWith("student") || h.startsWith("teacher")) {
+        if (h.startsWith("admin") || h.startsWith("student") || h.startsWith("Faculty")) {
             setIsAppHost(true);
         }
     }, []);
@@ -174,16 +174,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 return makeResponse({ success: true, message: "Registration successful." });
             }
 
-            if (path === "/teacher/my-batches" && method === "GET") {
-                const teacherId = currentUser?.id || "t1";
-                const teacherBatches = BATCHES
-                    .filter((b) => b.teacherId === teacherId)
+            if (path === "/Faculty/my-batches" && method === "GET") {
+                const FacultyId = currentUser?.id || "t1";
+                const FacultyBatches = BATCHES
+                    .filter((b) => b.FacultyId === FacultyId)
                     .map((b) => ({ ...b, course: COURSES.find((c) => c.id === b.courseId) }));
-                return makeResponse(teacherBatches);
+                return makeResponse(FacultyBatches);
             }
 
-            if (path.startsWith("/teacher/batch-data/") && method === "GET") {
-                const batchId = path.replace("/teacher/batch-data/", "");
+            if (path.startsWith("/Faculty/batch-data/") && method === "GET") {
+                const batchId = path.replace("/Faculty/batch-data/", "");
                 const enrollments = ENROLLMENTS.filter((e) => e.batchId === batchId).map((e) => ({
                     ...e,
                     student: USERS.find((u) => u.id === e.studentId),
@@ -199,33 +199,33 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 });
             }
 
-            if (path === "/teacher/tests" && method === "POST") {
+            if (path === "/Faculty/tests" && method === "POST") {
                 return makeResponse({ success: true, message: "Test created (frontend mode)." });
             }
 
-            if (path === "/teacher/batch-content" && method === "POST") {
+            if (path === "/Faculty/batch-content" && method === "POST") {
                 return makeResponse({ success: true, message: "Content added (frontend mode)." });
             }
 
-            if (path.startsWith("/teacher/test-results/") && method === "GET") {
+            if (path.startsWith("/Faculty/test-results/") && method === "GET") {
                 return makeResponse({ success: true, data: [] });
             }
 
-            if (path === "/teacher/dashboard" && method === "GET") {
-                const teacherId = currentUser?.id || "t1";
-                const teacherBatches = BATCHES
-                    .filter((b) => b.teacherId === teacherId)
+            if (path === "/Faculty/dashboard" && method === "GET") {
+                const FacultyId = currentUser?.id || "t1";
+                const FacultyBatches = BATCHES
+                    .filter((b) => b.FacultyId === FacultyId)
                     .map((b) => ({ ...b, course: COURSES.find((c) => c.id === b.courseId) }));
 
                 return makeResponse({
                     summary: {
-                        totalBatches: teacherBatches.length,
-                        totalStudents: ENROLLMENTS.filter((e) => teacherBatches.some((b) => b.id === e.batchId)).length,
+                        totalBatches: FacultyBatches.length,
+                        totalStudents: ENROLLMENTS.filter((e) => FacultyBatches.some((b) => b.id === e.batchId)).length,
                         totalTests: 0,
                         totalContents: 0,
                         pendingAssignmentReviews: 0,
                     },
-                    batches: teacherBatches,
+                    batches: FacultyBatches,
                 });
             }
 
@@ -319,7 +319,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             if (path === "/admin/dashboard" && method === "GET") {
                 return makeResponse({
                     students: allUsers.filter((u) => toPortalRole(u.role) === "STUDENT").length,
-                    teachers: allUsers.filter((u) => toPortalRole(u.role) === "TEACHER").length,
+                    Faculty: allUsers.filter((u) => toPortalRole(u.role) === "Faculty").length,
                     courses: COURSES.length,
                     batches: BATCHES.length,
                     revenue: 0,
@@ -335,7 +335,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                     stats: {
                         totalUsers: allUsers.length,
                         totalStudents: allUsers.filter((u) => toPortalRole(u.role) === "STUDENT").length,
-                        totalTeachers: allUsers.filter((u) => toPortalRole(u.role) === "TEACHER").length,
+                        totalFaculty: allUsers.filter((u) => toPortalRole(u.role) === "Faculty").length,
                         totalBatches: BATCHES.length,
                     },
                 });

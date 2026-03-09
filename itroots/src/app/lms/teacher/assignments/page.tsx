@@ -1,117 +1,270 @@
-"use client";
+﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import {
-    getCoursesForTeacher,
-    getAssignmentsForCourse,
-    SUBMISSIONS,
-    USERS,
-} from "@/data/lms-data";
-import { ClipboardText } from "@phosphor-icons/react";
+import { API_BASE_URL, ENDPOINTS } from "@/config/api";
+import { ClipboardText, CheckCircle, DownloadSimple } from "@phosphor-icons/react";
+import styles from "./Faculty-assignments.module.css";
 
-export default function TeacherAssignmentsPage() {
-    const { user, isLoading } = useLMSAuth();
+type Submission = {
+    id: string;
+    studentId: string;
+    studentName: string;
+    studentEmail: string;
+    fileUrl: string;
+    fileName: string;
+    notes?: string;
+    status: "SUBMITTED" | "REVIEWED";
+    grade?: number | null;
+    feedback?: string | null;
+    submittedAt: string;
+};
+
+type AssignmentRecord = {
+    id: string;
+    title: string;
+    description?: string;
+    contentUrl: string;
+    createdAt: string;
+    batchId: string;
+    batchName: string;
+    courseName: string;
+    submissionStats: {
+        total: number;
+        pending: number;
+        reviewed: number;
+    };
+    submissions: Submission[];
+};
+
+const BACKEND_ORIGIN = (() => {
+    try {
+        return new URL(API_BASE_URL).origin;
+    } catch {
+        return "";
+    }
+})();
+
+const resolveFileUrl = (value?: string) => {
+    const url = String(value || "").trim();
+    if (!url) return "#";
+    try {
+        return new URL(url).toString();
+    } catch {
+        return `${BACKEND_ORIGIN}${url.startsWith("/") ? url : `/${url}`}`;
+    }
+};
+
+const formatDate = (value: string) => new Date(value).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+});
+
+export default function FacultyAssignmentsPage() {
+    const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
+    const [assignments, setAssignments] = useState<AssignmentRecord[]>([]);
+    const [loadingData, setLoadingData] = useState(true);
+    const [gradeBySubmission, setGradeBySubmission] = useState<Record<string, string>>({});
+    const [feedbackBySubmission, setFeedbackBySubmission] = useState<Record<string, string>>({});
+    const [savingSubmissionId, setSavingSubmissionId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "TEACHER")) {
+        if (!isLoading && (!user || user.role !== "Faculty")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
 
-    if (isLoading || !user) return null;
+    const fetchAssignments = async () => {
+        if (!token) return;
+        setLoadingData(true);
+        try {
+            const response = await fetch(ENDPOINTS.Faculty.ASSIGNMENTS, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await response.json();
+            const list = Array.isArray(data) ? data : [];
+            setAssignments(list);
 
-    const myCourses = getCoursesForTeacher(user.id);
+            const nextGrades: Record<string, string> = {};
+            const nextFeedback: Record<string, string> = {};
+            list.forEach((assignment: AssignmentRecord) => {
+                assignment.submissions.forEach((submission) => {
+                    nextGrades[submission.id] = submission.grade === null || submission.grade === undefined ? "" : String(submission.grade);
+                    nextFeedback[submission.id] = submission.feedback || "";
+                });
+            });
+            setGradeBySubmission(nextGrades);
+            setFeedbackBySubmission(nextFeedback);
+        } catch (error) {
+            console.error("Failed to fetch Faculty assignments:", error);
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
+    useEffect(() => {
+        if (token) {
+            void fetchAssignments();
+        }
+    }, [token]);
+
+    const totals = useMemo(() => assignments.reduce((summary, assignment) => ({
+        assignments: summary.assignments + 1,
+        submissions: summary.submissions + assignment.submissionStats.total,
+        pending: summary.pending + assignment.submissionStats.pending,
+        reviewed: summary.reviewed + assignment.submissionStats.reviewed,
+    }), { assignments: 0, submissions: 0, pending: 0, reviewed: 0 }), [assignments]);
+
+    const handleReview = async (submissionId: string) => {
+        if (!token) return;
+        setSavingSubmissionId(submissionId);
+        try {
+            const response = await fetch(ENDPOINTS.Faculty.REVIEW_ASSIGNMENT(submissionId), {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    grade: gradeBySubmission[submissionId],
+                    feedback: feedbackBySubmission[submissionId],
+                }),
+            });
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data?.message || "Unable to save review");
+            }
+            await fetchAssignments();
+        } catch (error) {
+            console.error(error);
+            alert(error instanceof Error ? error.message : "Unable to save review");
+        } finally {
+            setSavingSubmissionId(null);
+        }
+    };
+
+    if (isLoading || !user) return null;
 
     return (
         <LMSShell pageTitle="Assignments">
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {/* Banner */}
-                <div style={{
-                    background: 'linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%)',
-                    borderRadius: '16px',
-                    padding: '1.75rem 2rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    color: '#fff',
-                    overflow: 'hidden',
-                }}>
+            <div className={styles.page}>
+                <div className={styles.banner}>
                     <div>
-                        <div style={{ fontFamily: "'Outfit', 'Inter', sans-serif", fontSize: '1.5rem', fontWeight: 700, marginBottom: '0.35rem' }}>Assignments</div>
-                        <div style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.75)', maxWidth: '500px' }}>Create, manage, and grade assignments for your courses.</div>
+                        <div className={styles.bannerTitle}>Assignments Review</div>
+                        <div className={styles.bannerSub}>Review student submissions, add marks, and return feedback from one place.</div>
                     </div>
                     <ClipboardText size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                    <button style={{ padding: '0.6rem 1.25rem', background: '#0881ec', color: '#fff', border: 'none', borderRadius: '10px', fontWeight: 700, cursor: 'pointer', fontFamily: 'inherit', fontSize: '0.85rem' }}>
-                        + New Assignment
-                    </button>
+                <div className={styles.statsGrid}>
+                    <div className={styles.statCard}><span className={styles.statValue}>{totals.assignments}</span><span className={styles.statLabel}>Assignments</span></div>
+                    <div className={styles.statCard}><span className={styles.statValue}>{totals.submissions}</span><span className={styles.statLabel}>Submissions</span></div>
+                    <div className={styles.statCard}><span className={styles.statValue}>{totals.pending}</span><span className={styles.statLabel}>Pending Review</span></div>
+                    <div className={styles.statCard}><span className={styles.statValue}>{totals.reviewed}</span><span className={styles.statLabel}>Reviewed</span></div>
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    {myCourses.map((course) => {
-                        const assignments = getAssignmentsForCourse(course.id);
-                        return (
-                            <div key={course.id} style={{ background: '#fff', borderRadius: '20px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-                                <div style={{ padding: '1.25rem 1.5rem', background: '#f8fafc', borderBottom: '1px solid #e2e8f0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                    <h3 style={{ fontFamily: 'Outfit', fontSize: '1.1rem', fontWeight: 700, margin: 0 }}>{course.title}</h3>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#0881ec', background: 'rgba(8, 129, 236, 0.1)', padding: '4px 10px', borderRadius: '100px' }}>
-                                        {assignments.length} Assignments
-                                    </span>
+                {loadingData ? (
+                    <div className={styles.emptyState}>Loading assignments...</div>
+                ) : assignments.length === 0 ? (
+                    <div className={styles.emptyState}>No assignments uploaded for your batches yet.</div>
+                ) : (
+                    <div className={styles.assignmentList}>
+                        {assignments.map((assignment) => (
+                            <section key={assignment.id} className={styles.assignmentCard}>
+                                <div className={styles.assignmentHeader}>
+                                    <div>
+                                        <div className={styles.assignmentMeta}>{assignment.courseName} | {assignment.batchName}</div>
+                                        <h3>{assignment.title}</h3>
+                                        <p>{assignment.description || "No assignment description provided."}</p>
+                                    </div>
+                                    <div className={styles.badgeRow}>
+                                        <span className={styles.badgeBlue}>{assignment.submissionStats.total} Submitted</span>
+                                        <span className={styles.badgeAmber}>{assignment.submissionStats.pending} Pending</span>
+                                        <span className={styles.badgeGreen}>{assignment.submissionStats.reviewed} Reviewed</span>
+                                    </div>
                                 </div>
 
-                                <div style={{ padding: '1rem' }}>
-                                    {assignments.length === 0 ? (
-                                        <p style={{ padding: '1.5rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>No assignments created for this course.</p>
-                                    ) : (
-                                        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                                            <thead>
-                                                <tr style={{ borderBottom: '1px solid #f1f5f9', textAlign: 'left' }}>
-                                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>ASSIGNMENT TITLE</th>
-                                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>DUE DATE</th>
-                                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>SUBMISSIONS</th>
-                                                    <th style={{ padding: '1rem', fontSize: '0.8rem', color: '#94a3b8', fontWeight: 600 }}>ACTIONS</th>
+                                <div className={styles.tableWrap}>
+                                    <table className={styles.table}>
+                                        <thead>
+                                            <tr>
+                                                <th>Student</th>
+                                                <th>Submission</th>
+                                                <th>Notes</th>
+                                                <th>Status</th>
+                                                <th>Grade</th>
+                                                <th>Feedback</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {assignment.submissions.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={7} className={styles.emptyCell}>No student submissions yet.</td>
                                                 </tr>
-                                            </thead>
-                                            <tbody>
-                                                {assignments.map((ass) => {
-                                                    const subCount = SUBMISSIONS.filter(s => s.assignmentId === ass.id).length;
-                                                    const gradedCount = SUBMISSIONS.filter(s => s.assignmentId === ass.id && s.grade !== undefined).length;
-                                                    return (
-                                                        <tr key={ass.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                                                            <td style={{ padding: '1rem' }}>
-                                                                <div style={{ fontWeight: 600, fontSize: '0.9rem', color: '#0a0f1e' }}>{ass.title}</div>
-                                                                <div style={{ fontSize: '0.75rem', color: '#64748b' }}>{ass.description.substring(0, 50)}...</div>
-                                                            </td>
-                                                            <td style={{ padding: '1rem', fontSize: '0.85rem', color: '#1e293b' }}>
-                                                                {new Date(ass.dueDate).toLocaleDateString()}
-                                                            </td>
-                                                            <td style={{ padding: '1rem' }}>
-                                                                <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#0a0f1e' }}>{subCount} Submitted</div>
-                                                                <div style={{ fontSize: '0.72rem', color: subCount === gradedCount ? '#10b981' : '#ee9602' }}>
-                                                                    {gradedCount}/{subCount} Graded
-                                                                </div>
-                                                            </td>
-                                                            <td style={{ padding: '1rem' }}>
-                                                                <button style={{ padding: '6px 12px', background: '#f1f5f9', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer', marginRight: '0.5rem' }}>Edit</button>
-                                                                <button style={{ padding: '6px 12px', background: '#0881ec', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>View Submissions</button>
-                                                            </td>
-                                                        </tr>
-                                                    )
-                                                })}
-                                            </tbody>
-                                        </table>
-                                    )}
+                                            ) : assignment.submissions.map((submission) => (
+                                                <tr key={submission.id}>
+                                                    <td>
+                                                        <div className={styles.tableStack}>
+                                                            <div className={styles.tablePrimary}>{submission.studentName}</div>
+                                                            <div className={styles.tableSecondary}>{submission.studentEmail}</div>
+                                                            <div className={styles.tableMuted}>Submitted on {formatDate(submission.submittedAt)}</div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <a href={resolveFileUrl(submission.fileUrl)} target="_blank" rel="noreferrer" className={styles.fileLink}>
+                                                            {submission.fileName} <DownloadSimple size={14} />
+                                                        </a>
+                                                    </td>
+                                                    <td>{submission.notes || "-"}</td>
+                                                    <td>
+                                                        <span className={submission.status === "REVIEWED" ? styles.reviewedBadge : styles.pendingBadge}>
+                                                            {submission.status === "REVIEWED" ? <CheckCircle size={14} weight="fill" /> : null}
+                                                            {submission.status === "REVIEWED" ? "Reviewed" : "Submitted"}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={gradeBySubmission[submission.id] || ""}
+                                                            onChange={(event) => setGradeBySubmission((current) => ({ ...current, [submission.id]: event.target.value }))}
+                                                            className={styles.gradeInput}
+                                                            placeholder="Marks"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <textarea
+                                                            rows={2}
+                                                            value={feedbackBySubmission[submission.id] || ""}
+                                                            onChange={(event) => setFeedbackBySubmission((current) => ({ ...current, [submission.id]: event.target.value }))}
+                                                            className={styles.feedbackInput}
+                                                            placeholder="Add feedback for the student"
+                                                        />
+                                                    </td>
+                                                    <td>
+                                                        <button
+                                                            type="button"
+                                                            className={styles.saveBtn}
+                                                            onClick={() => void handleReview(submission.id)}
+                                                            disabled={savingSubmissionId === submission.id}
+                                                        >
+                                                            {savingSubmissionId === submission.id ? "Saving..." : "Save Review"}
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
                                 </div>
-                            </div>
-                        )
-                    })}
-                </div>
+                            </section>
+                        ))}
+                    </div>
+                )}
             </div>
         </LMSShell>
     );

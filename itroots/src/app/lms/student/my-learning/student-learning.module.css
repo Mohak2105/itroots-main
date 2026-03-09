@@ -121,13 +121,13 @@
     margin: 0;
 }
 
-.teacherRow {
+.FacultyRow {
     display: flex;
     align-items: center;
     gap: 0.6rem;
 }
 
-.teacherAvatar {
+.FacultyAvatar {
     width: 32px;
     height: 32px;
     border-radius: 8px;
@@ -141,7 +141,7 @@
     flex-shrink: 0;
 }
 
-.teacherName {
+.FacultyName {
     font-size: 0.82rem;
     color: #6b7280;
     font-weight: 500;

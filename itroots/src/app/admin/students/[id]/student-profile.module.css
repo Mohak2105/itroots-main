@@ -1,0 +1,260 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 2.5rem 2rem;
+    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
+    border-radius: 20px;
+    color: #fff;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: hidden;
+}
+
+.hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 50%;
+}
+
+.heroContent,
+.heroActions {
+    position: relative;
+    z-index: 1;
+}
+
+.hero h1 {
+    margin: 0 0 0.35rem;
+    font-size: 1.9rem;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+}
+
+.hero p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.78);
+    max-width: 640px;
+    line-height: 1.6;
+}
+
+.backLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 700;
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+}
+
+.statCard {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 1.35rem 1.5rem;
+}
+
+.statValue {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.statLabel {
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.mainGrid {
+    display: grid;
+    grid-template-columns: minmax(320px, 380px) minmax(0, 1fr);
+    gap: 1.5rem;
+}
+
+.panel {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.panelHeader {
+    padding: 1.2rem 1.4rem;
+    border-bottom: 1px solid #eef2f7;
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.panelBody {
+    padding: 1.4rem;
+}
+
+.profileStack {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0881ec, #06b6d4);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.4rem;
+    font-weight: 800;
+}
+
+.profileName {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.profileMeta {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.kvList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.kvRow {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.kvLabel {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.kvValue {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #334155;
+    line-height: 1.5;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    width: fit-content;
+}
+
+.statusActive {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.statusBlocked {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.tableWrapper {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    min-width: 640px;
+    border-collapse: collapse;
+}
+
+.table th {
+    padding: 0.95rem 1.2rem;
+    text-align: left;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f8fafc;
+}
+
+.table td {
+    padding: 1rem 1.2rem;
+    border-bottom: 1px solid #eef2f7;
+    vertical-align: top;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.primaryText {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.secondaryText {
+    margin-top: 0.25rem;
+    font-size: 0.82rem;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.emptyState {
+    padding: 2rem;
+    text-align: center;
+    color: #64748b;
+}
+
+.loading {
+    padding: 3rem;
+    text-align: center;
+    color: #64748b;
+}
+
+@media (max-width: 960px) {
+    .mainGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        flex-direction: column;
+    }
+}

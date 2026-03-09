@@ -1,0 +1,94 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.headerRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+}
+
+.backBtn,
+.openBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.7rem 1rem;
+    border-radius: 12px;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 800;
+}
+
+.backBtn {
+    background: #f8fafc;
+    color: #0f172a;
+    border: 1px solid #e2e8f0;
+}
+
+.openBtn {
+    background: #0881ec;
+    color: #fff;
+    border: 1px solid #0881ec;
+}
+
+.viewerCard {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    overflow: hidden;
+}
+
+.viewerHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 1.75rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.viewerHeader h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.viewerHeader p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.viewerFrame {
+    width: 100%;
+    min-height: 78vh;
+    border: none;
+    background: #f8fafc;
+}
+
+.emptyState {
+    padding: 3rem;
+    text-align: center;
+    color: #64748b;
+}
+
+@media (max-width: 768px) {
+    .headerRow {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .viewerHeader {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .viewerFrame {
+        min-height: 65vh;
+    }
+}

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,6 +7,17 @@ import LMSShell from "@/components/lms/LMSShell";
 import { CalendarCheck, WarningCircle } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./attendance.module.css";
+
+const formatDate = (value?: string) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
+};
 
 export default function StudentAttendancePage() {
     const { user, isLoading, token } = useLMSAuth();
@@ -25,29 +36,22 @@ export default function StudentAttendancePage() {
         fetch(ENDPOINTS.STUDENT.ATTENDANCE, {
             headers: { Authorization: `Bearer ${token}` },
         })
-            .then(r => r.json())
-            .then(data => {
+            .then((response) => response.json())
+            .then((data) => {
                 if (data.success) setAttendanceData(data.data);
                 setLoadingData(false);
             })
-            .catch(err => {
-                console.error("Failed to fetch attendance:", err);
+            .catch((error) => {
+                console.error("Failed to fetch attendance:", error);
                 setLoadingData(false);
             });
     }, [token]);
 
     if (isLoading || !user) return null;
 
-    const getCircleGradient = (pct: number) => {
-        if (pct >= 85) return "linear-gradient(135deg, #10b981, #059669)";
-        if (pct >= 70) return "linear-gradient(135deg, #f59e0b, #d97706)";
-        return "linear-gradient(135deg, #ef4444, #b91c1c)";
-    };
-
     return (
         <LMSShell pageTitle="My Attendance">
             <div className={styles.page}>
-                {/* Banner */}
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Attendance Records</div>
@@ -56,84 +60,75 @@ export default function StudentAttendancePage() {
                     <CalendarCheck size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
 
-                {/* Content */}
                 {loadingData ? (
-                    <div className={styles.batchGrid}>
-                        {[1, 2].map(i => <div key={i} className={styles.skeleton} />)}
+                    <div className={styles.tableSections}>
+                        {[1, 2].map((item) => <div key={item} className={styles.skeleton} />)}
                     </div>
                 ) : Object.keys(attendanceData).length === 0 ? (
                     <div className={styles.emptyState}>
                         <CalendarCheck size={52} color="#94a3b8" weight="duotone" />
                         <h3>No Attendance Records Yet</h3>
-                        <p>Your teachers haven't marked any attendance for your enrolled batches.</p>
+                        <p>Your Faculty haven't marked any attendance for your enrolled batches.</p>
                     </div>
                 ) : (
-                    <div className={styles.batchGrid}>
+                    <div className={styles.tableSections}>
                         {Object.entries(attendanceData).map(([batchName, data]: [string, any]) => {
                             const percentage = Math.round((data.present / data.total) * 100) || 0;
                             return (
-                                <div key={batchName} className={styles.batchCard}>
-                                    {/* Card Header */}
-                                    <div className={styles.batchHeader}>
+                                <section key={batchName} className={styles.tableCard}>
+                                    <div className={styles.tableHeader}>
                                         <div>
-                                            <div className={styles.batchTitle}>{batchName}</div>
-                                            <div className={styles.batchSubtitle}>{data.total} Total Classes Recorded</div>
+                                            <h3 className={styles.batchTitle}>{batchName}</h3>
+                                            <p className={styles.batchSubtitle}>{data.total} total classes recorded</p>
                                         </div>
-                                        <div
-                                            className={styles.percentageCircle}
-                                            style={{ background: getCircleGradient(percentage) }}
-                                        >
-                                            {percentage}%
+                                        <div className={styles.summaryRow}>
+                                            <span className={`${styles.summaryBadge} ${styles.summaryBlue}`}>Attendance {percentage}%</span>
+                                            <span className={`${styles.summaryBadge} ${styles.summaryGreen}`}>Present {data.present}</span>
+                                            <span className={`${styles.summaryBadge} ${styles.summaryRed}`}>Absent {data.absent}</span>
+                                            <span className={`${styles.summaryBadge} ${styles.summaryAmber}`}>Late {data.late}</span>
                                         </div>
                                     </div>
 
-                                    {/* Warning */}
-                                    {percentage < 75 && (
+                                    {percentage < 75 ? (
                                         <div className={styles.warningBanner}>
                                             <WarningCircle size={18} weight="fill" />
-                                            Attendance below 75% — Please attend more classes!
+                                            Attendance below 75%. Please attend more classes.
                                         </div>
-                                    )}
+                                    ) : null}
 
-                                    {/* Stats Row */}
-                                    <div className={styles.statsRow}>
-                                        <div className={`${styles.stat} ${styles.present}`}>
-                                            <div className={styles.statValue}>{data.present}</div>
-                                            <div className={styles.statLabel}>Present</div>
-                                        </div>
-                                        <div className={`${styles.stat} ${styles.absent}`}>
-                                            <div className={styles.statValue}>{data.absent}</div>
-                                            <div className={styles.statLabel}>Absent</div>
-                                        </div>
-                                        <div className={`${styles.stat} ${styles.late}`}>
-                                            <div className={styles.statValue}>{data.late}</div>
-                                            <div className={styles.statLabel}>Late</div>
-                                        </div>
+                                    <div className={styles.tableWrapper}>
+                                        <table className={styles.attendanceTable}>
+                                            <thead>
+                                                <tr>
+                                                    <th>Date</th>
+                                                    <th>Status</th>
+                                                    <th>Batch</th>
+                                                    <th>Attendance %</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {data.records?.length > 0 ? (
+                                                    data.records.map((record: any) => (
+                                                        <tr key={record.id}>
+                                                            <td>{formatDate(record.date)}</td>
+                                                            <td>
+                                                                <span className={`${styles.statusPill} ${styles[record.status?.toLowerCase()]}`}>
+                                                                    {record.status}
+                                                                </span>
+                                                            </td>
+                                                            <td>{batchName}</td>
+                                                            <td>{percentage}%</td>
+                                                        </tr>
+                                                    ))
+                                                ) : (
+                                                    <tr>
+                                                        <td colSpan={4} className={styles.emptyTableCell}>No class history available.</td>
+                                                    </tr>
+                                                )}
+                                            </tbody>
+                                        </table>
                                     </div>
-
-                                    {/* History */}
-                                    <div className={styles.historySection}>
-                                        <h3>Recent History</h3>
-                                        <div className={styles.historyList}>
-                                            {data.records?.length > 0 ? (
-                                                data.records.slice(0, 10).map((record: any) => (
-                                                    <div key={record.id} className={styles.historyItem}>
-                                                        <span className={styles.historyDate}>
-                                                            {new Date(record.date).toLocaleDateString("en-US", {
-                                                                month: "short", day: "numeric", year: "numeric",
-                                                            })}
-                                                        </span>
-                                                        <span className={`${styles.historyStatus} ${styles[record.status?.toLowerCase()]}`}>
-                                                            {record.status}
-                                                        </span>
-                                                    </div>
-                                                ))
-                                            ) : (
-                                                <div style={{ fontSize: "0.8rem", color: "#94a3b8" }}>No class history available.</div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
+                                </section>
                             );
                         })}
                     </div>

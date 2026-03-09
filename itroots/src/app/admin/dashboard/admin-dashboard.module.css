@@ -1,8 +1,59 @@
+.pageStack {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.heroButton {
+    padding: 0.75rem 1.5rem;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    font-size: 0.85rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cardGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+}
+
+.contentCard {
+    background: #fff;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+}
+
+.emptyCard {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 3rem;
+    background: #fff;
+    border-radius: 20px;
+    border: 1px dashed #cbd5e1;
+    color: #64748b;
+}
+
+.sectionBody {
+    padding: 1.5rem;
+}
+
 .welcome {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 0;
     padding: 2.5rem 2rem;
     background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
     border-radius: 20px;
@@ -42,7 +93,7 @@
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.25rem;
-    margin-bottom: 2rem;
+    margin-bottom: 0;
 }
 
 .statCard {
@@ -155,13 +206,120 @@
     gap: 1.5rem;
 }
 
+.courseLibraryGrid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+    padding: 1.5rem;
+}
+
+.courseCard {
+    display: grid;
+    grid-template-columns: 52px minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.9rem;
+    padding: 1rem;
+    border-radius: 16px;
+    background: #f8fafc;
+    border: 1px solid #eef2f7;
+    text-decoration: none;
+}
+
+.courseInfo {
+    min-width: 0;
+}
+
+.courseIconWrap {
+    width: 46px;
+    height: 46px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.courseAccentBlue {
+    background: #e0f2fe;
+    color: #0ea5e9;
+}
+
+.courseAccentRose {
+    background: #ffe4e6;
+    color: #e11d48;
+}
+
+.courseAccentTeal {
+    background: #dff7f3;
+    color: #0f9f8c;
+}
+
+.courseAccentAmber {
+    background: #fdf1e8;
+    color: #b45309;
+}
+
+.courseAccentViolet {
+    background: #ede9fe;
+    color: #7c3aed;
+}
+
+.courseAccentIndigo {
+    background: #e0e7ff;
+    color: #6366f1;
+}
+
+.courseChipTitle {
+    display: block;
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: #1f2937;
+    line-height: 1.35;
+}
+
+.courseChipMeta {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: 0.82rem;
+    color: #6b7280;
+}
+
+.courseBadge {
+    white-space: nowrap;
+    padding: 0.45rem 0.8rem;
+    border-radius: 999px;
+    background: #1f5b8f;
+    color: #fff;
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+}
+
+.courseEmpty {
+    grid-column: 1 / -1;
+    color: #64748b;
+    padding: 0.25rem 0;
+}
+
 @media (max-width: 1024px) {
     .mainGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .courseLibraryGrid {
         grid-template-columns: 1fr;
     }
 }
 
 @media (max-width: 768px) {
+    .pageStack {
+        gap: 1.5rem;
+    }
+
+    .cardGrid {
+        grid-template-columns: 1fr;
+    }
+
     .welcome {
         flex-direction: column;
         align-items: flex-start;
@@ -177,10 +335,82 @@
     .statsGrid {
         grid-template-columns: 1fr;
     }
+
+    .controlsGrid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .courseCard {
+        grid-template-columns: 46px minmax(0, 1fr);
+    }
+
+    .courseBadge {
+        grid-column: 2;
+        justify-self: start;
+    }
 }
 
 @media (max-width: 480px) {
     .controlsGrid {
         grid-template-columns: 1fr;
     }
+}
+
+.tableWrapper {
+    width: 100%;
+    overflow-x: auto;
+}
+
+.tableLink {
+    color: #0f172a;
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.tableSubtle {
+    color: #64748b;
+    font-size: 0.78rem;
+}
+
+.tableCellStack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.emptyTableCell {
+    padding: 1.4rem 1.25rem;
+    color: #64748b;
+    text-align: center;
+}
+
+.statusBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.38rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+}
+
+.statusActive {
+    background: rgba(5, 150, 105, 0.12);
+    color: #059669;
+}
+
+.statusDraft {
+    background: rgba(180, 83, 9, 0.12);
+    color: #b45309;
+}
+
+.statusArchived {
+    background: rgba(124, 58, 237, 0.12);
+    color: #7c3aed;
+}
+.emptyCertificateState {
+    padding: 1.5rem;
+    color: #64748b;
+    text-align: center;
 }

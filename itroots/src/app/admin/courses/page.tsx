@@ -8,19 +8,12 @@ import LMSShell from "@/components/lms/LMSShell";
 import heroStyles from "../dashboard/admin-dashboard.module.css";
 import { ENDPOINTS } from "@/config/api";
 
-interface TeacherOption {
-    id: string;
-    name: string;
-    specialization?: string;
-}
-
 interface CourseForm {
     id: string;
     title: string;
     description: string;
     thumbnail: string;
     price: number;
-    category: string;
     duration: string;
     instructorId: string;
     status: "ACTIVE" | "DRAFT" | "ARCHIVED";
@@ -32,17 +25,17 @@ const EMPTY_FORM: CourseForm = {
     description: "",
     thumbnail: "",
     price: 0,
-    category: "",
     duration: "",
     instructorId: "",
     status: "DRAFT",
 };
 
+const DURATION_OPTIONS = ["1 Month", "2 Months", "3 Months", "4 Months", "6 Months", "12 Months"];
+
 export default function AdminCoursesPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
     const [courses, setCourses] = useState<any[]>([]);
-    const [teachers, setTeachers] = useState<TeacherOption[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [formData, setFormData] = useState<CourseForm>(EMPTY_FORM);
 
@@ -54,14 +47,9 @@ export default function AdminCoursesPage() {
 
     const fetchData = async () => {
         if (!token) return;
-        try {
-            const [coursesRes, teachersRes] = await Promise.all([
-                fetch(ENDPOINTS.ADMIN.COURSES, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(ENDPOINTS.ADMIN.TEACHERS, { headers: { Authorization: `Bearer ${token}` } }),
-            ]);
-            const [coursesData, teachersData] = await Promise.all([coursesRes.json(), teachersRes.json()]);
+        try {            const coursesRes = await fetch(ENDPOINTS.ADMIN.COURSES, { headers: { Authorization: `Bearer ${token}` } });
+            const coursesData = await coursesRes.json();
             setCourses(Array.isArray(coursesData) ? coursesData : []);
-            setTeachers(Array.isArray(teachersData) ? teachersData : []);
         } catch (err) {
             console.error("Course fetch failed:", err);
         }
@@ -74,7 +62,6 @@ export default function AdminCoursesPage() {
     const openCreateModal = () => {
         setFormData({
             ...EMPTY_FORM,
-            instructorId: teachers[0]?.id || "",
         });
         setIsModalOpen(true);
     };
@@ -86,7 +73,6 @@ export default function AdminCoursesPage() {
             description: course.description || "",
             thumbnail: course.thumbnail || "",
             price: Number(course.price || 0),
-            category: course.category || "",
             duration: course.duration || "",
             instructorId: course.instructorId || course.instructor?.id || "",
             status: course.status || (course.isPublished ? "ACTIVE" : "DRAFT"),
@@ -145,10 +131,11 @@ export default function AdminCoursesPage() {
 
     return (
         <LMSShell pageTitle="Course Library">
-            <div className={heroStyles.welcome} style={{ marginBottom: "2rem" }}>
+            <div className={heroStyles.pageStack}>
+                <div className={heroStyles.welcome}>
                 <div>
                     <h2>Course Library</h2>
-                    <p>Manage LMS courses, assign instructors, control pricing, and publish course status.</p>
+                    <p>Manage LMS courses, control pricing, and publish course status.</p>
                 </div>
                 <button
                     onClick={openCreateModal}
@@ -199,16 +186,12 @@ export default function AdminCoursesPage() {
 
                             <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "1.5rem", flex: 1 }}>
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                                    <span style={{ color: "#94a3b8", fontSize: "0.8rem", minWidth: "72px" }}>Instructor:</span>
+                                    <span style={{ color: "#94a3b8", fontSize: "0.8rem", minWidth: "72px" }}>Faculty:</span>
                                     <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1e293b" }}>{course.instructor?.name || "Unassigned"}</span>
                                 </div>
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                                     <span style={{ color: "#94a3b8", fontSize: "0.8rem", minWidth: "72px" }}>Duration:</span>
                                     <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1e293b" }}>{course.duration || "Not set"}</span>
-                                </div>
-                                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                                    <span style={{ color: "#94a3b8", fontSize: "0.8rem", minWidth: "72px" }}>Category:</span>
-                                    <span style={{ fontSize: "0.85rem", fontWeight: 600, color: "#1e293b" }}>{course.category || "General"}</span>
                                 </div>
                                 <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                                     <span style={{ color: "#94a3b8", fontSize: "0.8rem", minWidth: "72px" }}>Price:</span>
@@ -260,33 +243,25 @@ export default function AdminCoursesPage() {
                                     <input type="number" min="0" value={formData.price} onChange={(e) => setFormData({ ...formData, price: Number(e.target.value || 0) })} style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }} />
                                 </div>
                                 <div style={{ flex: 1 }}>
-                                    <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "#334155" }}>Category</label>
-                                    <input value={formData.category} onChange={(e) => setFormData({ ...formData, category: e.target.value })} placeholder="e.g. AI & ML" style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }} />
-                                </div>
-                            </div>
-
-                            <div style={{ display: "flex", gap: "1rem" }}>
-                                <div style={{ flex: 1 }}>
                                     <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "#334155" }}>Duration</label>
-                                    <input value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} placeholder="e.g. 12 Weeks" style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }} />
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "#334155" }}>Status</label>
-                                    <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as CourseForm["status"] })} style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }}>
-                                        <option value="DRAFT">Draft</option>
-                                        <option value="ACTIVE">Active</option>
-                                        <option value="ARCHIVED">Archived</option>
+                                    <select value={formData.duration} onChange={(e) => setFormData({ ...formData, duration: e.target.value })} style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }}>
+                                        <option value="">Select duration</option>
+                                        {DURATION_OPTIONS.map((option) => (
+                                            <option key={option} value={option}>{option}</option>
+                                        ))}
+                                        {formData.duration && !DURATION_OPTIONS.includes(formData.duration) ? (
+                                            <option value={formData.duration}>{formData.duration}</option>
+                                        ) : null}
                                     </select>
                                 </div>
                             </div>
 
                             <div>
-                                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "#334155" }}>Assign Instructor</label>
-                                <select required value={formData.instructorId} onChange={(e) => setFormData({ ...formData, instructorId: e.target.value })} style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }}>
-                                    <option value="">Select a teacher</option>
-                                    {teachers.map((teacher) => (
-                                        <option key={teacher.id} value={teacher.id}>{teacher.name}{teacher.specialization ? ` - ${teacher.specialization}` : ""}</option>
-                                    ))}
+                                <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "#334155" }}>Status</label>
+                                <select value={formData.status} onChange={(e) => setFormData({ ...formData, status: e.target.value as CourseForm["status"] })} style={{ width: "100%", padding: "0.75rem 1rem", borderRadius: "10px", border: "1px solid #cbd5e1", fontSize: "0.9rem", boxSizing: "border-box" }}>
+                                    <option value="DRAFT">Draft</option>
+                                    <option value="ACTIVE">Active</option>
+                                    <option value="ARCHIVED">Archived</option>
                                 </select>
                             </div>
 
@@ -297,6 +272,9 @@ export default function AdminCoursesPage() {
                     </div>
                 </div>
             ) : null}
+            </div>
         </LMSShell>
     );
 }
+
+

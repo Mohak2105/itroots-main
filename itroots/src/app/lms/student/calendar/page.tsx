@@ -6,7 +6,7 @@ import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { CaretLeft, CaretRight, CalendarDots, Clock, BookOpen, Link as LinkIcon } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
-import styles from "../../teacher/calendar/calendar.module.css";
+import styles from "../../Faculty/calendar/calendar.module.css";
 
 const MONTH_NAMES = [
     "January", "February", "March", "April", "May", "June",

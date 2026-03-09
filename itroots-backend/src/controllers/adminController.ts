@@ -6,12 +6,13 @@ import Batch from '../models/Batch';
 import Course from '../models/Course';
 import Enrollment from '../models/Enrollment';
 import Payment from '../models/Payment';
+import Certificate from '../models/Certificate';
 
 export const getAdminDashboard = async (req: Request, res: Response) => {
     try {
-        const [students, teachers, courses, batches, recentStudents, totalRevenue, pendingPayments] = await Promise.all([
+        const [students, Faculty, courses, batches, recentStudents, totalRevenue, pendingPayments, allCourses, allBatchesRaw] = await Promise.all([
             User.count({ where: { role: 'STUDENT' } }),
-            User.count({ where: { role: 'TEACHER' } }),
+            User.count({ where: { role: 'Faculty' } }),
             Course.count(),
             Batch.count(),
             User.findAll({
@@ -22,16 +23,43 @@ export const getAdminDashboard = async (req: Request, res: Response) => {
             }),
             Payment.sum('amount', { where: { status: { [Op.in]: ['PAID', 'PARTIAL'] } } }),
             Payment.count({ where: { status: 'PENDING' } }),
+            Course.findAll({
+                attributes: ['id', 'title', 'category', 'duration', 'status'],
+                include: [{ model: User, as: 'instructor', attributes: ['id', 'name'], required: false }],
+                order: [['title', 'ASC']],
+            }),
+            Batch.findAll({
+                attributes: ['id', 'name', 'schedule', 'startDate', 'endDate'],
+                include: [
+                    { model: Course, as: 'course', attributes: ['id', 'title'], required: false },
+                    { model: User, as: 'Faculty', attributes: ['id', 'name'], required: false },
+                    { model: User, as: 'students', attributes: ['id'], through: { attributes: [] }, required: false },
+                ],
+                order: [['startDate', 'ASC']],
+            }),
         ]);
+
+        const allBatches = allBatchesRaw.map((batch: any) => ({
+            id: batch.id,
+            name: batch.name,
+            schedule: batch.schedule,
+            startDate: batch.startDate,
+            endDate: batch.endDate,
+            studentCount: batch.students?.length || 0,
+            course: batch.course ? { id: batch.course.id, title: batch.course.title } : null,
+            Faculty: batch.Faculty ? { id: batch.Faculty.id, name: batch.Faculty.name } : null,
+        }));
 
         res.json({
             students,
-            teachers,
+            Faculty,
             courses,
             batches,
             revenue: Number(totalRevenue || 0),
             pendingPayments,
             recentStudents,
+            allCourses,
+            allBatches,
         });
     } catch (error) {
         console.error('Admin dashboard error:', error);
@@ -52,6 +80,64 @@ export const getAllUsers = async (req: Request, res: Response) => {
     }
 };
 
+export const getUserById = async (req: Request, res: Response) => {
+    try {
+        const user = await User.findByPk(req.params.id as string, {
+            attributes: { exclude: ['password'] },
+            include: [
+                {
+                    model: Batch,
+                    as: 'enrolledBatches',
+                    through: { attributes: [] },
+                    required: false,
+                    include: [
+                        { model: Course, as: 'course', attributes: ['id', 'title', 'duration', 'price'] },
+                        { model: User, as: 'Faculty', attributes: ['id', 'name', 'email', 'specialization'], required: false },
+                    ],
+                },
+                {
+                    model: Payment,
+                    as: 'payments',
+                    required: false,
+                    include: [
+                        { model: Course, as: 'course', attributes: ['id', 'title', 'price'], required: false },
+                        { model: Batch, as: 'batch', attributes: ['id', 'name'], required: false },
+                    ],
+                },
+                {
+                    model: Certificate,
+                    as: 'certificates',
+                    required: false,
+                    include: [
+                        { model: Course, as: 'course', attributes: ['id', 'title'], required: false },
+                        { model: Batch, as: 'batch', attributes: ['id', 'name'], required: false },
+                    ],
+                },
+            ],
+        });
+
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const totalPaid = Number((user as any).payments?.reduce((sum: number, payment: any) => sum + Number(payment.amount || 0), 0) || 0);
+        const totalCourseFees = Number((user as any).enrolledBatches?.reduce((sum: number, batch: any) => sum + Number(batch.course?.price || 0), 0) || 0);
+
+        return res.json({
+            user,
+            summary: {
+                totalPaid,
+                totalCourseFees,
+                pendingFees: Math.max(totalCourseFees - totalPaid, 0),
+                totalCertificates: (user as any).certificates?.length || 0,
+                totalBatches: (user as any).enrolledBatches?.length || 0,
+            },
+        });
+    } catch (error) {
+        console.error('Fetch user detail error:', error);
+        return res.status(500).json({ message: 'Server error fetching user detail' });
+    }
+};
 export const updateUser = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
@@ -93,10 +179,10 @@ export const updateUser = async (req: Request, res: Response) => {
 
 export const getSystemStats = async (req: Request, res: Response) => {
     try {
-        const [totalUsers, totalStudents, totalTeachers, totalBatches, totalRevenue] = await Promise.all([
+        const [totalUsers, totalStudents, totalFaculty, totalBatches, totalRevenue] = await Promise.all([
             User.count(),
             User.count({ where: { role: 'STUDENT' } }),
-            User.count({ where: { role: 'TEACHER' } }),
+            User.count({ where: { role: 'Faculty' } }),
             Batch.count(),
             Payment.sum('amount', { where: { status: { [Op.in]: ['PAID', 'PARTIAL'] } } }),
         ]);
@@ -105,7 +191,7 @@ export const getSystemStats = async (req: Request, res: Response) => {
             stats: {
                 totalUsers,
                 totalStudents,
-                totalTeachers,
+                totalFaculty,
                 totalBatches,
                 totalRevenue: Number(totalRevenue || 0),
                 systemStatus: 'Optimal',
@@ -123,7 +209,7 @@ export const getAllBatches = async (req: Request, res: Response) => {
         const batches = await Batch.findAll({
             include: [
                 { model: Course, as: 'course' },
-                { model: User, as: 'teacher', attributes: ['id', 'username', 'name', 'email', 'specialization'] },
+                { model: User, as: 'Faculty', attributes: ['id', 'username', 'name', 'email', 'specialization'] },
                 { model: User, as: 'students', attributes: ['id'], through: { attributes: [] } },
             ],
             order: [['startDate', 'ASC']],
@@ -186,10 +272,10 @@ export const getAllStudents = async (req: Request, res: Response) => {
     }
 };
 
-export const getAllTeachers = async (req: Request, res: Response) => {
+export const getAllFaculty = async (req: Request, res: Response) => {
     try {
         const { search } = req.query;
-        const where: any = { role: 'TEACHER' };
+        const where: any = { role: 'Faculty' };
         if (search) {
             where[Op.or] = [
                 { name: { [Op.like]: `%${search}%` } },
@@ -199,20 +285,20 @@ export const getAllTeachers = async (req: Request, res: Response) => {
             ];
         }
 
-        const teachers = await User.findAll({
+        const Faculty = await User.findAll({
             where,
             attributes: { exclude: ['password'] },
             include: [
                 { model: Course, as: 'courses', required: false },
-                { model: Batch, as: 'teacherBatches', required: false },
+                { model: Batch, as: 'FacultyBatches', required: false },
             ],
             order: [['createdAt', 'DESC']],
         });
 
-        res.json(teachers);
+        res.json(Faculty);
     } catch (error) {
-        console.error('Fetch teachers error:', error);
-        res.status(500).json({ message: 'Server error fetching teachers' });
+        console.error('Fetch Faculty error:', error);
+        res.status(500).json({ message: 'Server error fetching Faculty' });
     }
 };
 
@@ -251,3 +337,5 @@ export const deleteUser = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error during user deletion' });
     }
 };
+
+

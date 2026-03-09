@@ -7,10 +7,10 @@ import LMSShell from "@/components/lms/LMSShell";
 import {
     MagnifyingGlass,
     Plus,
-    Tag,
     X,
     Trash,
     PencilSimple,
+    EnvelopeSimple,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./admin-students.module.css";
@@ -54,6 +54,22 @@ const EMPTY_FORM = {
     batchId: "",
 };
 
+const formatDate = (value: string) =>
+    new Date(value).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
+
+const getInitials = (name: string) =>
+    name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase();
+
 export default function AdminStudentsPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
@@ -73,6 +89,10 @@ export default function AdminStudentsPage() {
             router.push("/login");
         }
     }, [user, isLoading, router]);
+
+    const activeStudents = useMemo(() => students.filter((student) => student.isActive), [students]);
+    const blockedStudents = useMemo(() => students.filter((student) => !student.isActive), [students]);
+
 
     const availableBatches = useMemo(
         () => batches.filter((batch) => !formData.courseId || batch.courseId === formData.courseId),
@@ -248,6 +268,30 @@ export default function AdminStudentsPage() {
         }
     };
 
+    const handleSendWelcomeMail = async (student: Student) => {
+        if (!token) return;
+        try {
+            const res = await fetch(ENDPOINTS.ADMIN.SEND_WELCOME_EMAIL(student.id), {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data?.message || "Unable to send welcome mail");
+            }
+            setIssuedCredentials({
+                name: data?.user?.name || student.name,
+                username: data?.credentials?.username || student.email,
+                password: data?.credentials?.password || "",
+                loginWith: data?.credentials?.loginWith || [student.email],
+            });
+            alert(`Welcome mail sent to ${data?.user?.email || student.email}`);
+        } catch (err) {
+            console.error("Welcome mail failed:", err);
+            alert(err instanceof Error ? err.message : "Unable to send welcome mail");
+        }
+    };
+
     const handleDeleteStudent = async (studentId: string) => {
         if (!confirm("Are you sure you want to delete this student permanently?")) return;
         try {
@@ -263,6 +307,94 @@ export default function AdminStudentsPage() {
         }
     };
 
+    const renderRows = (records: Student[]) => {
+        if (loadingData) {
+            return (
+                <tr>
+                    <td colSpan={6} className={styles.empty}>Loading student records...</td>
+                </tr>
+            );
+        }
+
+        if (records.length === 0) {
+            return (
+                <tr>
+                    <td colSpan={6} className={styles.empty}>No students found in this list.</td>
+                </tr>
+            );
+        }
+
+        return records.map((student) => {
+            const primaryBatch = student.enrolledBatches?.[0];
+            const extraBatchCount = Math.max((student.enrolledBatches?.length || 0) - 1, 0);
+
+            return (
+                <tr key={student.id}>
+                    <td>
+                        <div className={styles.studentInfo}>
+                            <div className={styles.avatar}>{getInitials(student.name)}</div>
+                            <div>
+                                <a href={`/students/${student.id}`} className={styles.nameLink}>
+                                    {student.name}
+                                </a>
+                                <div className={styles.email}>{student.username || student.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {primaryBatch ? (
+                            <div className={styles.tableStack}>
+                                <div className={styles.tablePrimary}>{primaryBatch.course?.title || "Course"}</div>
+                                <div className={styles.tableSecondary}>
+                                    {primaryBatch.name}
+                                    {extraBatchCount > 0 ? ` +${extraBatchCount} more` : ""}
+                                </div>
+                            </div>
+                        ) : (
+                            <span className={styles.unassigned}>No batch assigned</span>
+                        )}
+                    </td>
+                    <td>
+                        <div className={styles.tableStack}>
+                            <div className={styles.tablePrimary}>{student.phone || "No phone"}</div>
+                            <div className={styles.tableSecondary}>{student.email}</div>
+                        </div>
+                    </td>
+                    <td>
+                        <span className={styles.dateBadge}>{formatDate(student.createdAt)}</span>
+                    </td>
+                    <td>
+                        <button
+                            onClick={() => handleToggleStatus(student.id, student.isActive)}
+                            className={styles.toggleSwitch}
+                            title={student.isActive ? "Click to block" : "Click to activate"}
+                        >
+                            <div className={`${styles.toggleTrack} ${student.isActive ? styles.on : styles.off}`}>
+                                <div className={styles.toggleThumb} />
+                            </div>
+                            <span className={`${styles.toggleLabel} ${!student.isActive ? styles.off : ""}`}>
+                                {student.isActive ? "Active" : "Blocked"}
+                            </span>
+                        </button>
+                    </td>
+                    <td>
+                        <div className={styles.actions}>
+                            <button onClick={() => handleSendWelcomeMail(student)} className={styles.mailBtn} title="Send welcome mail">
+                                <EnvelopeSimple size={18} weight="bold" />
+                            </button>
+                            <button onClick={() => handleEditClick(student)} className={styles.editBtn} title="Edit student">
+                                <PencilSimple size={18} weight="bold" />
+                            </button>
+                            <button onClick={() => handleDeleteStudent(student.id)} className={styles.deleteBtn} title="Delete student">
+                                <Trash size={18} weight="bold" />
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            );
+        });
+    };
+
     if (isLoading || !user) return null;
 
     return (
@@ -271,7 +403,7 @@ export default function AdminStudentsPage() {
                 <div className={styles.headerCard}>
                     <div className={styles.headerInfo}>
                         <h1>Manage Students</h1>
-                        <p>Create student accounts, assign courses and batches, and manage LMS access.</p>
+                        <p>Create student accounts and assign courses and batches.</p>
                     </div>
                     <div className={styles.headerActions}>
                         <div className={styles.searchBox}>
@@ -284,99 +416,55 @@ export default function AdminStudentsPage() {
                             />
                         </div>
                         <button className={styles.enrollBtn} onClick={handleCreateClick}>
-                            <Plus size={18} weight="bold" /> Create Student
+                            <Plus size={18} weight="bold" />
+                            <span>Create Student</span>
                         </button>
                     </div>
                 </div>
 
                 {issuedCredentials ? (
-                    <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", color: "#065f46", borderRadius: "18px", padding: "1rem 1.25rem", marginBottom: "1.5rem" }}>
-                        <strong>{issuedCredentials.name}</strong> created successfully. Username: <strong>{issuedCredentials.username}</strong> | Password: <strong>{issuedCredentials.password}</strong>
+                    <div style={{ background: "#ecfdf5", border: "1px solid #a7f3d0", color: "#065f46", borderRadius: "18px", padding: "1rem 1.25rem" }}>
+                        <strong>{issuedCredentials.name}</strong> credentials ready. Username: <strong>{issuedCredentials.username}</strong> | Password: <strong>{issuedCredentials.password}</strong>
                     </div>
                 ) : null}
 
-                <div className={styles.tableWrapper}>
-                    <table className={styles.studentTable}>
-                        <thead>
-                            <tr>
-                                <th>STUDENT</th>
-                                <th>COURSE / BATCH</th>
-                                <th>CONTACT</th>
-                                <th>JOINED DATE</th>
-                                <th>STATUS</th>
-                                <th>ACTIONS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loadingData ? (
+                <section className={styles.tableSection}>
+                    <div className={styles.tableSectionHeader}>Active Students</div>
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.studentTable}>
+                            <thead>
                                 <tr>
-                                    <td colSpan={6} className={styles.empty}>Loading student records...</td>
+                                    <th>Student</th>
+                                    <th>Course / Batch</th>
+                                    <th>Contact</th>
+                                    <th>Joined Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
-                            ) : students.length === 0 ? (
+                            </thead>
+                            <tbody>{renderRows(activeStudents)}</tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section className={styles.tableSection}>
+                    <div className={styles.tableSectionHeader}>Blocked Students</div>
+                    <div className={styles.tableWrapper}>
+                        <table className={styles.studentTable}>
+                            <thead>
                                 <tr>
-                                    <td colSpan={6} className={styles.empty}>No student records matched your query.</td>
+                                    <th>Student</th>
+                                    <th>Course / Batch</th>
+                                    <th>Contact</th>
+                                    <th>Joined Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
                                 </tr>
-                            ) : (
-                                students.map((student) => (
-                                    <tr key={student.id}>
-                                        <td>
-                                            <div className={styles.studentInfo}>
-                                                <div className={styles.avatar}>{student.name.charAt(0)}</div>
-                                                <div>
-                                                    <div className={styles.name}>{student.name}</div>
-                                                    <div className={styles.email}>{student.username || student.email}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className={styles.batchList}>
-                                                {student.enrolledBatches?.length > 0 ? (
-                                                    student.enrolledBatches.map((batch) => (
-                                                        <div key={batch.id} className={styles.batchItem}>
-                                                            <Tag size={12} /> {batch.course?.title || "Course"} / {batch.name}
-                                                        </div>
-                                                    ))
-                                                ) : (
-                                                    <span className={styles.unassigned}>No batch assigned</span>
-                                                )}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div className={styles.contact}>{student.phone || "Not provided"}</div>
-                                        </td>
-                                        <td>
-                                            <div className={styles.date}>{new Date(student.createdAt).toISOString().split("T")[0]}</div>
-                                        </td>
-                                        <td>
-                                            <button
-                                                onClick={() => handleToggleStatus(student.id, student.isActive)}
-                                                className={styles.toggleSwitch}
-                                                title={student.isActive ? "Click to block" : "Click to activate"}
-                                            >
-                                                <div className={`${styles.toggleTrack} ${student.isActive ? styles.on : styles.off}`}>
-                                                    <div className={styles.toggleThumb} />
-                                                </div>
-                                                <span className={`${styles.toggleLabel} ${!student.isActive ? styles.off : ""}`}>
-                                                    {student.isActive ? "Active" : "Blocked"}
-                                                </span>
-                                            </button>
-                                        </td>
-                                        <td>
-                                            <div className={styles.actions}>
-                                                <button onClick={() => handleEditClick(student)} className={styles.editBtn} title="Edit student">
-                                                    <PencilSimple size={18} weight="bold" />
-                                                </button>
-                                                <button onClick={() => handleDeleteStudent(student.id)} className={styles.deleteBtn} title="Delete student">
-                                                    <Trash size={18} weight="bold" />
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>{renderRows(blockedStudents)}</tbody>
+                        </table>
+                    </div>
+                </section>
             </div>
 
             {showModal ? (
@@ -434,3 +522,5 @@ export default function AdminStudentsPage() {
         </LMSShell>
     );
 }
+
+

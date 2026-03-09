@@ -5,7 +5,7 @@ import { COURSES } from "@/data/lms-data";
 import { Book, Folder } from "@phosphor-icons/react";
 import styles from "../dashboard/dashboard.module.css";
 
-export default function TeacherContent() {
+export default function FacultyContent() {
     return (
         <LMSShell pageTitle="Content Access Management">
             <div className={styles.welcome}>

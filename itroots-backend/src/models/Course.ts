@@ -15,10 +15,10 @@ interface CourseAttributes {
     category?: string;
     status: CourseStatus;
     isPublished: boolean;
-    instructorId: string;
+    instructorId?: string | null;
 }
 
-interface CourseCreationAttributes extends Optional<CourseAttributes, 'id' | 'description' | 'thumbnail' | 'duration' | 'category' | 'status' | 'isPublished'> { }
+interface CourseCreationAttributes extends Optional<CourseAttributes, 'id' | 'description' | 'thumbnail' | 'duration' | 'category' | 'status' | 'isPublished' | 'instructorId'> { }
 
 class Course extends Model<CourseAttributes, CourseCreationAttributes> implements CourseAttributes {
     public id!: string;
@@ -31,7 +31,7 @@ class Course extends Model<CourseAttributes, CourseCreationAttributes> implement
     public category?: string;
     public status!: CourseStatus;
     public isPublished!: boolean;
-    public instructorId!: string;
+    public instructorId?: string | null;
 
     public readonly createdAt!: Date;
     public readonly updatedAt!: Date;
@@ -84,7 +84,7 @@ Course.init(
         },
         instructorId: {
             type: DataTypes.UUID,
-            allowNull: false,
+            allowNull: true,
             references: {
                 model: User,
                 key: 'id',

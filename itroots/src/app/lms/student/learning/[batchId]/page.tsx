@@ -1,9 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
+import { buildStudentContentViewerHref } from "@/utils/studentContentViewer";
 import {
     Video,
     ClipboardText,
@@ -13,11 +15,9 @@ import {
     BookOpenText,
     SealCheck,
     FilePdf,
-    FileText,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./learning-view.module.css";
-import Link from "next/link";
 
 export default function StudentLearningView() {
     const { batchId } = useParams();
@@ -35,7 +35,9 @@ export default function StudentLearningView() {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const json = await res.json();
-            if (res.ok) setData(json);
+            if (res.ok) {
+                setData(json);
+            }
         } catch (err) {
             console.error(err);
         } finally {
@@ -63,7 +65,6 @@ export default function StudentLearningView() {
     return (
         <LMSShell pageTitle="Batch Learning">
             <div className={styles.page}>
-                {/* Back + Banner */}
                 <div className={styles.bannerRow}>
                     <Link href="/lms/student/my-learning" className={styles.backBtn}>
                         <ArrowLeft size={18} /> Back to My Batches
@@ -71,9 +72,7 @@ export default function StudentLearningView() {
                 </div>
 
                 <div className={styles.grid}>
-                    {/* ── Main Content ── */}
                     <div className={styles.contentArea}>
-                        {/* Tab Bar */}
                         <div className={styles.tabBar}>
                             <button
                                 className={`${styles.tabBtn} ${activeTab === "videos" ? styles.tabBtnActive : ""}`}
@@ -98,7 +97,6 @@ export default function StudentLearningView() {
                             </button>
                         </div>
 
-                        {/* Tab Content */}
                         {loading ? (
                             <div className={styles.loadingState}>Loading batch content...</div>
                         ) : activeTab === "videos" ? (
@@ -106,18 +104,18 @@ export default function StudentLearningView() {
                                 {videos.length === 0 ? (
                                     <div className={styles.empty}>No video sessions uploaded for this batch yet.</div>
                                 ) : (
-                                    videos.map((v: any) => (
-                                        <div key={v.id} className={styles.vItem}>
+                                    videos.map((video: any) => (
+                                        <div key={video.id} className={styles.vItem}>
                                             <div className={styles.vIcon}>
                                                 <Video size={22} weight="duotone" />
                                             </div>
                                             <div className={styles.vMeta}>
-                                                <h4>{v.title}</h4>
-                                                <p>{v.description || "Batch Lecture Recording"}</p>
+                                                <h4>{video.title}</h4>
+                                                <p>{video.description || "Batch lecture recording"}</p>
                                             </div>
-                                            <a href={v.contentUrl} target="_blank" rel="noreferrer" className={styles.watchBtn}>
+                                            <Link href={buildStudentContentViewerHref(video.contentUrl, video.title)} className={styles.watchBtn}>
                                                 Watch Now
-                                            </a>
+                                            </Link>
                                         </div>
                                     ))
                                 )}
@@ -127,18 +125,18 @@ export default function StudentLearningView() {
                                 {resources.length === 0 ? (
                                     <div className={styles.empty}>No resources uploaded for this batch yet.</div>
                                 ) : (
-                                    resources.map((r: any) => (
-                                        <div key={r.id} className={`${styles.vItem} ${styles.resourceItem}`}>
+                                    resources.map((resource: any) => (
+                                        <div key={resource.id} className={`${styles.vItem} ${styles.resourceItem}`}>
                                             <div className={`${styles.vIcon} ${styles.resourceIcon}`}>
                                                 <FilePdf size={22} weight="duotone" />
                                             </div>
                                             <div className={styles.vMeta}>
-                                                <h4>{r.title}</h4>
-                                                <p>{r.fileType || "Document"} · {r.fileSize || ""}</p>
+                                                <h4>{resource.title}</h4>
+                                                <p>{resource.fileType || "Document"}{resource.fileSize ? ` | ${resource.fileSize}` : ""}</p>
                                             </div>
-                                            <a href={r.fileUrl || r.contentUrl} target="_blank" rel="noreferrer" className={`${styles.watchBtn} ${styles.downloadBtnStyle}`}>
-                                                Download
-                                            </a>
+                                            <Link href={buildStudentContentViewerHref(resource.fileUrl || resource.contentUrl, resource.title)} className={`${styles.watchBtn} ${styles.downloadBtnStyle}`}>
+                                                View Resource
+                                            </Link>
                                         </div>
                                     ))
                                 )}
@@ -148,18 +146,18 @@ export default function StudentLearningView() {
                                 {assignments.length === 0 ? (
                                     <div className={styles.empty}>No assignments uploaded for this batch yet.</div>
                                 ) : (
-                                    assignments.map((a: any) => (
-                                        <div key={a.id} className={`${styles.vItem} ${styles.assignmentItem}`}>
+                                    assignments.map((assignment: any) => (
+                                        <div key={assignment.id} className={`${styles.vItem} ${styles.assignmentItem}`}>
                                             <div className={`${styles.vIcon} ${styles.assignmentIcon}`}>
                                                 <BookOpenText size={22} weight="duotone" />
                                             </div>
                                             <div className={styles.vMeta}>
-                                                <h4>{a.title}</h4>
-                                                <p>Project Briefing</p>
+                                                <h4>{assignment.title}</h4>
+                                                <p>{assignment.description || "Project briefing"}</p>
                                             </div>
-                                            <a href={a.contentUrl} target="_blank" rel="noreferrer" className={`${styles.watchBtn} ${styles.assignmentBtnStyle}`}>
-                                                Open
-                                            </a>
+                                            <Link href={buildStudentContentViewerHref(assignment.contentUrl, assignment.title)} className={`${styles.watchBtn} ${styles.assignmentBtnStyle}`}>
+                                                Open Assignment
+                                            </Link>
                                         </div>
                                     ))
                                 )}
@@ -167,9 +165,7 @@ export default function StudentLearningView() {
                         )}
                     </div>
 
-                    {/* ── Sidebar ── */}
                     <div className={styles.sidebar}>
-                        {/* Tests Card */}
                         <div className={styles.examCard}>
                             <div className={styles.examHeader}>
                                 <Exam size={20} weight="fill" color="#0881ec" />
@@ -180,11 +176,11 @@ export default function StudentLearningView() {
                                 {tests.length === 0 ? (
                                     <div className={styles.emptySmall}>No active exams for this batch.</div>
                                 ) : (
-                                    tests.map((t: any) => (
-                                        <div key={t.id} className={styles.testStrip}>
+                                    tests.map((test: any) => (
+                                        <div key={test.id} className={styles.testStrip}>
                                             <div className={styles.testLabel}>
-                                                <span>{t.title}</span>
-                                                <small>{t.durationMinutes} min · {t.totalMarks} marks</small>
+                                                <span>{test.title}</span>
+                                                <small>{test.durationMinutes} min | {test.totalMarks} marks</small>
                                             </div>
                                             <Link href="/lms/student/tests" className={styles.startBtn}>
                                                 Start
@@ -195,7 +191,6 @@ export default function StudentLearningView() {
                             </div>
                         </div>
 
-                        {/* Certification info */}
                         <div className={styles.infoCard}>
                             <SealCheck size={32} color="#0881ec" weight="duotone" />
                             <h5>Certification Pathway</h5>

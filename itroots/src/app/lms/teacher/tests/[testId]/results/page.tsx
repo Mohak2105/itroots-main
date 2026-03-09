@@ -19,7 +19,7 @@ export default function TestResultsPage() {
         if (!token || !testId) return;
         setLoading(true);
         try {
-            const res = await fetch(`${ENDPOINTS.TEACHER.TEST_RESULTS}/${testId}`, {
+            const res = await fetch(`${ENDPOINTS.Faculty.TEST_RESULTS}/${testId}`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const json = await res.json();
@@ -32,7 +32,7 @@ export default function TestResultsPage() {
     }, [token, testId]);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "TEACHER")) {
+        if (!isLoading && (!user || user.role !== "Faculty")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);

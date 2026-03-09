@@ -1,14 +1,16 @@
-import express from 'express';
+﻿import express from 'express';
 import {
-    getTeacherDashboard,
+    getFacultyDashboard,
     getMyBatches,
     getBatchData,
     addBatchContent,
     createTest,
-    getTestResults
-} from '../controllers/teacherController';
+    getTestResults,
+    getFacultyAssignments,
+    reviewAssignmentSubmission,
+} from '../controllers/FacultyController';
 import {
-    getTeacherLiveClasses,
+    getFacultyLiveClasses,
     createLiveClass,
     updateLiveClass,
     cancelLiveClass,
@@ -21,20 +23,22 @@ import { authenticate, authorizeRole } from '../middlewares/auth';
 const router = express.Router();
 
 router.use(authenticate);
-router.use(authorizeRole('TEACHER'));
+router.use(authorizeRole('Faculty'));
 
-router.get('/dashboard', getTeacherDashboard);
+router.get('/dashboard', getFacultyDashboard);
 router.get('/my-batches', getMyBatches);
 router.get('/batch-data/:batchId', getBatchData);
 router.post('/batch-content', addBatchContent);
 router.post('/tests', createTest);
 router.get('/test-results/:testId', getTestResults);
+router.get('/assignments', getFacultyAssignments);
+router.patch('/assignments/:submissionId/review', reviewAssignmentSubmission);
 
 router.post('/attendance', markAttendance);
 router.get('/attendance/:batchId', getBatchAttendance);
 router.post('/announcements', createAnnouncement);
 router.get('/announcements/:batchId', getBatchAnnouncements);
-router.get('/live-classes', getTeacherLiveClasses);
+router.get('/live-classes', getFacultyLiveClasses);
 router.post('/live-classes', createLiveClass);
 router.put('/live-classes/:liveClassId', updateLiveClass);
 router.patch('/live-classes/:liveClassId/cancel', cancelLiveClass);

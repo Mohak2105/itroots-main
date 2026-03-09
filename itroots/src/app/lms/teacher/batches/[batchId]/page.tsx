@@ -40,6 +40,13 @@ const toInputDateTime = (value?: string) => {
     return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 16);
 };
 
+const createEmptyTestQuestion = () => ({
+    id: `q-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    text: "",
+    options: ["", "", "", ""],
+    correctIndex: 0,
+});
+
 export default function BatchManagementPage() {
     const { batchId } = useParams();
     const { user, isLoading, token } = useLMSAuth();
@@ -53,8 +60,8 @@ export default function BatchManagementPage() {
     const [isAttendanceModal, setIsAttendanceModal] = useState(false);
     const [isLiveClassModal, setIsLiveClassModal] = useState(false);
 
-    const [contentForm, setContentForm] = useState({ title: "", description: "", type: "VIDEO", contentUrl: "" });
-    const [testForm, setTestForm] = useState({ title: "", description: "", totalMarks: 100, durationMinutes: 60, questions: [] });
+    const [contentForm, setContentForm] = useState({ title: "", description: "", type: "VIDEO", contentUrl: "", uploadMode: "URL", fileData: "", fileName: "" });
+    const [testForm, setTestForm] = useState({ title: "", description: "", totalMarks: 100, durationMinutes: 60, questions: [createEmptyTestQuestion()] });
     const [announcementForm, setAnnouncementForm] = useState({ title: "", content: "", priority: "NORMAL" });
     const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split("T")[0]);
     const [attendanceRecords, setAttendanceRecords] = useState<Record<string, string>>({});
@@ -63,7 +70,7 @@ export default function BatchManagementPage() {
     const fetchBatchData = useCallback(async () => {
         if (!token || !batchId) return;
         try {
-            const res = await fetch(`${ENDPOINTS.TEACHER.BATCH_DATA}/${batchId}`, {
+            const res = await fetch(`${ENDPOINTS.Faculty.BATCH_DATA}/${batchId}`, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const json = await res.json();
@@ -84,7 +91,7 @@ export default function BatchManagementPage() {
     const fetchLiveClasses = useCallback(async () => {
         if (!token || !batchId) return;
         try {
-            const res = await fetch(ENDPOINTS.TEACHER.LIVE_CLASSES, {
+            const res = await fetch(ENDPOINTS.Faculty.LIVE_CLASSES, {
                 headers: { Authorization: `Bearer ${token}` },
             });
             const json = await res.json();
@@ -95,8 +102,34 @@ export default function BatchManagementPage() {
         }
     }, [token, batchId]);
 
+    const loadAttendanceForDate = useCallback(async (selectedDate: string) => {
+        if (!token || !batchId) return;
+        setIsAttendanceLoading(true);
+        try {
+            const response = await fetch(`${ENDPOINTS.Faculty.BASE}/attendance/${batchId}?date=${selectedDate}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const json = await response.json();
+            const existingRecords = Array.isArray(json?.data) ? json.data : [];
+            const nextRecords: Record<string, string> = {};
+            (data.data?.enrollments || []).forEach((enrollment: any) => {
+                nextRecords[enrollment.student.id] = 'PRESENT';
+            });
+            existingRecords.forEach((record: any) => {
+                if (record.studentId) {
+                    nextRecords[record.studentId] = record.status;
+                }
+            });
+            setAttendanceRecords(nextRecords);
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setIsAttendanceLoading(false);
+        }
+    }, [token, batchId, data.data?.enrollments]);
+
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "TEACHER")) {
+        if (!isLoading && (!user || user.role !== "Faculty")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -106,17 +139,120 @@ export default function BatchManagementPage() {
         void fetchLiveClasses();
     }, [fetchBatchData, fetchLiveClasses]);
 
+    useEffect(() => {
+        if (isAttendanceModal) {
+            void loadAttendanceForDate(attendanceDate);
+        }
+    }, [isAttendanceModal, attendanceDate, loadAttendanceForDate]);
+
+    const resetContentForm = () => {
+        setContentForm({ title: "", description: "", type: "VIDEO", contentUrl: "", uploadMode: "URL", fileData: "", fileName: "" });
+    };
+
+    const handleContentTypeChange = (value: string) => {
+        setContentForm((prev: any) => ({
+            ...prev,
+            type: value,
+            uploadMode: value === "VIDEO" ? "URL" : prev.uploadMode,
+            contentUrl: value === "VIDEO" ? prev.contentUrl : "",
+            fileData: value === "VIDEO" ? "" : prev.fileData,
+            fileName: value === "VIDEO" ? "" : prev.fileName,
+        }));
+    };
+
+    const handleContentFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            setContentForm((prev: any) => ({ ...prev, fileData: "", fileName: "" }));
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+            setContentForm((prev: any) => ({
+                ...prev,
+                fileName: file.name,
+                fileData: typeof reader.result === "string" ? reader.result : "",
+                contentUrl: "",
+            }));
+        };
+        reader.readAsDataURL(file);
+    };
+    const addTestQuestion = () => {
+        setTestForm((prev: any) => ({
+            ...prev,
+            questions: [...prev.questions, createEmptyTestQuestion()],
+        }));
+    };
+
+    const removeTestQuestion = (questionId: string) => {
+        setTestForm((prev: any) => ({
+            ...prev,
+            questions: prev.questions.length > 1
+                ? prev.questions.filter((question: any) => question.id !== questionId)
+                : prev.questions,
+        }));
+    };
+
+    const updateTestQuestion = (questionId: string, value: string) => {
+        setTestForm((prev: any) => ({
+            ...prev,
+            questions: prev.questions.map((question: any) => (
+                question.id === questionId ? { ...question, text: value } : question
+            )),
+        }));
+    };
+
+    const updateTestOption = (questionId: string, optionIndex: number, value: string) => {
+        setTestForm((prev: any) => ({
+            ...prev,
+            questions: prev.questions.map((question: any) => {
+                if (question.id !== questionId) return question;
+                const nextOptions = [...question.options];
+                nextOptions[optionIndex] = value;
+                return { ...question, options: nextOptions };
+            }),
+        }));
+    };
+
+    const setCorrectOption = (questionId: string, optionIndex: number) => {
+        setTestForm((prev: any) => ({
+            ...prev,
+            questions: prev.questions.map((question: any) => (
+                question.id === questionId ? { ...question, correctIndex: optionIndex } : question
+            )),
+        }));
+    };
+    const openAttendanceModal = () => {
+        setIsAttendanceModal(true);
+        void loadAttendanceForDate(attendanceDate);
+    };
+
+    const handleAttendanceStatusChange = (studentId: string, status: string) => {
+        setAttendanceRecords((prev) => ({ ...prev, [studentId]: status }));
+    };
+
     const handleAddContent = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch(ENDPOINTS.TEACHER.ADD_CONTENT, {
+            const payload = {
+                batchId,
+                title: contentForm.title,
+                description: contentForm.description,
+                type: contentForm.type,
+                contentUrl: contentForm.uploadMode === "URL" ? contentForm.contentUrl : "",
+                fileData: contentForm.uploadMode === "FILE" ? contentForm.fileData : "",
+                fileName: contentForm.uploadMode === "FILE" ? contentForm.fileName : "",
+            };
+
+            const res = await fetch(ENDPOINTS.Faculty.ADD_CONTENT, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ ...contentForm, batchId }),
+                body: JSON.stringify(payload),
             });
             if (res.ok) {
                 setIsAddContentModal(false);
-                setContentForm({ title: "", description: "", type: "VIDEO", contentUrl: "" });
+                resetContentForm();
                 void fetchBatchData();
             }
         } catch (err) {
@@ -127,14 +263,14 @@ export default function BatchManagementPage() {
     const handleCreateTest = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch(ENDPOINTS.TEACHER.CREATE_TEST, {
+            const res = await fetch(ENDPOINTS.Faculty.CREATE_TEST, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ ...testForm, batchId }),
             });
             if (res.ok) {
                 setIsCreateTestModal(false);
-                setTestForm({ title: "", description: "", totalMarks: 100, durationMinutes: 60, questions: [] });
+                setTestForm({ title: "", description: "", totalMarks: 100, durationMinutes: 60, questions: [createEmptyTestQuestion()] });
                 void fetchBatchData();
             }
         } catch (err) {
@@ -145,7 +281,7 @@ export default function BatchManagementPage() {
     const handleCreateAnnouncement = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const res = await fetch(`${ENDPOINTS.TEACHER.BASE}/announcements`, {
+            const res = await fetch(`${ENDPOINTS.Faculty.BASE}/announcements`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ ...announcementForm, batchId }),
@@ -168,7 +304,7 @@ export default function BatchManagementPage() {
                 status: attendanceRecords[studentId],
             }));
 
-            const res = await fetch(`${ENDPOINTS.TEACHER.BASE}/attendance`, {
+            const res = await fetch(`${ENDPOINTS.Faculty.BASE}/attendance`, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
                 body: JSON.stringify({ batchId, date: attendanceDate, records: recordsArray }),
@@ -217,8 +353,8 @@ export default function BatchManagementPage() {
         e.preventDefault();
         try {
             const url = liveClassForm.id
-                ? `${ENDPOINTS.TEACHER.LIVE_CLASSES}/${liveClassForm.id}`
-                : ENDPOINTS.TEACHER.LIVE_CLASSES;
+                ? `${ENDPOINTS.Faculty.LIVE_CLASSES}/${liveClassForm.id}`
+                : ENDPOINTS.Faculty.LIVE_CLASSES;
             const method = liveClassForm.id ? "PUT" : "POST";
             const res = await fetch(url, {
                 method,
@@ -240,7 +376,7 @@ export default function BatchManagementPage() {
     const handleCancelLiveClass = async (liveClassId: string) => {
         if (!confirm("Cancel this live class?")) return;
         try {
-            const res = await fetch(ENDPOINTS.TEACHER.CANCEL_LIVE_CLASS(liveClassId), {
+            const res = await fetch(ENDPOINTS.Faculty.CANCEL_LIVE_CLASS(liveClassId), {
                 method: "PATCH",
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -274,7 +410,7 @@ export default function BatchManagementPage() {
                     <button className={styles.secondaryBtn} onClick={() => setIsAnnouncementModal(true)} style={{ background: "#f8fafc", color: "#0f172a", border: "1px solid #cbd5e1" }}>
                         <Megaphone size={18} weight="bold" /> Announce
                     </button>
-                    <button className={styles.secondaryBtn} onClick={() => setIsAttendanceModal(true)} style={{ background: "#f8fafc", color: "#0f172a", border: "1px solid #cbd5e1" }}>
+                    <button className={styles.secondaryBtn} onClick={openAttendanceModal} style={{ background: "#f8fafc", color: "#0f172a", border: "1px solid #cbd5e1" }}>
                         <CalendarCheck size={18} weight="bold" /> Attendance
                     </button>
                 </div>
@@ -378,7 +514,7 @@ export default function BatchManagementPage() {
                                         <small>{test.totalMarks} Marks | {test.durationMinutes} min</small>
                                     </div>
                                     <button
-                                        onClick={() => router.push(`/lms/teacher/tests/${test.id}/results`)}
+                                        onClick={() => router.push(`/lms/Faculty/tests/${test.id}/results`)}
                                         className={styles.statBtn}
                                         title="View Results"
                                     >
@@ -464,16 +600,33 @@ export default function BatchManagementPage() {
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Type</label>
-                                <select value={contentForm.type} onChange={e => setContentForm({ ...contentForm, type: e.target.value })}>
+                                <select value={contentForm.type} onChange={e => handleContentTypeChange(e.target.value)}>
                                     <option value="VIDEO">Video Lecture URL</option>
-                                    <option value="ASSIGNMENT">Assignment Link/File</option>
-                                    <option value="RESOURCE">Other Resource (PDF, PPT)</option>
+                                    <option value="ASSIGNMENT">Assignment</option>
+                                    <option value="RESOURCE">Resource (PDF, PPT)</option>
                                 </select>
                             </div>
-                            <div className={styles.formGroup}>
-                                <label>URL</label>
-                                <input required value={contentForm.contentUrl} onChange={e => setContentForm({ ...contentForm, contentUrl: e.target.value })} placeholder="https://..." />
-                            </div>
+                            {contentForm.type !== "VIDEO" ? (
+                                <div className={styles.formGroup}>
+                                    <label>Upload Mode</label>
+                                    <select value={contentForm.uploadMode} onChange={e => setContentForm({ ...contentForm, uploadMode: e.target.value, contentUrl: e.target.value === "URL" ? contentForm.contentUrl : "", fileData: e.target.value === "FILE" ? contentForm.fileData : "", fileName: e.target.value === "FILE" ? contentForm.fileName : "" })}>
+                                        <option value="FILE">Upload File</option>
+                                        <option value="URL">Use File URL</option>
+                                    </select>
+                                </div>
+                            ) : null}
+                            {contentForm.type === "VIDEO" || contentForm.uploadMode === "URL" ? (
+                                <div className={styles.formGroup}>
+                                    <label>{contentForm.type === "VIDEO" ? "Video URL" : "File URL"}</label>
+                                    <input required value={contentForm.contentUrl} onChange={e => setContentForm({ ...contentForm, contentUrl: e.target.value })} placeholder="https://..." />
+                                </div>
+                            ) : (
+                                <div className={styles.formGroup}>
+                                    <label>Upload File</label>
+                                    <input type="file" required onChange={handleContentFileChange} />
+                                    {contentForm.fileName ? <small style={{ color: "#64748b", fontWeight: 600 }}>Selected: {contentForm.fileName}</small> : null}
+                                </div>
+                            )}
                             <div className={styles.formGroup}>
                                 <label>Description</label>
                                 <textarea value={contentForm.description} onChange={e => setContentForm({ ...contentForm, description: e.target.value })} placeholder="Brief overview..." />
@@ -486,27 +639,105 @@ export default function BatchManagementPage() {
 
             {isCreateTestModal && (
                 <div className={styles.modalOverlay}>
-                    <div className={styles.modal}>
+                    <div className={`${styles.modal} ${styles.testModal}`} style={{ maxWidth: "840px" }}>
                         <div className={styles.modalHeader}>
-                            <h3>New Assessment</h3>
+                            <h3>New MCQ Assessment</h3>
                             <button onClick={() => setIsCreateTestModal(false)}><X size={24} /></button>
                         </div>
                         <form onSubmit={handleCreateTest} className={styles.form}>
-                            <div className={styles.formGroup}>
-                                <label>Title</label>
-                                <input required value={testForm.title} onChange={e => setTestForm({ ...testForm, title: e.target.value })} />
+                            <div className={styles.testFormIntro}>
+                                <div>
+                                    <div className={styles.testFormEyebrow}>Assessment Builder</div>
+                                    <div className={styles.testFormLead}>Design a timed MCQ test for this batch.</div>
+                                    <p className={styles.testFormNote}>Add clear questions, define one correct answer for each option set, and notify students as soon as you publish.</p>
+                                </div>
+                                <div className={styles.testHighlightGrid}>
+                                    <div className={styles.testHighlightCard}>
+                                        <span className={styles.testHighlightValue}>{testForm.questions.length}</span>
+                                        <span className={styles.testHighlightLabel}>Questions</span>
+                                    </div>
+                                    <div className={styles.testHighlightCard}>
+                                        <span className={styles.testHighlightValue}>{testForm.totalMarks}</span>
+                                        <span className={styles.testHighlightLabel}>Marks</span>
+                                    </div>
+                                    <div className={styles.testHighlightCard}>
+                                        <span className={styles.testHighlightValue}>{testForm.durationMinutes}</span>
+                                        <span className={styles.testHighlightLabel}>Minutes</span>
+                                    </div>
+                                </div>
                             </div>
-                            <div style={{ display: "flex", gap: "1rem" }}>
-                                <div className={styles.formGroup} style={{ flex: 1 }}>
+
+                            <div className={styles.testMetaGrid}>
+                                <div className={styles.formGroup}>
+                                    <label>Test Title</label>
+                                    <input required value={testForm.title} onChange={e => setTestForm({ ...testForm, title: e.target.value })} placeholder="e.g. Module 1 Practice Test" />
+                                </div>
+                                <div className={styles.formGroup}>
                                     <label>Total Marks</label>
-                                    <input type="number" required value={testForm.totalMarks} onChange={e => setTestForm({ ...testForm, totalMarks: parseInt(e.target.value) })} />
+                                    <input type="number" min="1" required value={testForm.totalMarks} onChange={e => setTestForm({ ...testForm, totalMarks: parseInt(e.target.value || "0", 10) })} />
                                 </div>
-                                <div className={styles.formGroup} style={{ flex: 1 }}>
-                                    <label>Duration (Min)</label>
-                                    <input type="number" required value={testForm.durationMinutes} onChange={e => setTestForm({ ...testForm, durationMinutes: parseInt(e.target.value) })} />
+                                <div className={styles.formGroup}>
+                                    <label>Duration (Minutes)</label>
+                                    <input type="number" min="1" required value={testForm.durationMinutes} onChange={e => setTestForm({ ...testForm, durationMinutes: parseInt(e.target.value || "0", 10) })} />
+                                </div>
+                                <div className={`${styles.formGroup} ${styles.testMetaWide}`}>
+                                    <label>Student Instructions</label>
+                                    <textarea value={testForm.description} onChange={e => setTestForm({ ...testForm, description: e.target.value })} rows={3} placeholder="Add instructions students should read before starting the test" />
                                 </div>
                             </div>
-                            <button type="submit" className={styles.submitBtn}>Generate Test</button>
+
+                            <div className={styles.testQuestionsHeader}>
+                                <div>
+                                    <div className={styles.testQuestionsTitle}>MCQ Questions</div>
+                                    <div className={styles.testQuestionsSub}>Each question needs 4 options and exactly 1 correct answer.</div>
+                                </div>
+                                <button type="button" className={styles.secondaryBtn} onClick={addTestQuestion}>
+                                    <Plus size={16} weight="bold" /> Add Question
+                                </button>
+                            </div>
+
+                            <div className={styles.testQuestionsList}>
+                                {testForm.questions.map((question: any, questionIndex: number) => (
+                                    <div key={question.id} className={styles.testQuestionCard}>
+                                        <div className={styles.testQuestionHeader}>
+                                            <div>
+                                                <div className={styles.testQuestionIndex}>Question {questionIndex + 1}</div>
+                                                <div className={styles.testQuestionHint}>Students must answer this before submission.</div>
+                                            </div>
+                                            <button type="button" className={styles.inlineDangerBtn} onClick={() => removeTestQuestion(question.id)} disabled={testForm.questions.length === 1}>
+                                                Remove
+                                            </button>
+                                        </div>
+
+                                        <div className={styles.formGroup}>
+                                            <label>Question Text</label>
+                                            <textarea required value={question.text} onChange={(e) => updateTestQuestion(question.id, e.target.value)} rows={2} placeholder="Type the question" />
+                                        </div>
+
+                                        <div className={styles.testOptionGrid}>
+                                            {question.options.map((option: string, optionIndex: number) => (
+                                                <div key={optionIndex} className={styles.testOptionCard}>
+                                                    <div className={styles.testOptionTop}>
+                                                        <label>Option {String.fromCharCode(65 + optionIndex)}</label>
+                                                        <label className={styles.correctOptionToggle}>
+                                                            <input type="radio" name={`correct-${question.id}`} checked={question.correctIndex === optionIndex} onChange={() => setCorrectOption(question.id, optionIndex)} />
+                                                            <span>Correct Answer</span>
+                                                        </label>
+                                                    </div>
+                                                    <input required value={option} onChange={(e) => updateTestOption(question.id, optionIndex, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + optionIndex)}`} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className={styles.testFormActions}>
+                                <button type="button" className={styles.secondaryBtn} onClick={() => setIsCreateTestModal(false)}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className={styles.submitBtn}>Create Test and Notify Students</button>
+                            </div>
                         </form>
                     </div>
                 </div>

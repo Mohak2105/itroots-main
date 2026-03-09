@@ -1,6 +1,7 @@
-﻿import express from 'express';
+import express from 'express';
 import {
     getAllUsers,
+    getUserById,
     updateUser,
     getSystemStats,
     getAllBatches,
@@ -9,15 +10,16 @@ import {
     getAllStudents,
     enrollNewStudent,
     deleteUser,
-    getAllTeachers,
+    getAllFaculty,
     getAdminDashboard
 } from '../controllers/adminController';
 import {
     createStudent,
     assignStudentBatch,
-    createTeacher,
-    assignTeacherResources,
+    createFaculty,
+    assignFacultyResources,
     getStudentPayments,
+    sendUserWelcomeMail,
 } from '../controllers/adminPeopleController';
 import {
     getAllCourses,
@@ -52,7 +54,9 @@ router.use(authorizeRole('SUPER_ADMIN'));
 
 router.get('/dashboard', getAdminDashboard);
 router.get('/users', getAllUsers);
+router.get('/users/:id', getUserById);
 router.put('/users/:id', updateUser);
+router.post('/users/:id/send-welcome-email', sendUserWelcomeMail);
 router.delete('/users/:id', deleteUser);
 
 router.get('/system-stats', getSystemStats);
@@ -73,9 +77,9 @@ router.post('/students/enroll', enrollNewStudent);
 router.put('/students/:id/assignments', assignStudentBatch);
 router.get('/students/:id/payments', getStudentPayments);
 
-router.get('/teachers', getAllTeachers);
-router.post('/teachers', createTeacher);
-router.put('/teachers/:id/assignments', assignTeacherResources);
+router.get('/Faculty', getAllFaculty);
+router.post('/Faculty', createFaculty);
+router.put('/Faculty/:id/assignments', assignFacultyResources);
 
 router.get('/payments', getPayments);
 router.post('/payments', createPayment);

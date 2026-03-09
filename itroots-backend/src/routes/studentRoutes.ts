@@ -1,10 +1,13 @@
-﻿import express from 'express';
+import express from 'express';
 import {
     getStudentDashboard,
     getAvailableBatches,
     selfEnroll,
     getMyLearning,
     getBatchResources,
+    getStudentAssignments,
+    submitAssignment,
+    getMyTests,
     submitExamResult,
     getMyCertificates,
     downloadMyCertificate,
@@ -26,6 +29,9 @@ router.post('/self-enroll', selfEnroll);
 router.get('/my-learning', getMyLearning);
 router.get('/batch-resources', getBatchResources);
 router.get('/batch-resources/:batchId', getBatchResources);
+router.get('/assignments', getStudentAssignments);
+router.post('/assignments/:assignmentId/submit', submitAssignment);
+router.get('/tests', getMyTests);
 router.post('/submit-exam', submitExamResult);
 
 router.get('/attendance', getStudentAttendance);

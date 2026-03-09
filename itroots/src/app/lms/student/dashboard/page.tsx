@@ -1,16 +1,16 @@
 ﻿"use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
+import { buildStudentContentViewerHref, shouldOpenExternally } from "@/utils/studentContentViewer";
 import styles from "./dashboard.module.css";
 import {
     GraduationCap,
     CalendarCheck,
-    Video,
     Trophy,
     ArrowRight,
     BookOpen,
@@ -36,6 +36,18 @@ type DashboardData = {
     certificates: any[];
 };
 
+type AttendanceBatch = {
+    total: number;
+    present: number;
+    absent: number;
+    late: number;
+    records: Array<{
+        id: string;
+        date?: string;
+        status?: string;
+    }>;
+};
+
 type FeedItem = {
     id: string;
     title: string;
@@ -45,9 +57,43 @@ type FeedItem = {
     kind: "ANNOUNCEMENT" | "NOTIFICATION";
     actionUrl?: string;
     actionLabel?: string;
+    opensInNewTab?: boolean;
 };
 
-const extractUrl = (value?: string) => value?.match(/https?:\/\/\S+/)?.[0];
+const extractUrl = (value?: string) => value?.match(/https?:\/\/\S+|\/uploads\/\S+/)?.[0];
+
+const formatDate = (value?: string) => {
+    if (!value) return "-";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "-";
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
+};
+
+const buildNotificationAction = (title: string, rawActionUrl?: string) => {
+    if (!rawActionUrl) {
+        return { actionUrl: undefined, actionLabel: undefined, opensInNewTab: false };
+    }
+
+    const upperTitle = title.toUpperCase();
+    const actionLabel = upperTitle.includes("LIVE CLASS")
+        ? "Join"
+        : upperTitle.includes("VIDEO")
+            ? "Watch"
+            : upperTitle.includes("ASSIGNMENT")
+                ? "View"
+                : "Open";
+    const opensInNewTab = shouldOpenExternally(title, actionLabel);
+
+    return {
+        actionUrl: opensInNewTab ? rawActionUrl : buildStudentContentViewerHref(rawActionUrl, title),
+        actionLabel,
+        opensInNewTab,
+    };
+};
 
 const toFeedItems = (announcements: any[], notifications: any[]): FeedItem[] => {
     const announcementItems = announcements.map((item: any) => ({
@@ -61,18 +107,11 @@ const toFeedItems = (announcements: any[], notifications: any[]): FeedItem[] => 
 
     const notificationItems = notifications.map((item: any) => {
         const notification = item.notification || {};
-        const actionUrl = extractUrl(notification.message);
         const title = notification.title || "Notification";
-        const upperTitle = String(title).toUpperCase();
-        const actionLabel = upperTitle.includes("LIVE CLASS")
-            ? "Join"
-            : upperTitle.includes("VIDEO")
-                ? "Open"
-                : upperTitle.includes("ASSIGNMENT")
-                    ? "View"
-                    : actionUrl
-                        ? "Open"
-                        : undefined;
+        const { actionUrl, actionLabel, opensInNewTab } = buildNotificationAction(
+            title,
+            extractUrl(notification.message)
+        );
 
         return {
             id: `notification-${item.id}`,
@@ -83,6 +122,7 @@ const toFeedItems = (announcements: any[], notifications: any[]): FeedItem[] => 
             kind: "NOTIFICATION" as const,
             actionUrl,
             actionLabel,
+            opensInNewTab,
         };
     });
 
@@ -110,6 +150,7 @@ export default function StudentDashboard() {
         liveClasses: [],
         certificates: [],
     });
+    const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceBatch>>({});
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -126,10 +167,27 @@ export default function StudentDashboard() {
         })
             .then((r) => r.json())
             .then((data) => {
-                if (data?.summary) setDashboard(data);
+                if (data?.summary) {
+                    setDashboard(data);
+                }
             })
             .catch(console.error)
             .finally(() => setLoading(false));
+    }, [token]);
+
+    useEffect(() => {
+        if (!token) return;
+
+        fetch(ENDPOINTS.STUDENT.ATTENDANCE, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then((response) => response.json())
+            .then((data) => {
+                if (data?.success && data?.data) {
+                    setAttendanceData(data.data);
+                }
+            })
+            .catch(console.error);
     }, [token]);
 
     const feedItems = useMemo(
@@ -167,7 +225,7 @@ export default function StudentDashboard() {
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Dashboard</div>
-                        <div className={styles.bannerSub}>Track your batches, attendance, scores, upcoming live classes, and issued certificates.</div>
+                        <div className={styles.bannerSub}>Track your batches, attendance, scores, and issued certificates.</div>
                     </div>
                     <GraduationCap size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
@@ -192,15 +250,6 @@ export default function StudentDashboard() {
                         </div>
                     </div>
                     <div className={styles.statCard}>
-                        <div className={`${styles.statIcon} ${styles.statIconOrange}`}>
-                            <Video size={22} weight="duotone" />
-                        </div>
-                        <div className={styles.statInfo}>
-                            <div className={styles.statValue}>{loading ? "-" : dashboard.summary.upcomingLiveClasses}</div>
-                            <div className={styles.statLabel}>Upcoming Live Classes</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
                         <div className={`${styles.statIcon} ${styles.statIconPurple}`}>
                             <Trophy size={22} weight="duotone" />
                         </div>
@@ -218,42 +267,6 @@ export default function StudentDashboard() {
                             <div className={styles.statLabel}>Certificates</div>
                         </div>
                     </div>
-                </div>
-
-                <div className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <span className={styles.sectionTitle}>Upcoming Live Classes</span>
-                        <Link href="/calendar" className={styles.viewAll}>Open Calendar <ArrowRight size={14} /></Link>
-                    </div>
-
-                    {loading ? (
-                        <div className={styles.skeletonList}>
-                            {[1, 2].map((i) => <div key={i} className={styles.skeleton} />)}
-                        </div>
-                    ) : dashboard.liveClasses.length === 0 ? (
-                        <div className={styles.emptyState}>
-                            <Video size={40} color="#cbd5e1" weight="duotone" />
-                            <p>No live classes scheduled yet.</p>
-                        </div>
-                    ) : (
-                        <div className={styles.batchList}>
-                            {dashboard.liveClasses.map((item: any) => (
-                                <div key={item.id} className={styles.batchCard}>
-                                    <div className={styles.batchAvatar}>{item.course?.title?.charAt(0) || "L"}</div>
-                                    <div className={styles.batchInfo}>
-                                        <div className={styles.batchName}>{item.title}</div>
-                                        <div className={styles.batchCourse}>{item.course?.title} / {item.batch?.name}</div>
-                                        <div className={styles.annMeta}>
-                                            {new Date(item.scheduledAt).toLocaleString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
-                                        </div>
-                                    </div>
-                                    <a href={item.meetingLink} target="_blank" rel="noreferrer" className={styles.viewAll} style={{ whiteSpace: "nowrap" }}>
-                                        Join <LinkIcon size={14} />
-                                    </a>
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
 
                 <div className={styles.section}>
@@ -286,6 +299,80 @@ export default function StudentDashboard() {
                                     </button>
                                 </div>
                             ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <span className={styles.sectionTitle}>Attendance Records</span>
+                        <Link href="/attendance" className={styles.viewAll}>Open Attendance <ArrowRight size={14} /></Link>
+                    </div>
+
+                    {loading ? (
+                        <div className={styles.skeletonList}>
+                            {[1, 2].map((i) => <div key={i} className={styles.skeleton} />)}
+                        </div>
+                    ) : Object.keys(attendanceData).length === 0 ? (
+                        <div className={styles.emptyState}>
+                            <CalendarCheck size={40} color="#cbd5e1" weight="duotone" />
+                            <p>No attendance records yet.</p>
+                        </div>
+                    ) : (
+                        <div className={styles.attendanceSections}>
+                            {Object.entries(attendanceData).map(([batchName, data]) => {
+                                const percentage = data.total > 0 ? Math.round((data.present / data.total) * 100) : 0;
+
+                                return (
+                                    <div key={batchName} className={styles.attendanceCard}>
+                                        <div className={styles.attendanceHeader}>
+                                            <div>
+                                                <div className={styles.batchName}>{batchName}</div>
+                                                <div className={styles.batchCourse}>{data.total} total classes recorded</div>
+                                            </div>
+                                            <div className={styles.attendanceBadges}>
+                                                <span className={`${styles.attendanceBadge} ${styles.attendanceBlue}`}>Attendance {percentage}%</span>
+                                                <span className={`${styles.attendanceBadge} ${styles.attendanceGreen}`}>Present {data.present}</span>
+                                                <span className={`${styles.attendanceBadge} ${styles.attendanceRed}`}>Absent {data.absent}</span>
+                                                <span className={`${styles.attendanceBadge} ${styles.attendanceAmber}`}>Late {data.late}</span>
+                                            </div>
+                                        </div>
+
+                                        <div className={styles.attendanceTableWrap}>
+                                            <table className={styles.attendanceTable}>
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Status</th>
+                                                        <th>Batch</th>
+                                                        <th>Attendance %</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {data.records?.length > 0 ? (
+                                                        data.records.slice(0, 5).map((record) => (
+                                                            <tr key={record.id}>
+                                                                <td>{formatDate(record.date)}</td>
+                                                                <td>
+                                                                    <span className={`${styles.statusPill} ${styles[record.status?.toLowerCase() || ""]}`}>
+                                                                        {record.status || "-"}
+                                                                    </span>
+                                                                </td>
+                                                                <td>{batchName}</td>
+                                                                <td>{percentage}%</td>
+                                                            </tr>
+                                                        ))
+                                                    ) : (
+                                                        <tr>
+                                                            <td colSpan={4} className={styles.attendanceEmpty}>No attendance records available.</td>
+                                                        </tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>
@@ -355,9 +442,15 @@ export default function StudentDashboard() {
                                                 {" | "}{item.authorName}
                                             </div>
                                             {item.actionUrl ? (
-                                                <a href={item.actionUrl} target="_blank" rel="noreferrer" className={styles.viewAll} style={{ display: "inline-flex", marginTop: "0.5rem" }}>
-                                                    {item.actionLabel || "Open"} <LinkIcon size={14} />
-                                                </a>
+                                                item.opensInNewTab ? (
+                                                    <a href={item.actionUrl} target="_blank" rel="noreferrer" className={styles.viewAll} style={{ display: "inline-flex", marginTop: "0.5rem" }}>
+                                                        {item.actionLabel || "Open"} <LinkIcon size={14} />
+                                                    </a>
+                                                ) : (
+                                                    <Link href={item.actionUrl} className={styles.viewAll} style={{ display: "inline-flex", marginTop: "0.5rem" }}>
+                                                        {item.actionLabel || "View in LMS"} <LinkIcon size={14} />
+                                                    </Link>
+                                                )
                                             ) : null}
                                         </div>
                                     </div>

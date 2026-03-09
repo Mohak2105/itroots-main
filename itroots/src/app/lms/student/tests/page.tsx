@@ -1,10 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { getEnrollmentsForStudent, getTestsForCourse, getTestAttemptsForStudent, getCourseById, type Test } from "@/data/lms-data";
 import {
     CheckCircle,
     FileText,
@@ -15,94 +14,254 @@ import {
     ArrowLeft,
     Check,
     Exam,
+    WarningCircle,
+    ShieldCheck,
 } from "@phosphor-icons/react";
+import { ENDPOINTS } from "@/config/api";
 import styles from "./tests.module.css";
 
-export default function StudentTestsPage() {
-    const { user, isLoading } = useLMSAuth();
-    const router = useRouter();
+type TestQuestion = {
+    id: string;
+    text: string;
+    options: string[];
+    correctIndex: number;
+};
 
-    const [activeTest, setActiveTest] = useState<Test | null>(null);
+type TestAttempt = {
+    id: string;
+    score: number;
+    completionTime: number;
+    submittedAt: string;
+};
+
+type StudentTest = {
+    id: string;
+    title: string;
+    description?: string;
+    totalMarks: number;
+    durationMinutes: number;
+    questions: TestQuestion[];
+    batchId: string;
+    batchName: string;
+    courseId?: string | null;
+    courseName: string;
+    attempt: TestAttempt | null;
+};
+
+type SubmissionSummary = {
+    score: number;
+    totalMarks: number;
+    correctAnswers: number;
+    totalQuestions: number;
+    wrongAnswers: number;
+    unansweredQuestions: number;
+    percentage: number;
+    autoSubmitted: boolean;
+    violationReason: string | null;
+};
+
+const formatDuration = (seconds: number) => {
+    const safeSeconds = Math.max(0, seconds);
+    const minutes = Math.floor(safeSeconds / 60);
+    const remainingSeconds = safeSeconds % 60;
+    return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+};
+
+export default function StudentTestsPage() {
+    const { user, isLoading, token } = useLMSAuth();
+    const router = useRouter();
+    const submitInFlightRef = useRef(false);
+
+    const [tests, setTests] = useState<StudentTest[]>([]);
+    const [activeTest, setActiveTest] = useState<StudentTest | null>(null);
     const [answers, setAnswers] = useState<Record<string, number>>({});
-    const [submitted, setSubmitted] = useState(false);
-    const [score, setScore] = useState(0);
-    const [doneTestIds, setDoneTestIds] = useState<string[]>([]);
+    const [submission, setSubmission] = useState<SubmissionSummary | null>(null);
+    const [remainingSeconds, setRemainingSeconds] = useState(0);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "STUDENT")) router.push("/lms/login");
+        if (!isLoading && (!user || user.role !== "STUDENT")) {
+            router.push("/lms/login");
+        }
     }, [user, isLoading, router]);
+
+    const fetchTests = useCallback(async () => {
+        if (!token) return;
+        try {
+            const res = await fetch(ENDPOINTS.STUDENT.TESTS, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const json = await res.json();
+            if (!res.ok) {
+                throw new Error(json?.message || "Unable to fetch tests");
+            }
+            setTests(Array.isArray(json) ? json : []);
+        } catch (error) {
+            console.error(error);
+        }
+    }, [token]);
+
+    useEffect(() => {
+        void fetchTests();
+    }, [fetchTests]);
+
+    const startTest = (test: StudentTest) => {
+        setActiveTest(test);
+        setAnswers({});
+        setSubmission(null);
+        setRemainingSeconds(test.durationMinutes * 60);
+        submitInFlightRef.current = false;
+    };
+
+    const exitTest = () => {
+        setActiveTest(null);
+        setAnswers({});
+        setSubmission(null);
+        setRemainingSeconds(0);
+        setIsSubmitting(false);
+        submitInFlightRef.current = false;
+    };
+
+    const handleSelect = (questionId: string, optionIndex: number) => {
+        if (submission || isSubmitting) return;
+        setAnswers((prev) => ({ ...prev, [questionId]: optionIndex }));
+    };
+
+    const submitTest = useCallback(async (forceSubmit = false, violationReason?: string) => {
+        if (!activeTest || !token || submitInFlightRef.current) return;
+
+        const totalQuestions = activeTest.questions.length;
+        const answered = Object.keys(answers).length;
+        if (!forceSubmit && answered < totalQuestions) return;
+
+        submitInFlightRef.current = true;
+        setIsSubmitting(true);
+
+        try {
+            const completionTime = Math.max((activeTest.durationMinutes * 60) - remainingSeconds, 0);
+            const res = await fetch(ENDPOINTS.STUDENT.SUBMIT_EXAM, {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    testId: activeTest.id,
+                    answers,
+                    completionTime,
+                    forceSubmit,
+                    violationReason,
+                }),
+            });
+            const json = await res.json();
+            if (!res.ok) {
+                throw new Error(json?.message || "Unable to submit test");
+            }
+
+            setSubmission(json.summary);
+            setTests((prev) => prev.map((test) => (
+                test.id === activeTest.id
+                    ? {
+                        ...test,
+                        attempt: {
+                            id: json.result.id,
+                            score: json.result.score,
+                            completionTime: json.result.completionTime,
+                            submittedAt: json.result.submittedAt,
+                        },
+                    }
+                    : test
+            )));
+        } catch (error) {
+            console.error(error);
+            alert(error instanceof Error ? error.message : "Unable to submit test");
+            submitInFlightRef.current = false;
+        } finally {
+            setIsSubmitting(false);
+        }
+    }, [activeTest, answers, remainingSeconds, token]);
+
+    useEffect(() => {
+        if (!activeTest || submission) return;
+        const timer = window.setInterval(() => {
+            setRemainingSeconds((current) => {
+                if (current <= 1) {
+                    window.clearInterval(timer);
+                    void submitTest(true, "TIME_EXPIRED");
+                    return 0;
+                }
+                return current - 1;
+            });
+        }, 1000);
+
+        return () => window.clearInterval(timer);
+    }, [activeTest, submission, submitTest]);
+
+    useEffect(() => {
+        if (!activeTest || submission) return;
+
+        const handleVisibilityChange = () => {
+            if (document.hidden) {
+                void submitTest(true, "TAB_SWITCH");
+            }
+        };
+
+        const handleWindowBlur = () => {
+            void submitTest(true, "WINDOW_BLUR");
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+        window.addEventListener("blur", handleWindowBlur);
+
+        return () => {
+            document.removeEventListener("visibilitychange", handleVisibilityChange);
+            window.removeEventListener("blur", handleWindowBlur);
+        };
+    }, [activeTest, submission, submitTest]);
+
+    const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
 
     if (isLoading || !user) return null;
 
-    const enrollments = getEnrollmentsForStudent(user.id);
-    const attempts = getTestAttemptsForStudent(user.id);
-
-    const tests = enrollments.flatMap((e) => {
-        const course = getCourseById(e.courseId);
-        return getTestsForCourse(e.courseId).map((t) => ({
-            ...t,
-            courseName: course?.title ?? "",
-        }));
-    }).filter((t, i, self) => self.findIndex((x) => x.id === t.id) === i);
-
-    function startTest(test: Test) {
-        setActiveTest(test);
-        setAnswers({});
-        setSubmitted(false);
-        setScore(0);
-    }
-
-    function handleSelect(qId: string, idx: number) {
-        if (submitted) return;
-        setAnswers((prev) => ({ ...prev, [qId]: idx }));
-    }
-
-    function submitTest() {
-        if (!activeTest) return;
-        let correct = 0;
-        activeTest.questions.forEach((q) => {
-            if (answers[q.id] === q.correctIndex) correct++;
-        });
-        setScore(correct);
-        setSubmitted(true);
-        setDoneTestIds((prev) => [...prev, activeTest.id]);
-    }
-
-    // ── Quiz mode ──────────────────────────────────────────
     if (activeTest) {
-        const totalQ = activeTest.questions.length;
-        const answered = Object.keys(answers).length;
-        const pct = submitted ? Math.round((score / totalQ) * 100) : 0;
-
         return (
             <LMSShell pageTitle={activeTest.title}>
                 <div className={styles.quizContainer}>
-                    {/* Quiz Header */}
                     <div className={styles.quizHeader}>
                         <div>
                             <h2 className={styles.quizTitle}>{activeTest.title}</h2>
                             <p className={styles.quizMeta}>
-                                {totalQ} Questions · {activeTest.durationMinutes} min · {activeTest.totalMarks} marks
+                                {activeTest.questions.length} Questions | {activeTest.durationMinutes} min | {activeTest.totalMarks} marks
                             </p>
+                            {activeTest.description ? <p className={styles.quizDescription}>{activeTest.description}</p> : null}
                         </div>
-                        {!submitted && (
-                            <div className={styles.quizProgress}>
-                                {answered}/{totalQ} Answered
+                        <div className={styles.quizHeaderSide}>
+                            <div className={`${styles.timerChip} ${remainingSeconds <= 60 ? styles.timerDanger : ""}`}>
+                                <Timer size={16} /> {formatDuration(remainingSeconds)}
                             </div>
-                        )}
+                            {!submission ? (
+                                <div className={styles.quizProgress}>{answeredCount}/{activeTest.questions.length} Answered</div>
+                            ) : null}
+                        </div>
                     </div>
 
-                    {/* Result Banner */}
-                    {submitted && (
-                        <div className={`${styles.resultBanner} ${pct >= 60 ? styles.resultPass : styles.resultFail}`}>
-                            <div className={styles.resultScore}>{score}/{totalQ}</div>
-                            <div className={styles.resultPct}>{pct}%</div>
+                    {!submission ? (
+                        <div className={styles.securityBanner}>
+                            <ShieldCheck size={18} />
+                            <span>All questions are required. Switching tabs or leaving this window will auto-submit the test.</span>
+                        </div>
+                    ) : null}
+
+                    {submission ? (
+                        <div className={`${styles.resultBanner} ${submission.percentage >= 60 ? styles.resultPass : styles.resultFail}`}>
+                            <div className={styles.resultScore}>{submission.score}/{submission.totalMarks}</div>
+                            <div className={styles.resultPct}>{submission.percentage}%</div>
                             <div className={styles.resultMsg}>
-                                {pct >= 80 ? (
+                                {submission.percentage >= 80 ? (
                                     <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                                         <Confetti size={24} /> Excellent!
                                     </span>
-                                ) : pct >= 60 ? (
+                                ) : submission.percentage >= 60 ? (
                                     <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                                         <CheckCircle size={24} /> Passed!
                                     </span>
@@ -110,79 +269,90 @@ export default function StudentTestsPage() {
                                     "Better luck next time"
                                 )}
                             </div>
-                            <button className={styles.backBtn} onClick={() => setActiveTest(null)} type="button">
+                            <div className={styles.resultDetails}>
+                                <span>Correct: {submission.correctAnswers}</span>
+                                <span>Wrong: {submission.wrongAnswers}</span>
+                                <span>Unanswered: {submission.unansweredQuestions}</span>
+                            </div>
+                            {submission.autoSubmitted ? (
+                                <div className={styles.resultNote}>
+                                    <WarningCircle size={16} /> Auto-submitted: {submission.violationReason === "TIME_EXPIRED" ? "Time expired" : "tab or window switch detected"}
+                                </div>
+                            ) : null}
+                            <button className={styles.backBtn} onClick={exitTest} type="button">
                                 <ArrowLeft size={16} style={{ marginRight: "0.4rem" }} /> Back to Tests
                             </button>
                         </div>
-                    )}
+                    ) : null}
 
-                    {/* Questions */}
                     <div className={styles.questionsList}>
-                        {activeTest.questions.map((q, qi) => {
-                            const selectedIdx = answers[q.id];
-                            const isCorrect = submitted && selectedIdx === q.correctIndex;
-                            const isWrong = submitted && selectedIdx !== undefined && !isCorrect;
+                        {activeTest.questions.map((question, questionIndex) => {
+                            const selectedIndex = answers[question.id];
+                            const isCorrect = submission && selectedIndex === question.correctIndex;
+                            const isWrong = submission && selectedIndex !== undefined && selectedIndex !== question.correctIndex;
 
                             return (
                                 <div
-                                    key={q.id}
-                                    className={`${styles.questionCard} ${submitted ? (isCorrect ? styles.qCorrect : isWrong ? styles.qWrong : styles.qSkipped) : ""}`}
+                                    key={question.id}
+                                    className={`${styles.questionCard} ${submission ? (isCorrect ? styles.qCorrect : isWrong ? styles.qWrong : styles.qSkipped) : ""}`}
                                 >
-                                    <div className={styles.questionNum}>Q{qi + 1}</div>
+                                    <div className={styles.questionNum}>Q{questionIndex + 1}</div>
                                     <div className={styles.questionBody}>
-                                        <p className={styles.questionText}>{q.text}</p>
+                                        <p className={styles.questionText}>{question.text}</p>
                                         <div className={styles.optionsList}>
-                                            {q.options.map((opt, oi) => {
-                                                const isSelected = selectedIdx === oi;
-                                                const isCorrectOpt = oi === q.correctIndex;
+                                            {question.options.map((option, optionIndex) => {
+                                                const isSelected = selectedIndex === optionIndex;
+                                                const isCorrectOption = optionIndex === question.correctIndex;
                                                 return (
                                                     <button
-                                                        key={oi}
+                                                        key={optionIndex}
                                                         type="button"
-                                                        onClick={() => handleSelect(q.id, oi)}
-                                                        className={`${styles.optionBtn} ${isSelected && !submitted ? styles.optionSelected : ""} ${submitted && isCorrectOpt ? styles.optionCorrect : ""} ${submitted && isSelected && !isCorrectOpt ? styles.optionWrong : ""}`}
+                                                        onClick={() => handleSelect(question.id, optionIndex)}
+                                                        className={`${styles.optionBtn} ${isSelected && !submission ? styles.optionSelected : ""} ${submission && isCorrectOption ? styles.optionCorrect : ""} ${submission && isSelected && !isCorrectOption ? styles.optionWrong : ""}`}
+                                                        disabled={Boolean(submission)}
                                                     >
-                                                        <span className={styles.optionLetter}>{["A", "B", "C", "D"][oi]}</span>
-                                                        {opt}
+                                                        <span className={styles.optionLetter}>{["A", "B", "C", "D"][optionIndex]}</span>
+                                                        {option}
                                                     </button>
                                                 );
                                             })}
                                         </div>
-                                        {submitted && isWrong && (
+                                        {submission && isWrong ? (
                                             <div className={styles.explanation}>
                                                 <Check size={14} style={{ verticalAlign: "middle", marginRight: "0.4rem" }} />
-                                                Correct answer: <strong>{q.options[q.correctIndex]}</strong>
+                                                Correct answer: <strong>{question.options[question.correctIndex]}</strong>
                                             </div>
-                                        )}
+                                        ) : null}
                                     </div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    {/* Submit */}
-                    {!submitted && (
+                    {!submission ? (
                         <div className={styles.quizSubmitArea}>
                             <button
                                 className={styles.submitTestBtn}
-                                onClick={submitTest}
+                                onClick={() => void submitTest(false)}
                                 type="button"
-                                disabled={answered < totalQ}
+                                disabled={answeredCount < activeTest.questions.length || isSubmitting}
                             >
-                                {answered < totalQ ? `Answer All Questions (${totalQ - answered} remaining)` : "Submit Quiz"}
+                                {isSubmitting
+                                    ? "Submitting..."
+                                    : answeredCount < activeTest.questions.length
+                                        ? `Answer All Questions (${activeTest.questions.length - answeredCount} remaining)`
+                                        : "Submit Quiz"}
                             </button>
                         </div>
-                    )}
+                    ) : null}
                 </div>
             </LMSShell>
         );
     }
 
-    // ── Test listing ────────────────────────────────────────
     return (
         <LMSShell pageTitle="Tests & Quizzes">
             <div className={styles.page}>
-                {/* Banner */}
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Tests & Quizzes</div>
@@ -199,35 +369,33 @@ export default function StudentTestsPage() {
                             <p>Tests from your enrolled batches will appear here.</p>
                         </div>
                     ) : (
-                        tests.map((t) => {
-                            const attempt = attempts.find((a) => a.testId === t.id);
-                            const justCompleted = doneTestIds.includes(t.id);
-                            const done = !!attempt || justCompleted;
-
+                        tests.map((test) => {
+                            const done = Boolean(test.attempt);
                             return (
-                                <div key={t.id} className={`${styles.testCard} ${done ? styles.testCardDone : ""}`}>
+                                <div key={test.id} className={`${styles.testCard} ${done ? styles.testCardDone : ""}`}>
                                     <div className={styles.testCardIcon}>
                                         {done ? <CheckCircle size={28} color="#10b981" weight="fill" /> : <FileText size={28} color="#0881ec" weight="fill" />}
                                     </div>
                                     <div className={styles.testCardBody}>
-                                        <span className={styles.testCoursePill}>{t.courseName}</span>
-                                        <h3 className={styles.testTitle}>{t.title}</h3>
+                                        <span className={styles.testCoursePill}>{test.courseName}</span>
+                                        <h3 className={styles.testTitle}>{test.title}</h3>
                                         <div className={styles.testMeta}>
-                                            <span><Timer size={14} /> {t.durationMinutes} minutes</span>
-                                            <span><Question size={14} /> {t.questions.length} questions</span>
-                                            <span><Trophy size={14} /> {t.totalMarks} marks</span>
-                                            {attempt && (
-                                                <span className={styles.scoreChip}>Score: {attempt.score}/{t.questions.length}</span>
-                                            )}
+                                            <span><Timer size={14} /> {test.durationMinutes} minutes</span>
+                                            <span><Question size={14} /> {test.questions.length} questions</span>
+                                            <span><Trophy size={14} /> {test.totalMarks} marks</span>
+                                            <span>{test.batchName}</span>
+                                            {test.attempt ? (
+                                                <span className={styles.scoreChip}>Score: {test.attempt.score}/{test.totalMarks}</span>
+                                            ) : null}
                                         </div>
                                     </div>
                                     <button
                                         className={`${styles.startBtn} ${done ? styles.startBtnDone : ""}`}
-                                        onClick={() => !done && startTest(t)}
+                                        onClick={() => !done && startTest(test)}
                                         disabled={done}
                                         type="button"
                                     >
-                                        {done ? "Completed ✓" : "Start Quiz →"}
+                                        {done ? "Completed" : "Start Quiz"}
                                     </button>
                                 </div>
                             );

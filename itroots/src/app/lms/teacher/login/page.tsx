@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,9 +14,9 @@ import {
     Lock,
 } from "@phosphor-icons/react";
 import Link from "next/link";
-import styles from "./teacher-login.module.css";
+import styles from "./Faculty-login.module.css";
 
-export default function TeacherLoginPage() {
+export default function FacultyLoginPage() {
     const router = useRouter();
     const { login, logout } = useLMSAuth();
 
@@ -35,7 +35,7 @@ export default function TeacherLoginPage() {
 
         if (result.success) {
             const userRole = result.user?.role;
-            if (userRole === "TEACHER") {
+            if (userRole === "Faculty") {
                 router.push("/dashboard");
             } else if (userRole === "SUPER_ADMIN" || userRole === "CMS_MANAGER") {
                 logout();
@@ -66,7 +66,7 @@ export default function TeacherLoginPage() {
                     </div>
                 </div>
 
-                <h1 className={styles.title}>Teacher Portal</h1>
+                <h1 className={styles.title}>Faculty Portal</h1>
                 <p className={styles.subtitle}>Sign in to manage your digital classroom</p>
 
                 {error && (
@@ -84,7 +84,7 @@ export default function TeacherLoginPage() {
                             <input
                                 type="email"
                                 className={styles.input}
-                                placeholder="teacher@itroots.com"
+                                placeholder="Faculty@itroots.com"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -99,7 +99,7 @@ export default function TeacherLoginPage() {
                             <input
                                 type={showPass ? "text" : "password"}
                                 className={styles.input}
-                                placeholder="••••••••"
+                                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
@@ -133,3 +133,4 @@ export default function TeacherLoginPage() {
         </div>
     );
 }
+

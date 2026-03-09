@@ -1,11 +1,29 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+﻿import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 import User from './User';
 import Course from './Course';
 import Batch from './Batch';
 
-export type NotificationType = 'ANNOUNCEMENT' | 'NOTIFICATION';
-export type NotificationAudience = 'ALL_STUDENTS' | 'SELECTED_STUDENTS' | 'ALL_TEACHERS' | 'SELECTED_TEACHERS' | 'ALL_USERS';
+export type NotificationType =
+    | 'ANNOUNCEMENT'
+    | 'NOTIFICATION'
+    | 'REMINDER'
+    | 'ALERT'
+    | 'PLACEMENT'
+    | 'FEES';
+
+export type NotificationAudience =
+    | 'ALL_STUDENTS'
+    | 'SELECTED_STUDENTS'
+    | 'ALL_Faculty'
+    | 'SELECTED_Faculty'
+    | 'ALL_USERS'
+    | 'SELECTED_BATCH'
+    | 'SELECTED_BATCH_STUDENTS'
+    | 'SELECTED_BATCH_Faculty'
+    | 'SELECTED_COURSE'
+    | 'SELECTED_COURSE_STUDENTS'
+    | 'SELECTED_COURSE_Faculty';
 
 interface NotificationAttributes {
     id: string;
@@ -52,12 +70,24 @@ Notification.init(
             allowNull: false,
         },
         type: {
-            type: DataTypes.ENUM('ANNOUNCEMENT', 'NOTIFICATION'),
+            type: DataTypes.ENUM('ANNOUNCEMENT', 'NOTIFICATION', 'REMINDER', 'ALERT', 'PLACEMENT', 'FEES'),
             allowNull: false,
             defaultValue: 'NOTIFICATION',
         },
         audienceType: {
-            type: DataTypes.ENUM('ALL_STUDENTS', 'SELECTED_STUDENTS', 'ALL_TEACHERS', 'SELECTED_TEACHERS', 'ALL_USERS'),
+            type: DataTypes.ENUM(
+                'ALL_STUDENTS',
+                'SELECTED_STUDENTS',
+                'ALL_Faculty',
+                'SELECTED_Faculty',
+                'ALL_USERS',
+                'SELECTED_BATCH',
+                'SELECTED_BATCH_STUDENTS',
+                'SELECTED_BATCH_Faculty',
+                'SELECTED_COURSE',
+                'SELECTED_COURSE_STUDENTS',
+                'SELECTED_COURSE_Faculty'
+            ),
             allowNull: false,
         },
         sendEmail: {

@@ -12,7 +12,6 @@ import {
     Eye,
     GraduationCap,
     Scroll,
-    SealCheck,
 } from "@phosphor-icons/react";
 
 type Student = {
@@ -61,6 +60,15 @@ const formatDate = (value?: string) => {
     return new Date(value).toLocaleDateString("en-IN", {
         day: "numeric",
         month: "long",
+        year: "numeric",
+    });
+};
+
+const formatShortDate = (value?: string) => {
+    if (!value) return "";
+    return new Date(value).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
         year: "numeric",
     });
 };
@@ -338,10 +346,6 @@ export default function AdminCertificatesPage() {
                             Select the student and enrolled course, define the course duration, add the signatory, and issue a polished certificate with a downloadable PDF.
                         </p>
                     </div>
-                    <div className={styles.heroBadge}>
-                        <SealCheck size={44} weight="duotone" />
-                        <span>Secure Certificate Records</span>
-                    </div>
                 </section>
 
                 <section className={styles.statsGrid}>
@@ -383,7 +387,7 @@ export default function AdminCertificatesPage() {
                                 <select value={form.studentId} onChange={(e) => handleStudentChange(e.target.value)} required>
                                     <option value="">Choose a student</option>
                                     {students.map((student) => (
-                                        <option key={student.id} value={student.id}>{student.name} · {student.email}</option>
+                                        <option key={student.id} value={student.id}>{student.name}  -  {student.email}</option>
                                     ))}
                                 </select>
                             </label>
@@ -524,30 +528,66 @@ export default function AdminCertificatesPage() {
                     ) : certificates.length === 0 ? (
                         <div className={styles.emptyHistory}>No certificates generated yet.</div>
                     ) : (
-                        <div className={styles.historyGrid}>
-                            {certificates.map((certificate) => (
-                                <article key={certificate.id} className={styles.historyCard}>
-                                    <div className={styles.historyTop}>
-                                        <div>
-                                            <div className={styles.historyNumber}>{certificate.certificateNumber}</div>
-                                            <h3>{certificate.student?.name || "Student"}</h3>
-                                        </div>
-                                        <span className={styles.historyBadge}>{formatDate(certificate.issueDate)}</span>
-                                    </div>
-                                    <div className={styles.historyCourse}>{certificate.course?.title || "Course"}</div>
-                                    <div className={styles.historyMeta}>Duration: {certificate.duration}</div>
-                                    <div className={styles.historyMeta}>Batch: {certificate.batch?.name || "Assigned Batch"}</div>
-                                    <div className={styles.historyMeta}>Signed by: {certificate.signatoryName}</div>
-                                    <div className={styles.historyActions}>
-                                        <button type="button" className={styles.secondaryButton} onClick={() => setActiveCertificate(certificate)}>
-                                            View
-                                        </button>
-                                        <button type="button" className={styles.primaryButton} onClick={() => handleDownload(certificate.id)}>
-                                            <DownloadSimple size={16} /> Download PDF
-                                        </button>
-                                    </div>
-                                </article>
-                            ))}
+                        <div className={styles.historyTableWrapper}>
+                            <table className={styles.historyTable}>
+                                <thead>
+                                    <tr>
+                                        <th>Certificate No</th>
+                                        <th>Student</th>
+                                        <th>Course / Batch</th>
+                                        <th>Duration</th>
+                                        <th>Issue Date</th>
+                                        <th>Signatory</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {certificates.map((certificate) => {
+                                        const isSelected = activeCertificate?.id === certificate.id;
+                                        return (
+                                            <tr key={certificate.id} className={isSelected ? styles.historyRowActive : undefined}>
+                                                <td>
+                                                    <div className={styles.historyPrimary}>{certificate.certificateNumber}</div>
+                                                </td>
+                                                <td>
+                                                    <div className={styles.historyCell}>
+                                                        <div className={styles.historyPrimary}>{certificate.student?.name || "Student"}</div>
+                                                        <div className={styles.historySecondary}>{certificate.student?.email || "No email"}</div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className={styles.historyCell}>
+                                                        <div className={styles.historyPrimary}>{certificate.course?.title || "Course"}</div>
+                                                        <div className={styles.historySecondary}>{certificate.batch?.name || "Assigned Batch"}</div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className={styles.historyPrimary}>{certificate.duration || "Not specified"}</div>
+                                                </td>
+                                                <td>
+                                                    <span className={styles.historyBadge}>{formatShortDate(certificate.issueDate)}</span>
+                                                </td>
+                                                <td>
+                                                    <div className={styles.historyCell}>
+                                                        <div className={styles.historyPrimary}>{certificate.signatoryName}</div>
+                                                        <div className={styles.historySecondary}>{certificate.signatoryTitle || "Authorized Signatory"}</div>
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <div className={styles.historyTableActions}>
+                                                        <button type="button" className={styles.tableSecondaryButton} onClick={() => setActiveCertificate(certificate)}>
+                                                            View
+                                                        </button>
+                                                        <button type="button" className={styles.tablePrimaryButton} onClick={() => handleDownload(certificate.id)}>
+                                                            <DownloadSimple size={14} /> PDF
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
                         </div>
                     )}
                 </section>
@@ -555,4 +595,7 @@ export default function AdminCertificatesPage() {
         </LMSShell>
     );
 }
+
+
+
 

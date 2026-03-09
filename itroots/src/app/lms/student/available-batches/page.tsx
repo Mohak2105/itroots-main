@@ -107,7 +107,7 @@ export default function AvailableBatchesPage() {
                                     <Lightning size={20} color="#d97706" />
                                     <div>
                                         <span>Faculty</span>
-                                        <p>{batch.teacher?.name || "LMS Expert"}</p>
+                                        <p>{batch.Faculty?.name || "LMS Expert"}</p>
                                     </div>
                                 </div>
                                 <div className={styles.detailItem}>

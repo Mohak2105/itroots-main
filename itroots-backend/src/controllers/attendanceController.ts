@@ -8,10 +8,10 @@ export const markAttendance = async (req: Request, res: Response) => {
     try {
         const { batchId, date, records } = req.body;
         // records: [{ studentId: 'uuid', status: 'PRESENT', remarks: '' }]
-        const teacherId = (req as any).user.id;
+        const FacultyId = (req as any).user.id;
 
-        // Verify teacher owns the batch
-        const batch = await Batch.findOne({ where: { id: batchId, teacherId } });
+        // Verify Faculty owns the batch
+        const batch = await Batch.findOne({ where: { id: batchId, FacultyId } });
         if (!batch && (req as any).user.role !== 'SUPER_ADMIN') {
             return res.status(403).json({ message: 'Not authorized for this batch' });
         }

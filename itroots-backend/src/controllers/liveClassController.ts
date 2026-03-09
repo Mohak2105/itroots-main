@@ -13,17 +13,17 @@ import { isLiveClassTableReady } from '../utils/liveClassSchema';
 const liveClassInclude = [
     { model: Course, as: 'course', attributes: ['id', 'title', 'slug'] },
     { model: Batch, as: 'batch', attributes: ['id', 'name'] },
-    { model: User, as: 'teacher', attributes: ['id', 'name', 'email'] },
+    { model: User, as: 'Faculty', attributes: ['id', 'name', 'email'] },
 ];
 
-const ensureTeacherBatchAccess = async (teacherId: string, batchId: string, courseId: string) => {
+const ensureFacultyBatchAccess = async (FacultyId: string, batchId: string, courseId: string) => {
     const batch = await Batch.findOne({
-        where: { id: batchId, teacherId },
+        where: { id: batchId, FacultyId },
         include: [{ model: Course, as: 'course', attributes: ['id', 'title', 'slug'] }],
     });
 
     if (!batch) {
-        throw new Error('Assigned batch not found for this teacher');
+        throw new Error('Assigned batch not found for this Faculty');
     }
 
     if ((batch as any).courseId !== courseId) {
@@ -34,11 +34,11 @@ const ensureTeacherBatchAccess = async (teacherId: string, batchId: string, cour
 };
 
 const createStudentNotification = async ({
-    teacherId,
+    FacultyId,
     liveClass,
     action,
 }: {
-    teacherId: string;
+    FacultyId: string;
     liveClass: any;
     action: 'created' | 'updated' | 'cancelled';
 }) => {
@@ -78,7 +78,7 @@ const createStudentNotification = async ({
         type: 'NOTIFICATION',
         audienceType: 'SELECTED_STUDENTS',
         sendEmail: false,
-        createdBy: teacherId,
+        createdBy: FacultyId,
         batchId: liveClass.batchId,
         courseId: liveClass.courseId,
     });
@@ -90,21 +90,21 @@ const createStudentNotification = async ({
     })));
 };
 
-export const getTeacherLiveClasses = async (req: any, res: Response) => {
+export const getFacultyLiveClasses = async (req: any, res: Response) => {
     try {
         if (!(await isLiveClassTableReady())) {
             return res.json([]);
         }
 
-        const teacherId = req.user.id;
+        const FacultyId = req.user.id;
         const liveClasses = await LiveClass.findAll({
-            where: { teacherId },
+            where: { FacultyId },
             include: liveClassInclude,
             order: [['scheduledAt', 'ASC']],
         });
         res.json(liveClasses);
     } catch (error) {
-        console.error('Fetch teacher live classes error:', error);
+        console.error('Fetch Faculty live classes error:', error);
         res.status(500).json({ message: 'Error fetching live classes' });
     }
 };
@@ -118,20 +118,20 @@ export const createLiveClass = async (req: any, res: Response) => {
             return res.status(503).json({ message: 'Live classes database table is not ready yet' });
         }
 
-        const teacherId = req.user.id;
+        const FacultyId = req.user.id;
         const { title, courseId, batchId, scheduledAt, meetingLink, description } = req.body;
         if (!title || !courseId || !batchId || !scheduledAt || !meetingLink) {
             await transaction.rollback();
             return res.status(400).json({ message: 'title, courseId, batchId, scheduledAt and meetingLink are required' });
         }
 
-        await ensureTeacherBatchAccess(teacherId, batchId, courseId);
+        await ensureFacultyBatchAccess(FacultyId, batchId, courseId);
 
         const liveClass = await LiveClass.create({
             title,
             courseId,
             batchId,
-            teacherId,
+            FacultyId,
             scheduledAt,
             meetingLink,
             description,
@@ -141,7 +141,7 @@ export const createLiveClass = async (req: any, res: Response) => {
         await transaction.commit();
 
         const created = await LiveClass.findByPk(liveClass.id, { include: liveClassInclude });
-        await createStudentNotification({ teacherId, liveClass: created, action: 'created' });
+        await createStudentNotification({ FacultyId, liveClass: created, action: 'created' });
 
         res.status(201).json({ message: 'Live class created successfully', liveClass: created });
     } catch (error: any) {
@@ -156,9 +156,9 @@ export const updateLiveClass = async (req: any, res: Response) => {
             return res.status(503).json({ message: 'Live classes database table is not ready yet' });
         }
 
-        const teacherId = req.user.id;
+        const FacultyId = req.user.id;
         const liveClassId = req.params.liveClassId as string;
-        const liveClass = await LiveClass.findOne({ where: { id: liveClassId, teacherId } });
+        const liveClass = await LiveClass.findOne({ where: { id: liveClassId, FacultyId } });
         if (!liveClass) return res.status(404).json({ message: 'Live class not found' });
 
         const updates: any = {
@@ -174,11 +174,11 @@ export const updateLiveClass = async (req: any, res: Response) => {
 
         const nextCourseId = updates.courseId || liveClass.courseId;
         const nextBatchId = updates.batchId || liveClass.batchId;
-        await ensureTeacherBatchAccess(teacherId, nextBatchId, nextCourseId);
+        await ensureFacultyBatchAccess(FacultyId, nextBatchId, nextCourseId);
 
         await liveClass.update(updates);
         const updated = await LiveClass.findByPk(liveClass.id, { include: liveClassInclude });
-        await createStudentNotification({ teacherId, liveClass: updated, action: 'updated' });
+        await createStudentNotification({ FacultyId, liveClass: updated, action: 'updated' });
 
         res.json({ message: 'Live class updated successfully', liveClass: updated });
     } catch (error: any) {
@@ -192,14 +192,14 @@ export const cancelLiveClass = async (req: any, res: Response) => {
             return res.status(503).json({ message: 'Live classes database table is not ready yet' });
         }
 
-        const teacherId = req.user.id;
+        const FacultyId = req.user.id;
         const liveClassId = req.params.liveClassId as string;
-        const liveClass = await LiveClass.findOne({ where: { id: liveClassId, teacherId } });
+        const liveClass = await LiveClass.findOne({ where: { id: liveClassId, FacultyId } });
         if (!liveClass) return res.status(404).json({ message: 'Live class not found' });
 
         await liveClass.update({ status: 'CANCELLED' });
         const cancelled = await LiveClass.findByPk(liveClass.id, { include: liveClassInclude });
-        await createStudentNotification({ teacherId, liveClass: cancelled, action: 'cancelled' });
+        await createStudentNotification({ FacultyId, liveClass: cancelled, action: 'cancelled' });
 
         res.json({ message: 'Live class cancelled successfully', liveClass: cancelled });
     } catch (error: any) {

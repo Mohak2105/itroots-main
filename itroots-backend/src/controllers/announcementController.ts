@@ -10,8 +10,8 @@ export const createAnnouncement = async (req: Request, res: Response) => {
         const authorId = (req as any).user.id;
 
         if (batchId) {
-            // Verify teacher owns the batch
-            const batch = await Batch.findOne({ where: { id: batchId, teacherId: authorId } });
+            // Verify Faculty owns the batch
+            const batch = await Batch.findOne({ where: { id: batchId, FacultyId: authorId } });
             if (!batch && (req as any).user.role !== 'SUPER_ADMIN') {
                 return res.status(403).json({ message: 'Not authorized for this batch' });
             }

@@ -1,31 +1,33 @@
-import { DataTypes, Model, Optional } from 'sequelize';
+﻿import { DataTypes, Model, Optional } from 'sequelize';
 import sequelize from '../config/database';
 
 export interface UserAttributes {
     id: string;
-    username?: string;
+    username?: string | null;
     name: string;
     email: string;
-    phone?: string;
+    phone?: string | null;
+    profileImage?: string | null;
     password: string;
-    role: 'SUPER_ADMIN' | 'CMS_MANAGER' | 'TEACHER' | 'STUDENT';
-    specialization?: string;
+    role: 'SUPER_ADMIN' | 'CMS_MANAGER' | 'Faculty' | 'STUDENT';
+    specialization?: string | null;
     isActive: boolean;
     createdAt?: Date;
     updatedAt?: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'username' | 'phone' | 'specialization' | 'isActive' | 'createdAt' | 'updatedAt'> { }
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'username' | 'phone' | 'profileImage' | 'specialization' | 'isActive' | 'createdAt' | 'updatedAt'> { }
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
     public id!: string;
-    public username?: string;
+    public username?: string | null;
     public name!: string;
     public email!: string;
-    public phone?: string;
+    public phone?: string | null;
+    public profileImage?: string | null;
     public password!: string;
-    public role!: 'SUPER_ADMIN' | 'CMS_MANAGER' | 'TEACHER' | 'STUDENT';
-    public specialization?: string;
+    public role!: 'SUPER_ADMIN' | 'CMS_MANAGER' | 'Faculty' | 'STUDENT';
+    public specialization?: string | null;
     public isActive!: boolean;
 
     public readonly createdAt!: Date;
@@ -60,12 +62,16 @@ User.init(
             type: DataTypes.STRING,
             allowNull: true,
         },
+        profileImage: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
         password: {
             type: DataTypes.STRING,
             allowNull: false,
         },
         role: {
-            type: DataTypes.ENUM('SUPER_ADMIN', 'CMS_MANAGER', 'TEACHER', 'STUDENT'),
+            type: DataTypes.ENUM('SUPER_ADMIN', 'CMS_MANAGER', 'Faculty', 'STUDENT'),
             defaultValue: 'STUDENT',
             allowNull: false,
         },

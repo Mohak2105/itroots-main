@@ -1,4 +1,4 @@
-USE itroots_db;
+﻿USE itroots_db;
 
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS username VARCHAR(255) NULL,
@@ -55,8 +55,8 @@ CREATE TABLE IF NOT EXISTS notifications (
     id CHAR(36) NOT NULL,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
-    type ENUM('ANNOUNCEMENT', 'NOTIFICATION') NOT NULL DEFAULT 'NOTIFICATION',
-    audienceType ENUM('ALL_STUDENTS', 'SELECTED_STUDENTS', 'ALL_TEACHERS', 'SELECTED_TEACHERS', 'ALL_USERS') NOT NULL,
+    type ENUM('ANNOUNCEMENT', 'NOTIFICATION', 'REMINDER', 'ALERT', 'PLACEMENT', 'FEES') NOT NULL DEFAULT 'NOTIFICATION',
+    audienceType ENUM('ALL_STUDENTS', 'SELECTED_STUDENTS', 'ALL_Faculty', 'SELECTED_Faculty', 'ALL_USERS', 'SELECTED_BATCH', 'SELECTED_BATCH_STUDENTS', 'SELECTED_BATCH_Faculty', 'SELECTED_COURSE', 'SELECTED_COURSE_STUDENTS', 'SELECTED_COURSE_Faculty') NOT NULL,
     sendEmail TINYINT(1) NOT NULL DEFAULT 0,
     createdBy CHAR(36) NOT NULL,
     batchId CHAR(36) NULL,
@@ -95,6 +95,43 @@ CREATE TABLE IF NOT EXISTS notification_recipients (
 
 UPDATE users SET username = 'admin' WHERE email = 'admin@itroots.com' AND (username IS NULL OR username = '');
 UPDATE users SET username = 'cmsmanager' WHERE email = 'cms@itroots.com' AND (username IS NULL OR username = '');
-UPDATE users SET username = 'teacher', specialization = COALESCE(specialization, 'Full Stack Development') WHERE email = 'teacher@itroots.com' AND (username IS NULL OR username = '');
+UPDATE users SET username = 'Faculty', specialization = COALESCE(specialization, 'Full Stack Development') WHERE email = 'Faculty@itroots.com' AND (username IS NULL OR username = '');
 UPDATE users SET username = 'student' WHERE email = 'student@itroots.com' AND (username IS NULL OR username = '');
 UPDATE courses SET status = CASE WHEN isPublished = 1 THEN 'ACTIVE' ELSE 'DRAFT' END WHERE status IS NULL OR status = '';
+
+ALTER TABLE courses
+    MODIFY COLUMN instructorId CHAR(36) NULL;
+
+ALTER TABLE notifications
+MODIFY COLUMN type ENUM('ANNOUNCEMENT', 'NOTIFICATION', 'REMINDER', 'ALERT', 'PLACEMENT', 'FEES') NOT NULL DEFAULT 'NOTIFICATION';
+
+ALTER TABLE notifications
+MODIFY COLUMN audienceType ENUM('ALL_STUDENTS', 'SELECTED_STUDENTS', 'ALL_Faculty', 'SELECTED_Faculty', 'ALL_USERS', 'SELECTED_BATCH', 'SELECTED_BATCH_STUDENTS', 'SELECTED_BATCH_Faculty', 'SELECTED_COURSE', 'SELECTED_COURSE_STUDENTS', 'SELECTED_COURSE_Faculty') NOT NULL;
+
+
+
+CREATE TABLE IF NOT EXISTS assignment_submissions (
+    id CHAR(36) NOT NULL,
+    studentId CHAR(36) NOT NULL,
+    assignmentId CHAR(36) NOT NULL,
+    batchId CHAR(36) NOT NULL,
+    fileUrl VARCHAR(255) NOT NULL,
+    fileName VARCHAR(255) NOT NULL,
+    notes TEXT NULL,
+    status ENUM('SUBMITTED', 'REVIEWED') NOT NULL DEFAULT 'SUBMITTED',
+    grade INT NULL,
+    feedback TEXT NULL,
+    submittedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE KEY uq_assignment_submission_student_assignment (studentId, assignmentId),
+    KEY idx_assignment_submissions_assignmentId (assignmentId),
+    KEY idx_assignment_submissions_batchId (batchId),
+    CONSTRAINT fk_assignment_submissions_student FOREIGN KEY (studentId) REFERENCES users(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_assignment_submissions_assignment FOREIGN KEY (assignmentId) REFERENCES batch_contents(id)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_assignment_submissions_batch FOREIGN KEY (batchId) REFERENCES batches(id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

@@ -40,7 +40,7 @@ const sameDate = (date: Date, value: string) => {
         && eventDate.getDate() === date.getDate();
 };
 
-export default function TeacherCalendarPage() {
+export default function FacultyCalendarPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
     const [currentDate, setCurrentDate] = useState(new Date());
@@ -51,7 +51,7 @@ export default function TeacherCalendarPage() {
     const [formData, setFormData] = useState(emptyForm);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "TEACHER")) {
+        if (!isLoading && (!user || user.role !== "Faculty")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -60,8 +60,8 @@ export default function TeacherCalendarPage() {
         if (!token) return;
         try {
             const [batchRes, liveClassRes] = await Promise.all([
-                fetch(ENDPOINTS.TEACHER.MY_BATCHES, { headers: { Authorization: `Bearer ${token}` } }),
-                fetch(ENDPOINTS.TEACHER.LIVE_CLASSES, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(ENDPOINTS.Faculty.MY_BATCHES, { headers: { Authorization: `Bearer ${token}` } }),
+                fetch(ENDPOINTS.Faculty.LIVE_CLASSES, { headers: { Authorization: `Bearer ${token}` } }),
             ]);
             const [batchData, liveClassData] = await Promise.all([batchRes.json(), liveClassRes.json()]);
             setBatches(Array.isArray(batchData) ? batchData : []);
@@ -165,7 +165,7 @@ export default function TeacherCalendarPage() {
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const endpoint = formData.id ? `${ENDPOINTS.TEACHER.LIVE_CLASSES}/${formData.id}` : ENDPOINTS.TEACHER.LIVE_CLASSES;
+            const endpoint = formData.id ? `${ENDPOINTS.Faculty.LIVE_CLASSES}/${formData.id}` : ENDPOINTS.Faculty.LIVE_CLASSES;
             const method = formData.id ? "PUT" : "POST";
             const res = await fetch(endpoint, {
                 method,
@@ -190,7 +190,7 @@ export default function TeacherCalendarPage() {
     const handleCancelClass = async (liveClassId: string) => {
         if (!confirm("Cancel this live class?")) return;
         try {
-            const res = await fetch(ENDPOINTS.TEACHER.CANCEL_LIVE_CLASS(liveClassId), {
+            const res = await fetch(ENDPOINTS.Faculty.CANCEL_LIVE_CLASS(liveClassId), {
                 method: "PATCH",
                 headers: { Authorization: `Bearer ${token}` },
             });

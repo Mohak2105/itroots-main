@@ -7,12 +7,12 @@ import LMSShell from "@/components/lms/LMSShell";
 import { ChartBar } from "@phosphor-icons/react";
 import styles from "./engagement.module.css";
 
-export default function TeacherEngagementPage() {
+export default function FacultyEngagementPage() {
     const { user, isLoading } = useLMSAuth();
     const router = useRouter();
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "TEACHER")) {
+        if (!isLoading && (!user || user.role !== "Faculty")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);

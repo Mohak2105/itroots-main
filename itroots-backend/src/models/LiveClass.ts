@@ -11,7 +11,7 @@ interface LiveClassAttributes {
     title: string;
     courseId: string;
     batchId: string;
-    teacherId: string;
+    FacultyId: string;
     scheduledAt: Date;
     meetingLink: string;
     description?: string;
@@ -25,7 +25,7 @@ class LiveClass extends Model<LiveClassAttributes, LiveClassCreationAttributes> 
     public title!: string;
     public courseId!: string;
     public batchId!: string;
-    public teacherId!: string;
+    public FacultyId!: string;
     public scheduledAt!: Date;
     public meetingLink!: string;
     public description?: string;
@@ -56,7 +56,7 @@ LiveClass.init(
             allowNull: false,
             references: { model: Batch, key: 'id' },
         },
-        teacherId: {
+        FacultyId: {
             type: DataTypes.UUID,
             allowNull: false,
             references: { model: User, key: 'id' },
@@ -89,9 +89,9 @@ LiveClass.init(
 
 LiveClass.belongsTo(Course, { as: 'course', foreignKey: 'courseId' });
 LiveClass.belongsTo(Batch, { as: 'batch', foreignKey: 'batchId' });
-LiveClass.belongsTo(User, { as: 'teacher', foreignKey: 'teacherId' });
+LiveClass.belongsTo(User, { as: 'Faculty', foreignKey: 'FacultyId' });
 Course.hasMany(LiveClass, { as: 'liveClasses', foreignKey: 'courseId' });
 Batch.hasMany(LiveClass, { as: 'liveClasses', foreignKey: 'batchId' });
-User.hasMany(LiveClass, { as: 'scheduledLiveClasses', foreignKey: 'teacherId' });
+User.hasMany(LiveClass, { as: 'scheduledLiveClasses', foreignKey: 'FacultyId' });
 
 export default LiveClass;

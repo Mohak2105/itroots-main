@@ -6,7 +6,7 @@ const createAdmin = async () => {
     await connectDB();
 
     const hashedPassword = await bcrypt.hash('admin123', 10);
-    const hashedTeacher = await bcrypt.hash('teacher123', 10);
+    const hashedFaculty = await bcrypt.hash('Faculty123', 10);
     const hashedStudent = await bcrypt.hash('student123', 10);
 
     try {
@@ -15,8 +15,8 @@ const createAdmin = async () => {
             defaults: { username: 'admin', name: 'Super Admin', email: 'admin@itroots.com', password: hashedPassword, role: 'SUPER_ADMIN', isActive: true }
         });
         await User.findOrCreate({
-            where: { email: 'teacher@itroots.com' },
-            defaults: { username: 'teacher', name: 'Demo Teacher', email: 'teacher@itroots.com', password: hashedTeacher, role: 'TEACHER', specialization: 'Full Stack Development', isActive: true }
+            where: { email: 'Faculty@itroots.com' },
+            defaults: { username: 'Faculty', name: 'Demo Faculty', email: 'Faculty@itroots.com', password: hashedFaculty, role: 'Faculty', specialization: 'Full Stack Development', isActive: true }
         });
         await User.findOrCreate({
             where: { email: 'student@itroots.com' },

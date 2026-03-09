@@ -22,7 +22,7 @@ export default function GradeSubmissionPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "TEACHER")) {
+        if (!isLoading && (!user || user.role !== "Faculty")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -40,7 +40,7 @@ export default function GradeSubmissionPage() {
         setIsSubmitting(true);
         await new Promise(r => setTimeout(r, 1000));
         alert(`Graded ${student?.name} successfully! (Mock)`);
-        router.push("/lms/teacher/dashboard");
+        router.push("/lms/Faculty/dashboard");
     }
 
     return (
