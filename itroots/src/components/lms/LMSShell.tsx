@@ -45,7 +45,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
     "Profile Settings": Gear,
     "Admin Analytics": ChartBar,
     "Manage Students": UsersThree,
-    "Manage Teachers": ChalkboardTeacher,
+    "Manage Faculty": ChalkboardTeacher,
     "Batch Manage": CalendarDots,
     "Course Manage": BookOpen,
     "Fees Management": CreditCard,
@@ -70,7 +70,7 @@ const ICON_COLOR_MAP: Record<string, string> = {
     "Profile Settings": "#64748b",
     "Admin Analytics": "#f59e0b",
     "Manage Students": "#8b5cf6",
-    "Manage Teachers": "#0ea5e9",
+    "Manage Faculty": "#0ea5e9",
     "Batch Manage": "#14b8a6",
     "Course Manage": "#3b82f6",
     "Fees Management": "#22c55e",
@@ -95,7 +95,7 @@ const STUDENT_NAV = [
     },
 ];
 
-const TEACHER_NAV = [
+const Faculty_NAV = [
     {
         section: "",
         items: [
@@ -112,14 +112,13 @@ const TEACHER_NAV = [
 
 const ADMIN_NAV = [
     {
-        section: "LMS Management",
+        section: "LMS Management System",
         items: [
-            { href: "/dashboard", label: "Admin Analytics" },
+            { href: "/dashboard", label: "Admin Dashboard" },
+            { href: "/courses", label: "Course Management" },
+            { href: "/batches", label: "Batch Management" },
+            { href: "/Faculty", label: "Manage Faculty" },
             { href: "/students", label: "Manage Students" },
-            { href: "/teachers", label: "Manage Teachers" },
-            { href: "/batches", label: "Batch Manage" },
-            { href: "/courses", label: "Course Manage" },
-            { href: "/payments", label: "Fees Management" },
             { href: "/notifications", label: "Notifications" },
             { href: "/certificates", label: "Certificates" },
         ],
@@ -148,13 +147,13 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
 
     const hostname = typeof window !== "undefined" ? window.location.hostname : "";
     const isAdminDomain = hostname.startsWith("admin");
-    const isSubdomain = hostname.startsWith("admin") || hostname.startsWith("student") || hostname.startsWith("teacher");
+    const isSubdomain = hostname.startsWith("admin") || hostname.startsWith("student") || hostname.startsWith("Faculty");
 
     const navGroups =
         isAdminDomain && user?.role === "SUPER_ADMIN"
             ? ADMIN_NAV
-            : user?.role === "TEACHER"
-                ? TEACHER_NAV
+            : user?.role === "Faculty"
+                ? Faculty_NAV
                 : user?.role === "CMS_MANAGER"
                     ? []
                     : STUDENT_NAV;
@@ -193,11 +192,11 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
             return "/dashboard";
         }
 
-        if (pathname.startsWith("/lms/teacher/")) {
-            return pathname.replace("/lms/teacher", "") || "/";
+        if (pathname.startsWith("/lms/Faculty/")) {
+            return pathname.replace("/lms/Faculty", "") || "/";
         }
 
-        if (pathname === "/lms/teacher") {
+        if (pathname === "/lms/Faculty") {
             return "/dashboard";
         }
 
@@ -306,7 +305,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                     <div className={styles.dropdownHeader}>
                                         <div className={styles.dropdownAvatar}>{profileImageUrl ? <img src={profileImageUrl} alt={user?.name || "User"} className={styles.dropdownAvatarImage} /> : userInitials}</div>
                                         <div>
-                                            <div className={styles.dropdownName}>{user?.role === "TEACHER" ? "Teacher" : user?.role === "SUPER_ADMIN" ? "Admin" : "Student"}</div>
+                                            <div className={styles.dropdownName}>{user?.role === "Faculty" ? "Faculty" : user?.role === "SUPER_ADMIN" ? "Admin" : "Student"}</div>
                                             <div className={styles.dropdownEmail}>{user?.email}</div>
                                             <div className={styles.dropdownBadge}>{user?.role}</div>
                                         </div>
@@ -353,3 +352,4 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
         </div>
     );
 }
+

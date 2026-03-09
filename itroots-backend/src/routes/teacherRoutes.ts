@@ -8,7 +8,7 @@ import {
     getTestResults,
     getFacultyAssignments,
     reviewAssignmentSubmission,
-} from '../controllers/FacultyController';
+} from '../controllers/teacherController';
 import {
     getFacultyLiveClasses,
     createLiveClass,
@@ -23,7 +23,7 @@ import { authenticate, authorizeRole } from '../middlewares/auth';
 const router = express.Router();
 
 router.use(authenticate);
-router.use(authorizeRole('Faculty'));
+router.use(authorizeRole('TEACHER'));
 
 router.get('/dashboard', getFacultyDashboard);
 router.get('/my-batches', getMyBatches);

@@ -1,4 +1,4 @@
-import dotenv from 'dotenv';
+﻿import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
@@ -9,7 +9,7 @@ import { connectDB } from './config/database';
 import authRoutes from './routes/authRoutes';
 import cmsRoutes from './routes/cmsRoutes';
 import adminRoutes from './routes/adminRoutes';
-import FacultyRoutes from './routes/FacultyRoutes';
+import teacherRoutes from './routes/teacherRoutes';
 import studentRoutes from './routes/studentRoutes';
 import publicRoutes from './routes/publicRoutes';
 
@@ -46,7 +46,7 @@ app.get('/', (req, res) => {
             auth: '/api/v1/auth',
             cms: '/api/v1/cms',
             admin: '/api/v1/admin',
-            Faculty: '/api/v1/Faculty',
+            teacher: '/api/v1/teacher',
             student: '/api/v1/student',
             public: '/api/v1/public',
         },
@@ -57,7 +57,7 @@ app.get('/', (req, res) => {
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/cms', cmsRoutes);
 app.use('/api/v1/admin', adminRoutes);
-app.use('/api/v1/Faculty', FacultyRoutes);
+app.use('/api/v1/teacher', teacherRoutes);
 app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/public', publicRoutes);
 
