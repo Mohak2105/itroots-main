@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -61,13 +61,10 @@ export default function StudentCertificatesPage() {
             <div className={styles.page}>
                 <section className={styles.hero}>
                     <div>
-                        <p className={styles.eyebrow}>My Achievements</p>
-                        <h1>Issued certificates</h1>
-                        <p>Download your course completion certificates in PDF format from the LMS.</p>
+                        <h1>Certificates</h1>
+                        <p>Download your course completion certificates.</p>
                     </div>
-                    <div className={styles.heroIcon}>
-                        <SealCheck size={44} weight="duotone" />
-                    </div>
+                    <SealCheck size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </section>
 
                 {loadingData ? (

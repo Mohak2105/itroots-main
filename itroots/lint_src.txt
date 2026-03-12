@@ -1,0 +1,630 @@
+﻿
+D:\itroots-main\itroots\src\app\about\page.tsx
+   13:5   warning  'Users' is defined but never used                                @typescript-eslint/no-unused-vars
+   14:5   warning  'Briefcase' is defined but never used                            @typescript-eslint/no-unused-vars
+  101:45  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  166:39  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\itroots-main\itroots\src\app\admin\certificates\page.tsx
+   11:5  warning  'Certificate' is defined but never used                                                                       @typescript-eslint/no-unused-vars
+   14:5  warning  'GraduationCap' is defined but never used                                                                     @typescript-eslint/no-unused-vars
+   15:5  warning  'Scroll' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+  150:8  warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\itroots-main\itroots\src\app\admin\courses\page.tsx
+   39:44  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+   62:8   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array                                                                                                                                                                             react-hooks/exhaustive-deps
+   71:36  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  166:59  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  166:77  error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`                                                                                                                                                                                                                          react/no-unescaped-entities
+  169:46  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  185:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\itroots-main\itroots\src\app\admin\notifications\page.tsx
+  160:8  warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\itroots-main\itroots\src\app\admin\placements\page.tsx
+   12:5   warning  'PencilSimple' is defined but never used                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+   46:12  warning  'selectedId' is assigned a value but never used                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   75:8   warning  React Hook useEffect has a missing dependency: 'fetchPlacements'. Either include it or remove the dependency array                                                                                                                                                                       react-hooks/exhaustive-deps
+  189:53  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  261:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\itroots-main\itroots\src\app\admin\students\page.tsx
+  144:8  warning  React Hook useEffect has a missing dependency: 'fetchStudents'. Either include it or remove the dependency array      react-hooks/exhaustive-deps
+  150:8  warning  React Hook useEffect has a missing dependency: 'fetchAcademicData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\itroots-main\itroots\src\app\admin\teachers\page.tsx
+  137:8  warning  React Hook useEffect has a missing dependency: 'fetchFaculty'. Either include it or remove the dependency array       react-hooks/exhaustive-deps
+  143:8  warning  React Hook useEffect has a missing dependency: 'fetchAcademicData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\itroots-main\itroots\src\app\blog\[slug]\page.tsx
+   87:17  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  136:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\itroots-main\itroots\src\app\blog\page.tsx
+   51:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  116:41  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\itroots-main\itroots\src\app\courses\[slug]\page.tsx
+    8:5   warning  'Users' is defined but never used                    @typescript-eslint/no-unused-vars
+   13:5   warning  'Briefcase' is defined but never used                @typescript-eslint/no-unused-vars
+   15:5   warning  'Target' is defined but never used                   @typescript-eslint/no-unused-vars
+   16:5   warning  'Star' is defined but never used                     @typescript-eslint/no-unused-vars
+   18:5   warning  'Terminal' is defined but never used                 @typescript-eslint/no-unused-vars
+   19:5   warning  'HelpCircle' is defined but never used               @typescript-eslint/no-unused-vars
+   20:5   warning  'ShieldCheck' is defined but never used              @typescript-eslint/no-unused-vars
+   21:5   warning  'Laptop' is defined but never used                   @typescript-eslint/no-unused-vars
+   22:5   warning  'Trophy' is defined but never used                   @typescript-eslint/no-unused-vars
+   23:5   warning  'Gem' is defined but never used                      @typescript-eslint/no-unused-vars
+   24:5   warning  'Rocket' is defined but never used                   @typescript-eslint/no-unused-vars
+   25:5   warning  'Headphones' is defined but never used               @typescript-eslint/no-unused-vars
+   26:5   warning  'FileCheck' is defined but never used                @typescript-eslint/no-unused-vars
+   27:5   warning  'Layers' is defined but never used                   @typescript-eslint/no-unused-vars
+   31:16  warning  'PhHeadset' is defined but never used                @typescript-eslint/no-unused-vars
+   44:23  warning  'PhDownload' is defined but never used               @typescript-eslint/no-unused-vars
+   51:10  warning  'ToolsGravity' is defined but never used             @typescript-eslint/no-unused-vars
+  188:11  warning  'relatedCourses' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+D:\itroots-main\itroots\src\app\courses\page.tsx
+   14:58  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-explicit-any
+   46:37  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `dynamicCourses`, but the source dependencies were [searchQuery, activeCategory]. Inferred different dependency than source.
+
+D:\itroots-main\itroots\src\app\courses\page.tsx:46:37
+  44 |     const allCategories = ['All', ...Array.from(new Set(courses.map((c) => c.category)))];
+  45 |
+> 46 |     const filteredCourses = useMemo(() => {
+     |                                     ^^^^^^^
+> 47 |         return courses.filter((course) => {
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 48 |             const matchesCategory =
+     ΓÇª
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 57 |         });
+     | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 58 |     }, [searchQuery, activeCategory]);
+     | ^^^^^^ Could not preserve existing manual memoization
+  59 |
+  60 |     return (
+  61 |         <>  react-hooks/preserve-manual-memoization
+   58:8   warning  React Hook useMemo has a missing dependency: 'courses'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   react-hooks/exhaustive-deps
+  128:53  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @next/next/no-img-element
+
+D:\itroots-main\itroots\src\app\hire-from-us\page.tsx
+   16:5   warning  'MessageSquarePlus' is defined but never used       @typescript-eslint/no-unused-vars
+   17:5   warning  'ChevronDown' is defined but never used             @typescript-eslint/no-unused-vars
+   19:5   warning  'Clock3' is defined but never used                  @typescript-eslint/no-unused-vars
+   20:5   warning  'UserCheck' is defined but never used               @typescript-eslint/no-unused-vars
+   76:7   warning  'recruiterFaqs' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  145:12  warning  'openFaq' is assigned a value but never used        @typescript-eslint/no-unused-vars
+  145:21  warning  'setOpenFaq' is assigned a value but never used     @typescript-eslint/no-unused-vars
+
+D:\itroots-main\itroots\src\app\lms\auth-context.tsx
+  131:13  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\app\lms\auth-context.tsx:131:13
+  129 |     useEffect(() => {
+  130 |         if (typeof window === "undefined") {
+> 131 |             setIsLoading(false);
+      |             ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  132 |             return;
+  133 |         }
+  134 |  react-hooks/set-state-in-effect
+
+D:\itroots-main\itroots\src\app\lms\student\announcements\page.tsx
+   36:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   36:73  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:34  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   48:73  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   76:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   77:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  130:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\student\assignments\page.tsx
+  12:5  warning  'Warning' is defined but never used                                                                                  @typescript-eslint/no-unused-vars
+  78:8  warning  React Hook useEffect has a missing dependency: 'fetchAssignments'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\itroots-main\itroots\src\app\lms\student\attendance\page.tsx
+   25:58  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   71:46  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   75:90  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  111:79  error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\student\available-batches\page.tsx
+  11:5   warning  'CheckCircle' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+  13:5   warning  'MagnifyingGlass' is defined but never used                                                                        @typescript-eslint/no-unused-vars
+  23:44  error    Unexpected any. Specify a different type                                                                           @typescript-eslint/no-explicit-any
+  50:8   warning  React Hook useEffect has a missing dependency: 'fetchAvailable'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\itroots-main\itroots\src\app\lms\student\certificates\page.tsx
+  14:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\student\courses\[courseId]\page.tsx
+  43:13  error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\app\lms\student\courses\[courseId]\page.tsx:43:13
+  41 |     useEffect(() => {
+  42 |         if (enrollment) {
+> 43 |             setCompletedIds(enrollment.completedLessonIds);
+     |             ^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  44 |         }
+  45 |         if (course && !activeLesson) {
+  46 |             // auto-select first lesson  react-hooks/set-state-in-effect
+  50:8   warning  React Hook useEffect has a missing dependency: 'activeLesson'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/exhaustive-deps
+
+D:\itroots-main\itroots\src\app\lms\student\dashboard\page.tsx
+   32:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   33:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   34:20  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   35:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   36:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   98:37  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   98:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   99:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  108:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  289:71  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  398:79  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\student\learning\[batchId]\page.tsx
+   26:38  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   60:46  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   61:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   62:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  107:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:62  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  149:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  179:54  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\student\my-learning\page.tsx
+  14:5   warning  'PlusCircle' is defined but never used     @typescript-eslint/no-unused-vars
+  15:5   warning  'User' is defined but never used           @typescript-eslint/no-unused-vars
+  16:5   warning  'GraduationCap' is defined but never used  @typescript-eslint/no-unused-vars
+  22:52  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+  70:49  error    Unexpected any. Specify a different type   @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\student\progress\page.tsx
+   14:52  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   15:73  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   46:55  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  106:53  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\student\resources\page.tsx
+   16:5   warning  'VideoCamera' is defined but never used   @typescript-eslint/no-unused-vars
+   44:48  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  129:50  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\teacher\analytics\page.tsx
+  14:44  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  16:46  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  44:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\app\lms\teacher\analytics\page.tsx:44:9
+  42 |     useEffect(() => {
+  43 |         if (!token || !selectedBatchId) return;
+> 44 |         setLoadingStudents(true);
+     |         ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  45 |         // Fix: BATCH_DATA is a string base URL, append the batchId
+  46 |         fetch(`${ENDPOINTS.Faculty.BATCH_DATA}/${selectedBatchId}`, {
+  47 |             headers: { Authorization: `Bearer ${token}` },  react-hooks/set-state-in-effect
+  52:68  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\teacher\assignments\page.tsx
+  113:8  warning  React Hook useEffect has a missing dependency: 'fetchAssignments'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+D:\itroots-main\itroots\src\app\lms\teacher\batches\[batchId]\page.tsx
+    3:44   warning  'useMemo' is defined but never used                                @typescript-eslint/no-unused-vars
+   20:13   warning  'LinkIcon' is defined but never used                               @typescript-eslint/no-unused-vars
+   55:38   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+   56:52   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+   81:60   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+   98:68   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+   99:43   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+   99:51   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  115:65   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  118:46   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  153:31   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  166:35   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  172:35   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  182:28   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  189:28   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  192:52   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  198:28   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  200:54   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  207:28   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  209:54   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  219:28   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  221:54   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  231:11   warning  'handleAttendanceStatusChange' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  334:43   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  468:67   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  468:115  error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  478:67   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  488:67   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  488:115  error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  498:67   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  510:58   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  700:68   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+  790:74   error    Unexpected any. Specify a different type                           @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\teacher\calendar\page.tsx
+   48:44  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   49:52  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+   76:8   warning  React Hook useEffect has a missing dependency: 'fetchData'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+   79:38  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  147:35  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  348:63  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+  355:70  error    Unexpected any. Specify a different type                                                                      @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\teacher\dashboard\page.tsx
+  21:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:18  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+D:\itroots-main\itroots\src\app\lms\teacher\grades\page.tsx
+  20:44  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  22:46  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           @typescript-eslint/no-explicit-any
+  42:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\app\lms\teacher\grades\page.tsx:42:9
+  40 |             }));
+  41 |
+> 42 |         setBatches(FacultyBatches);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  43 |         setSelectedBatchId(FacultyBatches[0]?.id || "");
+  44 |         setLoadingBatches(false);
+  45 |     }, [user]);                                                         react-hooks/set-state-in-effect
+  49:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\app\lms\teacher\grades\page.tsx:49:9
+  47 |     useEffect(() => {
+  48 |         if (!selectedBatchId) return;
+> 49 |         setLoadingStudents(true);
+     |         ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  50 |
+  51 |         const enriched = ENROLLMENTS
+  52 |             .filter((enrollment) => enrollment.batchId === selectedBatchId)  react-hooks/set-state-in-effect
+
+D:\itroots-main\itroots\src\app\lms\teacher\students\page.tsx
+  20:44  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-explicit-any
+  22:46  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-explicit-any
+  43:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\app\lms\teacher\students\page.tsx:43:9
+  41 |             }));
+  42 |
+> 43 |         setBatches(FacultyBatches);
+     |         ^^^^^^^^^^ Avoid calling setState() directly within an effect
+  44 |         setSelectedBatchId(FacultyBatches[0]?.id || "");
+  45 |         setLoadingBatches(false);
+  46 |     }, [user]);                                                         react-hooks/set-state-in-effect
+  50:9   error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\app\lms\teacher\students\page.tsx:50:9
+  48 |     useEffect(() => {
+  49 |         if (!selectedBatchId) return;
+> 50 |         setLoadingStudents(true);
+     |         ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  51 |
+  52 |         const enriched = ENROLLMENTS
+  53 |             .filter((enrollment) => enrollment.batchId === selectedBatchId)  react-hooks/set-state-in-effect
+
+D:\itroots-main\itroots\src\app\lms\teacher\tests\[testId]\results\page.tsx
+   7:37  warning  'IdentificationCard' is defined but never used  @typescript-eslint/no-unused-vars
+   7:57  warning  'CalendarBlank' is defined but never used       @typescript-eslint/no-unused-vars
+  15:44  error    Unexpected any. Specify a different type        @typescript-eslint/no-explicit-any
+  16:12  warning  'loading' is assigned a value but never used    @typescript-eslint/no-unused-vars
+
+D:\itroots-main\itroots\src\app\page.tsx
+   27:3   warning  'Clock' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   28:3   warning  'Link2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+   35:10  warning  'GlowingEffect' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             @typescript-eslint/no-unused-vars
+   37:10  warning  'TestimonialsColumn' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  143:5   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\app\page.tsx:143:5
+  141 |
+  142 |   useEffect(() => {
+> 143 |     setActiveTestimonialSlide((prev) => Math.min(prev, Math.max(testimonialSlidesCount - 1, 0)));
+      |     ^^^^^^^^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  144 |   }, [testimonialSlidesCount]);
+  145 |
+  146 |   useEffect(() => {  react-hooks/set-state-in-effect
+  222:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @next/next/no-img-element
+  410:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @next/next/no-img-element
+  482:19  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @next/next/no-img-element
+  679:36  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       react/no-unescaped-entities
+  780:27  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @next/next/no-img-element
+  878:33  warning  'list' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      @typescript-eslint/no-unused-vars
+
+D:\itroots-main\itroots\src\app\terms-of-service\page.tsx
+  12:68  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\itroots-main\itroots\src\components\courses\HeroVisuals.tsx
+   32:193  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\itroots-main\itroots\src\components\courses\HeroVisuals.tsx:32:193
+  30 |       <rect x="180" y="236" width="280" height="12" fill="rgba(8,129,236,.1)" />
+  31 |       <circle cx="196" cy="234" r="4" fill="rgba(255,95,87,.8)" /><circle cx="208" cy="234" r="4" fill="rgba(255,189,46,.8)" /><circle cx="220" cy="234" r="4" fill="rgba(40,200,64,.8)" />
+> 32 |       {[0, 1, 2, 3, 4, 5].map(i => <React.Fragment key={i}><rect x="186" y={260 + i * 16} width="7" height="4" rx="2" fill="rgba(255,255,255,.08)" /><rect x="198" y={260 + i * 16} width={30 + Math.random() * 40} height="4" rx="2" fill={i % 2 === 0 ? "rgba(100,180,255,.5)" : "rgba(8,129,236,.4)"} /><rect x={234 + Math.random() * 20} y={260 + i * 16} width={50 + Math.random() * 60} height="4" rx="2" fill="rgba(255,255,255,.1)" /></React.Fragment>)}
+     |                                                                                                                                                                                                 ^^^^^^^^^^^^^ Cannot call impure function
+  33 |       {/* stat cards */}
+  34 |       <rect x="20" y="230" width="140" height="60" rx="10" fill="url(#jG)" stroke="rgba(6,100,194,.2)" strokeWidth="1.5" />
+  35 |       <rect x="34" y="244" width="44" height="6" rx="3" fill="rgba(6,100,194,.25)" />                                                                                                                                                                             react-hooks/purity
+   32:315  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\itroots-main\itroots\src\components\courses\HeroVisuals.tsx:32:315
+  30 |       <rect x="180" y="236" width="280" height="12" fill="rgba(8,129,236,.1)" />
+  31 |       <circle cx="196" cy="234" r="4" fill="rgba(255,95,87,.8)" /><circle cx="208" cy="234" r="4" fill="rgba(255,189,46,.8)" /><circle cx="220" cy="234" r="4" fill="rgba(40,200,64,.8)" />
+> 32 |       {[0, 1, 2, 3, 4, 5].map(i => <React.Fragment key={i}><rect x="186" y={260 + i * 16} width="7" height="4" rx="2" fill="rgba(255,255,255,.08)" /><rect x="198" y={260 + i * 16} width={30 + Math.random() * 40} height="4" rx="2" fill={i % 2 === 0 ? "rgba(100,180,255,.5)" : "rgba(8,129,236,.4)"} /><rect x={234 + Math.random() * 20} y={260 + i * 16} width={50 + Math.random() * 60} height="4" rx="2" fill="rgba(255,255,255,.1)" /></React.Fragment>)}
+     |                                                                                                                                                                                                                                                                                                                           ^^^^^^^^^^^^^ Cannot call impure function
+  33 |       {/* stat cards */}
+  34 |       <rect x="20" y="230" width="140" height="60" rx="10" fill="url(#jG)" stroke="rgba(6,100,194,.2)" strokeWidth="1.5" />
+  35 |       <rect x="34" y="244" width="44" height="6" rx="3" fill="rgba(6,100,194,.25)" />                                                   react-hooks/purity
+   32:364  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\itroots-main\itroots\src\components\courses\HeroVisuals.tsx:32:364
+  30 |       <rect x="180" y="236" width="280" height="12" fill="rgba(8,129,236,.1)" />
+  31 |       <circle cx="196" cy="234" r="4" fill="rgba(255,95,87,.8)" /><circle cx="208" cy="234" r="4" fill="rgba(255,189,46,.8)" /><circle cx="220" cy="234" r="4" fill="rgba(40,200,64,.8)" />
+> 32 |       {[0, 1, 2, 3, 4, 5].map(i => <React.Fragment key={i}><rect x="186" y={260 + i * 16} width="7" height="4" rx="2" fill="rgba(255,255,255,.08)" /><rect x="198" y={260 + i * 16} width={30 + Math.random() * 40} height="4" rx="2" fill={i % 2 === 0 ? "rgba(100,180,255,.5)" : "rgba(8,129,236,.4)"} /><rect x={234 + Math.random() * 20} y={260 + i * 16} width={50 + Math.random() * 60} height="4" rx="2" fill="rgba(255,255,255,.1)" /></React.Fragment>)}
+     |                                                                                                                                                                                                                                                                                                                                                                            ^^^^^^^^^^^^^ Cannot call impure function
+  33 |       {/* stat cards */}
+  34 |       <rect x="20" y="230" width="140" height="60" rx="10" fill="url(#jG)" stroke="rgba(6,100,194,.2)" strokeWidth="1.5" />
+  35 |       <rect x="34" y="244" width="44" height="6" rx="3" fill="rgba(6,100,194,.25)" />  react-hooks/purity
+  374:15   warning  'PhTerminal' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  375:3    warning  'Brain' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  378:3    warning  'Lightning' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+  379:3    warning  'ChartLineUp' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  380:3    warning  'Robot' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         @typescript-eslint/no-unused-vars
+  383:3    warning  'Circuitry' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+
+D:\itroots-main\itroots\src\components\courses\MentorsSlider.tsx
+  4:8  warning  'Image' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\itroots-main\itroots\src\components\courses\PremiumTestimonials.tsx
+   4:8   warning  'Image' is defined but never used                                @typescript-eslint/no-unused-vars
+   5:8   warning  'Link' is defined but never used                                 @typescript-eslint/no-unused-vars
+   6:16  warning  'ArrowRight' is defined but never used                           @typescript-eslint/no-unused-vars
+  27:11  warning  'displayTestimonials' is assigned a value but never used         @typescript-eslint/no-unused-vars
+  46:35  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+D:\itroots-main\itroots\src\components\layout\Footer\Footer.tsx
+   8:5  warning  'Twitter' is defined but never used     @typescript-eslint/no-unused-vars
+   9:5  warning  'Linkedin' is defined but never used    @typescript-eslint/no-unused-vars
+  12:5  warning  'ArrowRight' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\itroots-main\itroots\src\components\layout\MainLayout.tsx
+  59:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\components\layout\MainLayout.tsx:59:9
+  57 |     useEffect(() => {
+  58 |         const h = window.location.hostname.toLowerCase();
+> 59 |         setIsAppHost(h.startsWith("admin") || h.startsWith("student") || h.startsWith("faculty"));
+     |         ^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  60 |     }, []);
+  61 |
+  62 |     useEffect(() => {  react-hooks/set-state-in-effect
+
+D:\itroots-main\itroots\src\components\lms\LMSShell.tsx
+  129:46  warning  'pageTitle' is defined but never used                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  295:87  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  307:99  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\itroots-main\itroots\src\components\lms\ProfileSettingsPanel.tsx
+  227:33  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+D:\itroots-main\itroots\src\components\ui\CustomSelect\CustomSelect.tsx
+  37:9  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+D:\itroots-main\itroots\src\components\ui\CustomSelect\CustomSelect.tsx:37:9
+  35 |
+  36 |     useEffect(() => {
+> 37 |         setSelectedValue(value || '');
+     |         ^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  38 |     }, [value]);
+  39 |
+  40 |     const selectedOption = options.find(opt => opt.value === selectedValue);  react-hooks/set-state-in-effect
+
+D:\itroots-main\itroots\src\components\ui\ToolsGravity.tsx
+  22:43  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\itroots-main\itroots\src\components\ui\ToolsGravity.tsx:22:43
+  20 |
+  21 |                     // Randomize starting positions a bit
+> 22 |                     const xPos = `${20 + (Math.random() * 60)}%`;
+     |                                           ^^^^^^^^^^^^^ Cannot call impure function
+  23 |                     const yPos = `${10 + (Math.random() * 20)}%`;
+  24 |                     const angle = (Math.random() * 40) - 20;
+  25 |                               react-hooks/purity
+  23:43  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\itroots-main\itroots\src\components\ui\ToolsGravity.tsx:23:43
+  21 |                     // Randomize starting positions a bit
+  22 |                     const xPos = `${20 + (Math.random() * 60)}%`;
+> 23 |                     const yPos = `${10 + (Math.random() * 20)}%`;
+     |                                           ^^^^^^^^^^^^^ Cannot call impure function
+  24 |                     const angle = (Math.random() * 40) - 20;
+  25 |
+  26 |                     return (  react-hooks/purity
+  24:36  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\itroots-main\itroots\src\components\ui\ToolsGravity.tsx:24:36
+  22 |                     const xPos = `${20 + (Math.random() * 60)}%`;
+  23 |                     const yPos = `${10 + (Math.random() * 20)}%`;
+> 24 |                     const angle = (Math.random() * 40) - 20;
+     |                                    ^^^^^^^^^^^^^ Cannot call impure function
+  25 |
+  26 |                     return (
+  27 |                         <MatterBody                               react-hooks/purity
+  36:37  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          @next/next/no-img-element
+
+D:\itroots-main\itroots\src\components\ui\WhatsAppButton\WhatsAppButton.tsx
+  4:10  warning  'MessageCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+D:\itroots-main\itroots\src\components\ui\glowing-effect.tsx
+  80:15  error  'targetAngle' is never reassigned. Use 'const' instead  prefer-const
+
+D:\itroots-main\itroots\src\components\ui\gravity.tsx
+   14:1   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/ban-ts-comment
+   31:1   error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/ban-ts-comment
+   43:39  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   48:37  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+   60:38  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       @typescript-eslint/no-explicit-any
+  145:26  error    Error: Cannot call impure function during render
+
+`Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+D:\itroots-main\itroots\src\components\ui\gravity.tsx:145:26
+  143 | }: MatterBodyProps) => {
+  144 |     const elementRef = useRef<HTMLDivElement>(null)
+> 145 |     const idRef = useRef(Math.random().toString(36).substring(7))
+      |                          ^^^^^^^^^^^^^ Cannot call impure function
+  146 |     const context = useContext(GravityContext)
+  147 |
+  148 |     useEffect(() => {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  react-hooks/purity
+  162:54  warning  The ref value 'idRef.current' will likely have changed by the time this effect cleanup function runs. If this ref points to a node rendered by React, copy 'idRef.current' to a variable inside the effect, and use that variable in the cleanup function                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      react-hooks/exhaustive-deps
+  163:8   warning  React Hook useEffect has missing dependencies: 'angle', 'bodyType', 'context', 'sampleLength', 'x', and 'y'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                react-hooks/exhaustive-deps
+  295:53  error    Error: Cannot access variable before it is declared
+
+`updateElements` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+D:\itroots-main\itroots\src\components\ui\gravity.tsx:295:53
+  293 |             })
+  294 |
+> 295 |             frameId.current = requestAnimationFrame(updateElements)
+      |                                                     ^^^^^^^^^^^^^^ `updateElements` accessed before it is declared
+  296 |         }, [])
+  297 |
+  298 |         const initializeRenderer = useCallback(() => {
+
+D:\itroots-main\itroots\src\components\ui\gravity.tsx:286:9
+  284 |
+  285 |         // Keep react elements in sync with the physics world
+> 286 |         const updateElements = useCallback(() => {
+      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 287 |             bodiesMap.current.forEach(({ element, body }) => {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 288 |                 const { x, y } = body.position
+      ΓÇª
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 295 |             frameId.current = requestAnimationFrame(updateElements)
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 296 |         }, [])
+      | ^^^^^^^^^^^^^^^ `updateElements` is declared here
+  297 |
+  298 |         const initializeRenderer = useCallback(() => {
+  299 |             if (!canvas.current) return  react-hooks/immutability
+  304:13  error    Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/ban-ts-comment
+  305:30  error    A `require()` style import is forbidden                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-require-imports
+  395:63  warning  'event' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  406:61  warning  'event' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  430:17  error    Error: Cannot access variable before it is declared
+
+`startEngine` is accessed before it is declared, which prevents the earlier access from updating when this value changes over time.
+
+D:\itroots-main\itroots\src\components\ui\gravity.tsx:430:17
+  428 |             if (autoStart) {
+  429 |                 runner.current.enabled = true
+> 430 |                 startEngine()
+      |                 ^^^^^^^^^^^ `startEngine` accessed before it is declared
+  431 |             }
+  432 |         }, [updateElements, debug, autoStart])
+  433 |
+
+D:\itroots-main\itroots\src\components\ui\gravity.tsx:475:9
+  473 |         }, [clearRenderer, initializeRenderer, resetOnResize])
+  474 |
+> 475 |         const startEngine = useCallback(() => {
+      |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 476 |             if (runner.current) {
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 477 |                 runner.current.enabled = true
+      ΓÇª
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 485 |             isRunning.current = true
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+> 486 |         }, [updateElements, canvasSize])
+      | ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ `startEngine` is declared here
+  487 |
+  488 |         const stopEngine = useCallback(() => {
+  489 |             if (!isRunning.current) return                                                                                                                                               react-hooks/immutability
+  432:12  warning  React Hook useCallback has missing dependencies: 'addTopWall', 'grabCursor', 'gravity.x', 'gravity.y', and 'startEngine'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   react-hooks/exhaustive-deps
+  486:12  warning  React Hook useCallback has an unnecessary dependency: 'canvasSize'. Either exclude it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+  523:12  warning  React Hook useCallback has missing dependencies: 'canvasSize.height', 'canvasSize.width', 'handleResize', 'stopEngine', and 'updateElements'. Either include them or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               react-hooks/exhaustive-deps
+  532:13  warning  React Hook useImperativeHandle has a missing dependency: 'reset'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+
+Γ£û 229 problems (125 errors, 104 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+

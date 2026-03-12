@@ -174,8 +174,8 @@ export default function AdminStudentProfilePage() {
                                     <div className={styles.profileName}>{student.name}</div>
                                     <div className={styles.profileMeta}>{student.username || student.email}</div>
                                 </div>
-                                <span className={`${styles.statusBadge} ${student.isActive ? styles.statusActive : styles.statusBlocked}`}>
-                                    {student.isActive ? "Active" : "Blocked"}
+                                <span className={`${styles.statusBadge} ${student.isActive ? styles.statusActive : styles.statusInactive}`}>
+                                    {student.isActive ? "Active" : "Inactive"}
                                 </span>
                                 <div className={styles.kvList}>
                                     <div className={styles.kvRow}>

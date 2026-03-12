@@ -1,459 +1,612 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
+import Link from 'next/link';
 import Image from 'next/image';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    Phone,
+    ArrowRight,
+    CalendarClock,
+    CheckCircle2,
+    ChevronDown,
+    Clock3,
+    Headset,
     Mail,
     MapPin,
-    Clock,
-    ArrowRight,
-<<<<<<< HEAD
-    CheckCircle
-=======
-    CheckCircle,
     MessageSquare,
-    Send
->>>>>>> b8275b344df0c43dcb4d2fcd30dcfe4534e0583c
+    Phone,
+    Send,
+    ShieldCheck,
+    Star,
+    UserRoundCheck,
 } from 'lucide-react';
 import CustomSelect from '@/components/ui/CustomSelect/CustomSelect';
 import { courses } from '@/data/courses';
+import { ENDPOINTS } from '@/config/api';
 import styles from './page.module.css';
 
 const courseOptions = courses.map((course) => ({
     value: course.slug,
     label: course.shortTitle,
 }));
-const CONTACT_SUBMISSIONS_KEY = 'itroots_contact_submissions';
 
-const contactInfo = [
+const contactCards = [
     {
         icon: <MapPin size={22} />,
-        title: 'Visit Us',
-        lines: [
-            'ITROOTS Pvt Ltd, Office No. 205 & 206,',
-            '2nd floor, Rainbow Plaza, Jangali Maharaj Road,',
-            'opposite Modern High School, Deccan,',
-            'Shivajinagar, Pune, Mh. 411005',
-        ],
-        color: '#0c2d4c',
-        bg: 'rgba(12, 45, 76, 0.08)',
+        label: 'Visit Campus',
+        value: 'Office No. 205 and 206, Rainbow Plaza, Jangali Maharaj Road, Deccan, Pune 411005',
+        accent: '#0c2d4c',
+        tone: 'rgba(12, 45, 76, 0.12)',
+        action: null,
     },
     {
         icon: <Phone size={22} />,
-        title: 'Call Us',
-        lines: ['+91 40 1234 5678', '+91 98765 43210'],
-        color: '#ee9602',
-        bg: 'rgba(238, 150, 2, 0.08)',
+        label: 'Call Admissions',
+        value: '+91 40 1234 5678',
+        sub: '+91 98765 43210',
+        accent: '#ee9602',
+        tone: 'rgba(238, 150, 2, 0.14)',
+        action: 'tel:+914012345678',
     },
     {
         icon: <Mail size={22} />,
-        title: 'Email Us',
-        lines: ['admissions@itroots.in', 'career@itroots.in'],
-        color: '#0881ec',
-        bg: 'rgba(8, 129, 236, 0.08)',
+        label: 'Write To Us',
+        value: 'admissions@itroots.in',
+        sub: 'career@itroots.in',
+        accent: '#0881ec',
+        tone: 'rgba(8, 129, 236, 0.14)',
+        action: 'mailto:admissions@itroots.in',
     },
     {
-        icon: <Clock size={22} />,
-        title: 'Working Hours',
-        lines: ['Mon – Sat: 10:00 AM – 7:00 PM', 'Sunday: Closed'],
-        color: '#3b9995',
-        bg: 'rgba(59, 153, 149, 0.08)',
+        icon: <Clock3 size={22} />,
+        label: 'Working Hours',
+        value: 'Mon - Sat: 10:00 AM - 7:00 PM',
+        sub: 'Sunday: Closed',
+        accent: '#3b9995',
+        tone: 'rgba(59, 153, 149, 0.14)',
+        action: null,
     },
 ];
 
-export default function ContactPage() {
+const processSteps = [
+    {
+        title: 'Share your goals',
+        desc: 'Tell us your background and what role you want to target.',
+    },
+    {
+        title: 'Get expert roadmap',
+        desc: 'Our counselors recommend the best-fit course and learning path.',
+    },
+    {
+        title: 'Book your demo',
+        desc: 'Attend a free session and decide with clarity and confidence.',
+    },
+];
+
+const faqs = [
+    {
+        q: 'How quickly will someone respond after I submit this form?',
+        a: 'Our admissions team usually replies within 2 to 4 business hours from Monday to Saturday.',
+    },
+    {
+        q: 'Is career counseling really free?',
+        a: 'Yes. Your first 1-on-1 counseling session is completely free and focused on guidance, not pressure.',
+    },
+    {
+        q: 'Can I take counseling online if I am outside Pune?',
+        a: 'Yes. We provide phone and video counseling so you can discuss options from anywhere in India.',
+    },
+    {
+        q: 'Can I visit the office without an appointment?',
+        a: 'Walk-ins are welcome during working hours, but booking a slot helps us assign a dedicated counselor.',
+    },
+];
+
+export default function ContactNewPage() {
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [openFaq, setOpenFaq] = useState<number | null>(0);
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
         setIsLoading(true);
+
         const formData = new FormData(e.currentTarget);
         const data = {
-            name: String(formData.get('name') || ''),
-            email: String(formData.get('email') || ''),
-            phone: String(formData.get('phone') || ''),
-            course: String(formData.get('course') || ''),
-            subject: String(formData.get('subject') || ''),
-            message: String(formData.get('message') || ''),
+            name: formData.get('name'),
+            email: formData.get('email'),
+            phone: formData.get('phone'),
+            course: formData.get('course'),
+            subject: formData.get('subject'),
+            message: formData.get('message'),
         };
 
         try {
-            const existing = JSON.parse(localStorage.getItem(CONTACT_SUBMISSIONS_KEY) || '[]');
-            const submissions = Array.isArray(existing) ? existing : [];
-            submissions.push({ ...data, submittedAt: new Date().toISOString() });
-            localStorage.setItem(CONTACT_SUBMISSIONS_KEY, JSON.stringify(submissions));
+            const response = await fetch(ENDPOINTS.PUBLIC.CONTACT, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+            });
 
-            await new Promise((resolve) => setTimeout(resolve, 600));
-            setIsSubmitted(true);
-            e.currentTarget.reset();
-        } catch (error) {
-            console.error('Submission error:', error);
-            alert('Unable to save message locally. Please try again.');
+            if (response.ok) {
+                setIsSubmitted(true);
+                e.currentTarget.reset();
+            } else {
+                alert('Submission failed. Please try again.');
+            }
+        } catch {
+            alert('An error occurred. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <>
-            {/* Hero / Banner — UNCHANGED */}
+        <div className={styles.page}>
             <section className={styles.hero}>
+                <div className={styles.heroGlowOne} />
+                <div className={styles.heroGlowTwo} />
+                <div className={styles.heroGridPattern} />
+
                 <div className={styles.container}>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                    <motion.nav
+                        className={styles.breadcrumb}
+                        initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
+                        transition={{ duration: 0.4 }}
                     >
-                        <h1>Contact Us</h1>
-                        <p>Have questions? We&apos;d love to hear from you. Our team is ready to help.</p>
-                    </motion.div>
+                        <Link href="/" className={styles.breadcrumbLink}>Home</Link>
+                        <span>/</span>
+                        <span className={styles.breadcrumbCurrent}>Contact Us New</span>
+                    </motion.nav>
+
+                    <div className={styles.heroGrid}>
+                        <motion.div
+                            className={styles.heroCopy}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.55, delay: 0.1 }}
+                        >
+                            <span className={styles.heroBadge}>
+                                <Headset size={15} />
+                                Premium Career Support
+                            </span>
+                            <h1>
+                                Start your tech journey with a team that actually listens.
+                            </h1>
+                            <p>
+                                Talk to ITROOTS counselors for course advice, admission support, and realistic
+                                placement planning tailored to your goals.
+                            </p>
+                            <div className={styles.heroActions}>
+                                <a href="tel:+914012345678" className={styles.primaryBtn}>
+                                    <Phone size={17} />
+                                    Call Admissions
+                                </a>
+                                <a href="#contact-form" className={styles.secondaryBtn}>
+                                    <Send size={16} />
+                                    Send Message
+                                </a>
+                                <Link href="/contact" className={styles.ghostBtn}>
+                                    View Old Contact Page
+                                </Link>
+                            </div>
+                            <div className={styles.heroStatRow}>
+                                <div className={styles.heroStatCard}>
+                                    <UserRoundCheck size={17} />
+                                    <div>
+                                        <strong>5,000+</strong>
+                                        <span>Students Counseled</span>
+                                    </div>
+                                </div>
+                                <div className={styles.heroStatCard}>
+                                    <Star size={17} />
+                                    <div>
+                                        <strong>4.9 / 5</strong>
+                                        <span>Support Experience</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.div>
+
+                        <motion.aside
+                            className={styles.heroPanel}
+                            initial={{ opacity: 0, x: 30 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            transition={{ duration: 0.55, delay: 0.2 }}
+                        >
+                            <span className={styles.panelTag}>Admissions Desk</span>
+                            <h2>Fast response, clear guidance, no pressure.</h2>
+                            <ul className={styles.panelList}>
+                                <li>
+                                    <CalendarClock size={16} />
+                                    Monday to Saturday availability
+                                </li>
+                                <li>
+                                    <ShieldCheck size={16} />
+                                    100% confidential discussion
+                                </li>
+                                <li>
+                                    <CheckCircle2 size={16} />
+                                    Free counseling before enrollment
+                                </li>
+                            </ul>
+                            <a href="#contact-form" className={styles.panelBtn}>
+                                Get Personalized Guidance
+                                <ArrowRight size={16} />
+                            </a>
+                        </motion.aside>
+                    </div>
                 </div>
             </section>
 
-            {/* Info Cards Strip */}
-            <section className={styles.infoStrip}>
+            <section className={styles.cardsSection}>
                 <div className={styles.container}>
-                    <div className={styles.infoCardsGrid}>
-                        {contactInfo.map((item, i) => (
+                    <div className={styles.cardsGrid}>
+                        {contactCards.map((card, index) => (
                             <motion.div
-                                key={i}
-                                className={styles.infoCard}
+                                key={card.label}
+                                className={styles.contactCard}
                                 initial={{ opacity: 0, y: 20 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 0.4, delay: i * 0.1 }}
+                                transition={{ duration: 0.35, delay: index * 0.08 }}
                             >
-                                <div
-                                    className={styles.infoCardIcon}
-                                    style={{ background: item.bg, color: item.color }}
-                                >
-                                    {item.icon}
+                                <div className={styles.contactCardIcon} style={{ background: card.tone, color: card.accent }}>
+                                    {card.icon}
                                 </div>
-                                <h3>{item.title}</h3>
-                                {item.lines.map((line, j) => (
-                                    <p key={j}>{line}</p>
-                                ))}
+                                <span className={styles.contactCardLabel}>{card.label}</span>
+                                {card.action ? (
+                                    <a href={card.action} className={styles.contactCardValue} style={{ color: card.accent }}>
+                                        {card.value}
+                                    </a>
+                                ) : (
+                                    <p className={styles.contactCardValue}>{card.value}</p>
+                                )}
+                                {card.sub ? <p className={styles.contactCardSub}>{card.sub}</p> : null}
                             </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Main Contact Section */}
-            <section className={styles.contactSection}>
+            <section className={styles.mainSection} id="contact-form">
                 <div className={styles.container}>
-                    <motion.div
-                        className={styles.infoCardsHeading}
-                        initial={{ opacity: 0, y: 16 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.45 }}
-                    >
-                        <h2>We&apos;re Here to Help</h2>
-                    </motion.div>
-
-                    <motion.div
-                        className={styles.infoCardsRow}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <div className={styles.infoMiniCard}>
-                            <div className={styles.infoIcon}>
-                                <MapPin size={22} />
-                            </div>
-                            <div className={styles.infoText}>
-                                <h3>Visit Us</h3>
-                                <p>ITROOTS Pvt Ltd, Rainbow Plaza, J.M. Road, Pune 411005</p>
-                            </div>
-                        </div>
-
-                        <div className={styles.infoMiniCard}>
-                            <div className={styles.infoIcon}>
-                                <Phone size={22} />
-                            </div>
-                            <div className={styles.infoText}>
-                                <h3>Call Us</h3>
-                                <p>+91 40 1234 5678 /<br />+91 98765 43210</p>
-                            </div>
-                        </div>
-
-                        <div className={styles.infoMiniCard}>
-                            <div className={styles.infoIcon}>
-                                <Mail size={22} />
-                            </div>
-                            <div className={styles.infoText}>
-                                <h3>Email Us</h3>
-                                <p>admissions@itroots.in / career@itroots.in</p>
-                            </div>
-                        </div>
-
-                        <div className={styles.infoMiniCard}>
-                            <div className={styles.infoIcon}>
-                                <Clock size={22} />
-                            </div>
-                            <div className={styles.infoText}>
-                                <h3>Working Hours</h3>
-                                <p>Mon - Sat: 10:00 AM - 7:00 PM</p>
-                            </div>
-                        </div>
-                    </motion.div>
-
-                    <div className={styles.contactGrid}>
-<<<<<<< HEAD
-                        {/* Contact Intro */}
+                    <div className={styles.mainGrid}>
                         <motion.div
-                            className={styles.contactIntro}
-=======
-
-                        {/* Left — Info Panel */}
-                        <motion.div
-                            className={styles.contactSidebar}
->>>>>>> b8275b344df0c43dcb4d2fcd30dcfe4534e0583c
-                            initial={{ opacity: 0, x: -30 }}
-                            whileInView={{ opacity: 1, x: 0 }}
+                            className={styles.formCard}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
-                            transition={{ duration: 0.5 }}
+                            transition={{ duration: 0.45 }}
                         >
-                            <span className={styles.eyebrow}>We&apos;re Here For You</span>
-                            <h2>Get In Touch With Our Team</h2>
-                            <p>
-<<<<<<< HEAD
-                                Whether you have a question about our courses, placements, or anything else,
-                                our team is ready to answer all your queries. Visit our office lobby and meet our counselling team.
-                            </p>
-                            <div className={styles.lobbyImageWrapper}>
-                                <img
-                                    src="/images/Lobby.jpg"
-                                    alt="ITROOTS Lobby"
-                                    className={styles.lobbyImage}
-                                />
-=======
-                                Whether you have a question about our courses, admission process, placement support, or anything else —
-                                our counsellors are ready to answer every query with care.
-                            </p>
-
-                            <div className={styles.promiseList}>
-                                {[
-                                    'Response within 24 hours',
-                                    'Free career counselling session',
-                                    'No obligation — just honest advice',
-                                    'Talk to a real admission expert',
-                                ].map((item, i) => (
-                                    <div key={i} className={styles.promiseItem}>
-                                        <CheckCircle size={18} fill="#0c2d4c" color="white" className={styles.promiseIcon} />
-                                        <span>{item}</span>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <div className={styles.sidebarDivider} />
-
-                            <div className={styles.quickContact}>
-                                <a href="tel:+914012345678" className={styles.quickLink}>
-                                    <div className={styles.quickIcon}><Phone size={18} /></div>
-                                    <div>
-                                        <span className={styles.quickLabel}>Call directly</span>
-                                        <strong>+91 40 1234 5678</strong>
-                                    </div>
-                                </a>
-                                <a href="mailto:admissions@itroots.in" className={styles.quickLink}>
-                                    <div className={styles.quickIcon}><Mail size={18} /></div>
-                                    <div>
-                                        <span className={styles.quickLabel}>Write to us</span>
-                                        <strong>admissions@itroots.in</strong>
-                                    </div>
-                                </a>
->>>>>>> b8275b344df0c43dcb4d2fcd30dcfe4534e0583c
-                            </div>
-                        </motion.div>
-
-                        {/* Right — Form */}
-                        <motion.div
-                            className={styles.formWrapper}
-                            initial={{ opacity: 0, x: 30 }}
-                            whileInView={{ opacity: 1, x: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5, delay: 0.1 }}
-                        >
-                            {isSubmitted ? (
-                                <div className={styles.successWrapper}>
-                                    <div className={styles.successIcon}>
-                                        <CheckCircle size={44} color="#10b981" />
-                                    </div>
-                                    <h2>Message Sent!</h2>
-                                    <p>Thank you for reaching out. Our team will get back to you within 24 hours.</p>
-                                    <button onClick={() => setIsSubmitted(false)} className={styles.submitBtn}>
-                                        Send Another Message
-                                    </button>
-                                </div>
-                            ) : (
-                                <form className={styles.form} onSubmit={handleSubmit}>
-                                    <div className={styles.formHeader}>
-                                        <div className={styles.formHeaderIcon}>
-                                            <MessageSquare size={22} />
+                            <AnimatePresence mode="wait">
+                                {isSubmitted ? (
+                                    <motion.div
+                                        key="success"
+                                        className={styles.successState}
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        exit={{ opacity: 0, scale: 0.95 }}
+                                    >
+                                        <div className={styles.successIcon}>
+                                            <CheckCircle2 size={48} />
                                         </div>
-                                        <div>
-                                            <h2>Send Us a Message</h2>
-                                            <p>Fill in the form and we&apos;ll be in touch shortly.</p>
+                                        <h3>Message sent successfully.</h3>
+                                        <p>Our team will contact you within 2 to 4 business hours.</p>
+                                        <button
+                                            type="button"
+                                            className={styles.successBtn}
+                                            onClick={() => setIsSubmitted(false)}
+                                        >
+                                            Send Another Message
+                                        </button>
+                                    </motion.div>
+                                ) : (
+                                    <motion.form
+                                        key="form"
+                                        className={styles.form}
+                                        onSubmit={handleSubmit}
+                                        initial={{ opacity: 0 }}
+                                        animate={{ opacity: 1 }}
+                                        exit={{ opacity: 0 }}
+                                    >
+                                        <div className={styles.formHead}>
+                                            <div className={styles.formHeadIcon}>
+                                                <MessageSquare size={20} />
+                                            </div>
+                                            <div>
+                                                <h3>Tell us what you need</h3>
+                                                <p>Fill the form and get expert guidance quickly.</p>
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className={styles.formRow}>
+                                        <div className={styles.formRow}>
+                                            <div className={styles.formGroup}>
+                                                <label htmlFor="name">Full Name *</label>
+                                                <input
+                                                    id="name"
+                                                    name="name"
+                                                    type="text"
+                                                    placeholder="e.g. Rahul Sharma"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label htmlFor="email">Email Address *</label>
+                                                <input
+                                                    id="email"
+                                                    name="email"
+                                                    type="email"
+                                                    placeholder="you@email.com"
+                                                    required
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className={styles.formRow}>
+                                            <div className={styles.formGroup}>
+                                                <label htmlFor="phone">Phone Number *</label>
+                                                <input
+                                                    id="phone"
+                                                    name="phone"
+                                                    type="tel"
+                                                    placeholder="+91 XXXXX XXXXX"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label>Course Interested In</label>
+                                                <CustomSelect options={courseOptions} name="course" />
+                                            </div>
+                                        </div>
+
                                         <div className={styles.formGroup}>
-                                            <label htmlFor="name">Full Name <span>*</span></label>
-                                            <input type="text" id="name" name="name" placeholder="e.g. Rahul Sharma" required />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label htmlFor="email">Email Address <span>*</span></label>
-                                            <input type="email" id="email" name="email" placeholder="you@email.com" required />
-                                        </div>
-                                    </div>
-
-                                    <div className={styles.formRow}>
-                                        <div className={styles.formGroup}>
-                                            <label htmlFor="phone">Phone Number <span>*</span></label>
-                                            <input type="tel" id="phone" name="phone" placeholder="+91 XXXXX XXXXX" required />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label>Course Interested In</label>
-                                            <CustomSelect
-                                                options={courseOptions}
-                                                name="course"
+                                            <label htmlFor="subject">Subject</label>
+                                            <input
+                                                id="subject"
+                                                name="subject"
+                                                type="text"
+                                                placeholder="How can we help you?"
                                             />
                                         </div>
-                                    </div>
 
-                                    <div className={styles.formGroup}>
-                                        <label htmlFor="subject">Subject</label>
-                                        <input type="text" id="subject" name="subject" placeholder="How can we help you?" />
-                                    </div>
+                                        <div className={styles.formGroup}>
+                                            <label htmlFor="message">Message *</label>
+                                            <textarea
+                                                id="message"
+                                                name="message"
+                                                rows={5}
+                                                placeholder="Tell us your current profile and your career goal..."
+                                                required
+                                            />
+                                        </div>
 
-                                    <div className={styles.formGroup}>
-                                        <label htmlFor="message">Message <span>*</span></label>
-                                        <textarea
-                                            id="message"
-                                            name="message"
-                                            required
-                                            rows={5}
-                                            placeholder="Tell us more about what you're looking for..."
-                                        ></textarea>
-                                    </div>
-
-                                    <button type="submit" className={styles.submitBtn} disabled={isLoading}>
-                                        {isLoading ? (
-                                            'Sending...'
-                                        ) : (
-                                            <>
-                                                Send Message
-                                                <Send size={18} />
-                                            </>
-                                        )}
-                                    </button>
-                                </form>
-                            )}
+                                        <button type="submit" className={styles.submitBtn} disabled={isLoading}>
+                                            {isLoading ? (
+                                                <span className={styles.loadingDots}>Sending<span>.</span><span>.</span><span>.</span></span>
+                                            ) : (
+                                                <>
+                                                    Submit Inquiry
+                                                    <Send size={16} />
+                                                </>
+                                            )}
+                                        </button>
+                                        <p className={styles.formHint}>
+                                            By submitting, you agree to our <Link href="/privacy-policy">Privacy Policy</Link>.
+                                        </p>
+                                    </motion.form>
+                                )}
+                            </AnimatePresence>
                         </motion.div>
+
+                        <motion.aside
+                            className={styles.sidePanel}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.45, delay: 0.08 }}
+                        >
+                            <div className={styles.sideCard}>
+                                <span className={styles.sideEyebrow}>How it works</span>
+                                <h3>Your admission flow in 3 easy steps</h3>
+                                <div className={styles.stepList}>
+                                    {processSteps.map((step, index) => (
+                                        <div key={step.title} className={styles.stepItem}>
+                                            <span className={styles.stepNo}>{index + 1}</span>
+                                            <div>
+                                                <h4>{step.title}</h4>
+                                                <p>{step.desc}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className={styles.sideCard}>
+                                <span className={styles.sideEyebrow}>Need instant help?</span>
+                                <a href="tel:+914012345678" className={styles.quickLink}>
+                                    <Phone size={17} />
+                                    +91 40 1234 5678
+                                </a>
+                                <a href="mailto:admissions@itroots.in" className={styles.quickLink}>
+                                    <Mail size={17} />
+                                    admissions@itroots.in
+                                </a>
+                                <a
+                                    href="https://wa.me/919876543210"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className={styles.quickLink}
+                                >
+                                    <MessageSquare size={17} />
+                                    WhatsApp Chat
+                                </a>
+                                <div className={styles.socialRow}>
+                                    <span>Follow us</span>
+                                    <div>
+                                        <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">Facebook</a>
+                                        <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">Instagram</a>
+                                        <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">YouTube</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </motion.aside>
                     </div>
                 </div>
             </section>
 
-            {/* Office Gallery */}
-            <section className={styles.officeSection}>
+            <section className={styles.visitSection}>
                 <div className={styles.container}>
-                    <div className={styles.officeSectionHeader}>
-                        <span className={styles.eyebrow}>Our Workspace</span>
-                        <h2>Visit Our Office</h2>
-                        <p>A modern, tech-enabled learning environment designed for your success.</p>
-                    </div>
-                    <div className={styles.officeGrid}>
-                        <motion.div
-                            className={styles.officeImageWrap}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.4 }}
-                        >
-                            <Image
-                                src="/images/Entrance.jpg"
-                                alt="ITROOTS Office Entrance"
-                                width={600}
-                                height={400}
-                                className={styles.officeImg}
+                    <motion.div
+                        className={styles.sectionHeader}
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        <span>Campus and location</span>
+                        <h2>Visit our learning space in Pune</h2>
+                        <p>Modern classrooms, practical labs, and a team ready to guide your career transition.</p>
+                    </motion.div>
+
+                    <div className={styles.visitGrid}>
+                        <div className={styles.galleryGrid}>
+                            <div className={`${styles.galleryItem} ${styles.galleryItemLarge}`}>
+                                <Image
+                                    src="/images/Entrance.jpg"
+                                    alt="ITROOTS Entrance"
+                                    fill
+                                    sizes="(max-width: 900px) 100vw, 55vw"
+                                    className={styles.galleryImage}
+                                />
+                                <span>Entrance</span>
+                            </div>
+                            <div className={styles.galleryItem}>
+                                <Image
+                                    src="/images/Lobby.jpg"
+                                    alt="ITROOTS Lobby"
+                                    fill
+                                    sizes="(max-width: 900px) 100vw, 25vw"
+                                    className={styles.galleryImage}
+                                />
+                                <span>Lobby</span>
+                            </div>
+                            <div className={styles.galleryItem}>
+                                <Image
+                                    src="/images/Offfice.jpg"
+                                    alt="ITROOTS Office Floor"
+                                    fill
+                                    sizes="(max-width: 900px) 100vw, 25vw"
+                                    className={styles.galleryImage}
+                                />
+                                <span>Training Floor</span>
+                            </div>
+                        </div>
+
+                        <div className={styles.mapCard}>
+                            <iframe
+                                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.102129968592!2d73.84688947489279!3d18.52428636906136!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2c19315a199fd%3A0xfe80d210c7470a99!2sITROOTS%20PVT%20LTD!5e0!3m2!1sen!2sin!4v1772691842505!5m2!1sen!2sin"
+                                width="100%"
+                                height="320"
+                                style={{ border: 0 }}
+                                allowFullScreen
+                                loading="lazy"
+                                referrerPolicy="no-referrer-when-downgrade"
+                                title="ITROOTS Location"
                             />
-                            <span className={styles.officeLabel}>Entrance</span>
-                        </motion.div>
-                        <motion.div
-                            className={styles.officeImageWrap}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.4, delay: 0.1 }}
-                        >
-                            <Image
-                                src="/images/Lobby.jpg"
-                                alt="ITROOTS Lobby"
-                                width={600}
-                                height={400}
-                                className={styles.officeImg}
-                            />
-                            <span className={styles.officeLabel}>Lobby</span>
-                        </motion.div>
-                        <motion.div
-                            className={styles.officeImageWrap}
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.4, delay: 0.2 }}
-                        >
-                            <Image
-                                src="/images/Offfice.jpg"
-                                alt="ITROOTS Office Space"
-                                width={600}
-                                height={400}
-                                className={styles.officeImg}
-                            />
-                            <span className={styles.officeLabel}>Office</span>
-                        </motion.div>
+                            <div className={styles.mapInfo}>
+                                <h3>ITROOTS Pvt Ltd</h3>
+                                <p>
+                                    Office No. 205 and 206, Rainbow Plaza, Jangali Maharaj Road,
+                                    Deccan, Shivajinagar, Pune 411005
+                                </p>
+                                <a
+                                    href="https://maps.google.com/?q=ITROOTS+PVT+LTD+Pune"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Open in Google Maps
+                                    <ArrowRight size={15} />
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
 
-            {/* Google Map */}
-            <section className={styles.mapSection}>
-<<<<<<< HEAD
-                <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d242221.27525757928!2d73.70830591458395!3d18.451588520283625!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2c19315a199fd%3A0xfe80d210c7470a99!2sITROOTS%20PVT%20LTD!5e0!3m2!1sen!2sin!4v1772709075908!5m2!1sen!2sin"
-                    width="100%"
-                    height="450"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
-                    referrerPolicy="no-referrer-when-downgrade"
-                    title="ITRoots Location"
-                ></iframe>
-=======
-                <div className={styles.mapHeader}>
-                    <div className={styles.container}>
-                        <h2>Find Us on the Map</h2>
-                        <p>ITROOTS is located in the heart of Pune &#8212; easily accessible from Shivajinagar &#38; Deccan.</p>
+            <section className={styles.faqSection}>
+                <div className={styles.container}>
+                    <div className={styles.faqGrid}>
+                        <div className={styles.faqIntro}>
+                            <span>FAQs</span>
+                            <h2>Frequently asked questions</h2>
+                            <p>If you need anything specific, use the contact form and our team will guide you.</p>
+                            <a href="#contact-form">
+                                Ask your question
+                                <ArrowRight size={16} />
+                            </a>
+                        </div>
+                        <div className={styles.faqList}>
+                            {faqs.map((faq, index) => {
+                                const isOpen = openFaq === index;
+                                return (
+                                    <div key={faq.q} className={`${styles.faqItem} ${isOpen ? styles.faqItemOpen : ''}`}>
+                                        <button
+                                            type="button"
+                                            className={styles.faqButton}
+                                            onClick={() => setOpenFaq(isOpen ? null : index)}
+                                        >
+                                            <span>{faq.q}</span>
+                                            <ChevronDown size={19} />
+                                        </button>
+                                        <AnimatePresence initial={false}>
+                                            {isOpen ? (
+                                                <motion.div
+                                                    className={styles.faqAnswer}
+                                                    initial={{ height: 0, opacity: 0 }}
+                                                    animate={{ height: 'auto', opacity: 1 }}
+                                                    exit={{ height: 0, opacity: 0 }}
+                                                    transition={{ duration: 0.25, ease: 'easeInOut' }}
+                                                >
+                                                    <p>{faq.a}</p>
+                                                </motion.div>
+                                            ) : null}
+                                        </AnimatePresence>
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
-                <div className={styles.mapFrame}>
-                    <iframe
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3783.102129968592!2d73.84688947489279!3d18.52428636906136!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bc2c19315a199fd%3A0xfe80d210c7470a99!2sITROOTS%20PVT%20LTD!5e0!3m2!1sen!2sin!4v1772691842505!5m2!1sen!2sin"
-                        width="100%"
-                        height="480"
-                        style={{ border: 0 }}
-                        allowFullScreen
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                        title="ITRoots Location"
-                    ></iframe>
-                </div>
->>>>>>> b8275b344df0c43dcb4d2fcd30dcfe4534e0583c
             </section>
-        </>
+
+            <section className={styles.ctaSection}>
+                <div className={styles.ctaGlow} />
+                <div className={styles.container}>
+                    <motion.div
+                        className={styles.ctaInner}
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.4 }}
+                    >
+                        <span>Ready to start?</span>
+                        <h2>Get the roadmap to your next tech role.</h2>
+                        <p>Connect with ITROOTS advisors and choose the right course with complete clarity.</p>
+                        <div className={styles.ctaActions}>
+                            <Link href="/courses" className={styles.ctaPrimary}>
+                                Explore Courses
+                                <ArrowRight size={17} />
+                            </Link>
+                            <a href="tel:+914012345678" className={styles.ctaSecondary}>
+                                <Phone size={17} />
+                                Call Now
+                            </a>
+                        </div>
+                    </motion.div>
+                </div>
+            </section>
+        </div>
     );
 }

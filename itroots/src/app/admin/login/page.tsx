@@ -18,7 +18,7 @@ export default function AdminLoginPage() {
     const router = useRouter();
     const { login, logout } = useLMSAuth();
 
-    const [email, setEmail] = useState("");
+    const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
     const [showPass, setShowPass] = useState(false);
     const [error, setError] = useState("");
@@ -29,7 +29,7 @@ export default function AdminLoginPage() {
         setError("");
         setIsLoading(true);
 
-        const result = await login(email.trim(), password);
+        const result = await login(identifier.trim(), password);
 
         if (result.success) {
             const userRole = result.user?.role;
@@ -70,17 +70,17 @@ export default function AdminLoginPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Administrator Email</label>
+                        <label className={styles.label}>Email or Username</label>
                         <div className={styles.inputWrapper}>
                             <Envelope size={20} className={styles.inputIcon} />
                             <input
-                                type="email"
+                                type="text"
                                 className={styles.input}
-                                placeholder="admin@itroots.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Email or Username"
+                                value={identifier}
+                                onChange={(e) => setIdentifier(e.target.value)}
                                 required
                             />
                         </div>

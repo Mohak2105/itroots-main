@@ -4,432 +4,285 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import {
-    Target,
-    Users,
-    Award,
-    Building,
-    CheckCircle,
+    CheckCircle2,
     ArrowRight,
-    TrendingUp,
-    BookOpen,
-    Briefcase,
-    Star,
+    Award,
+    PlayCircle,
+    Target,
     Zap,
-    Shield,
-    Heart,
+    Users,
+    Briefcase,
+    ShieldCheck,
     Globe
 } from 'lucide-react';
 import styles from './page.module.css';
 
 const stats = [
-    { value: '5000+', label: 'Students Placed', icon: <Users size={24} /> },
-    { value: '10+', label: 'Years of Excellence', icon: <Award size={24} /> },
-    { value: '100+', label: 'Hiring Partners', icon: <Building size={24} /> },
-    { value: '95%', label: 'Placement Rate', icon: <TrendingUp size={24} /> },
+    { value: '5K+', label: 'Students Placed', color: 'orange' },
+    { value: '10+', label: 'Years Experience', color: 'blue' },
+    { value: '100+', label: 'Hiring Partners', color: 'teal' },
+    { value: '95%', label: 'Placement Rate', color: 'purple' }
 ];
 
-const milestones = [
-    { year: '2015', title: 'Founded', description: 'ITROOTS was established with a vision to bridge the IT skills gap in India.' },
-    { year: '2017', title: 'First 1000 Students', description: 'Reached the milestone of training 1000+ students from diverse backgrounds.' },
-    { year: '2019', title: '50+ Hiring Partners', description: 'Built strong industry partnerships with top tech companies for placements.' },
-    { year: '2021', title: 'Online Expansion', description: 'Launched hybrid learning programs to serve students across India.' },
-    { year: '2023', title: '5000+ Placements', description: 'Achieved 5000+ successful career transformations across India.' },
-    { year: '2024', title: 'AI Integration', description: 'Introduced cutting-edge AI, GenAI programs aligned with future-ready careers.' }
+const features = [
+    'Industry-aligned Curriculum designed by experts',
+    '100% Placement Assistance & Dedicated Support',
+    'Real-world Projects & Hands-on Training',
+    'Modern Infrastructure & High-tech Labs'
 ];
 
 const values = [
     {
-        icon: <Target size={28} />,
-        title: 'Excellence',
-        description: 'We strive for excellence in every aspect of our training — from curriculum design to placement support.',
-        color: '#0c2d4c',
-        bg: 'rgba(12, 45, 76, 0.08)'
+        title: 'Innovation First',
+        desc: 'We stay ahead of the curve, constantly updating our curriculum to match the latest tech trends like AI & Cloud.',
+        icon: <Zap size={32} />,
+        color: 'var(--accent-orange)',
+        bg: 'rgba(238, 150, 2, 0.1)'
     },
     {
-        icon: <Heart size={28} />,
-        title: 'Student-Centric',
-        description: 'Our students\' success is our primary measure of achievement. Every decision is made with learners in mind.',
-        color: '#ee9602',
-        bg: 'rgba(238, 150, 2, 0.08)'
-    },
-    {
-        icon: <Globe size={28} />,
-        title: 'Industry-Aligned',
-        description: 'Curriculum designed with direct input from industry experts, keeping pace with the latest technology trends.',
-        color: '#0881ec',
-        bg: 'rgba(8, 129, 236, 0.08)'
-    },
-    {
-        icon: <Shield size={28} />,
-        title: 'Integrity',
-        description: 'We maintain transparency and honesty in all our operations, fostering trust with students and partners.',
-        color: '#3b9995',
-        bg: 'rgba(59, 153, 149, 0.08)'
-    },
-    {
-        icon: <Zap size={28} />,
-        title: 'Innovation',
-        description: 'Continuously evolving our programs to integrate the latest tools, AI platforms, and learning methodologies.',
-        color: '#f5a623',
-        bg: 'rgba(245, 166, 35, 0.08)'
-    },
-    {
-        icon: <Briefcase size={28} />,
         title: 'Career Focus',
-        description: 'Every module is designed with job-readiness in mind — practical skills that employers actually look for.',
-        color: '#5b21b6',
-        bg: 'rgba(91, 33, 182, 0.08)'
-    },
-];
-
-const whyChooseUs = [
-    { stat: '100%', label: 'Job Guarantee', desc: 'We guarantee placement or refund — no ifs, no buts.' },
-    { stat: '10+', label: 'Years Experience', desc: 'Over a decade of transforming IT careers in India.' },
-    { stat: '5-6h', label: 'Daily Practice', desc: 'Intensive hands-on training every day, not just theory.' },
-    { stat: 'Real', label: 'Projects', desc: 'Industry-grade projects that make your resume stand out.' },
-];
-
-const team = [
-    {
-        name: 'Rahul Naik',
-        role: 'Founder & CEO',
-        description: '20+ years in IT education and consulting. Visionary behind ITROOTS\' placement-first approach.',
-        initials: 'RN',
-        gradient: 'linear-gradient(135deg, #0c2d4c 0%, #1a5f96 100%)'
+        desc: 'Every module is designed with one goal: making our students highly employable in top-tier tech companies.',
+        icon: <Target size={32} />,
+        color: 'var(--primary-blue)',
+        bg: 'rgba(12, 45, 76, 0.1)'
     },
     {
-        name: 'Priya Naik',
-        role: 'Director of Training',
-        description: 'Former Google engineer and AI specialist. Leads curriculum design and academic excellence.',
-        initials: 'PN',
-        gradient: 'linear-gradient(135deg, #ee9602 0%, #f5a623 100%)'
+        title: 'Global Standards',
+        desc: 'Our teaching methodologies meet international standards, ensuring our students can compete on a global scale.',
+        icon: <Globe size={32} />,
+        color: 'var(--teal-accent)',
+        bg: 'rgba(5, 65, 81, 0.1)'
     },
     {
-        name: 'Vaibhav Patil',
-        role: 'Head of Placements',
-        description: 'Extensive network in Fortune 500 companies. Has placed 2000+ students at top tech firms.',
-        initials: 'VP',
-        gradient: 'linear-gradient(135deg, #054151 0%, #3b9995 100%)'
-    },
-    {
-        name: 'Dhiraj Patil',
-        role: 'Academic Director',
-        description: 'PhD in Computer Science from IIT Hyderabad. Ensures every program meets global standards.',
-        initials: 'DP',
-        gradient: 'linear-gradient(135deg, #5b21b6 0%, #7c3aed 100%)'
+        title: 'Integrity',
+        desc: 'We believe in transparent commitments. When we promise support, we deliver it unconditionally.',
+        icon: <ShieldCheck size={32} />,
+        color: '#8b5cf6',
+        bg: 'rgba(139, 92, 246, 0.1)'
     }
 ];
 
-export default function AboutPage() {
+const team = [
+    { name: 'Rahul Naik', role: 'Founder & CEO', img: '/images/about/team-placeholder-1.jpg' },
+    { name: 'Priya Naik', role: 'Director of Training', img: '/images/about/team-placeholder-2.jpg' },
+    { name: 'Vaibhav Patil', role: 'Head of Placements', img: '/images/about/team-placeholder-3.jpg' },
+    { name: 'Dhiraj Patil', role: 'Academic Director', img: '/images/about/team-placeholder-4.jpg' }
+];
+
+export default function AboutNewPage() {
     return (
-        <>
-            {/* Hero / Banner Section — UNCHANGED */}
-            <section className={styles.hero}>
+        <main className={styles.main}>
+            {/* 1. Hero Section */}
+            <section className={styles.heroSection}>
+                <div className={styles.heroShape1}></div>
+                <div className={styles.heroShape2}></div>
                 <div className={styles.container}>
-                    <motion.div
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <h1>About ITROOTS</h1>
-                        <p>Empowering careers through quality IT education since 2015</p>
-                    </motion.div>
+                    <div className={styles.heroContent}>
+                        <motion.span
+                            className={styles.heroBadge}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                        >
+                            Get To Know Us Better
+                        </motion.span>
+                        <motion.h1
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.1 }}
+                        >
+                            We build the next generation of <span>Tech Innovators</span>
+                        </motion.h1>
+                        <motion.p
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.2 }}
+                        >
+                            ITROOTS is India's premium tech education institute, bridging the gap between academic learning and industry demands since 2015.
+                        </motion.p>
+                    </div>
                 </div>
             </section>
 
-            {/* Stats Strip */}
-            <section className={styles.statsStrip}>
+            {/* 2. Overlapping Stats */}
+            <section className={styles.statsSection}>
                 <div className={styles.container}>
-<<<<<<< HEAD
-                    <div className={styles.missionGrid}>
-                        <div className={styles.missionContent}>
-                            <div className={styles.missionBox}>
-                                <div className={styles.missionTitleRow}>
-                                    <div className={styles.missionIcon}>
-                                        <Target size={24} />
-                                    </div>
-                                    <h2>Our Mission</h2>
-                                </div>
-                                <p>
-                                    To transform aspiring professionals into industry-ready tech talent through comprehensive training, hands-on experience, and dedicated placement support. We believe everyone deserves access to quality IT education that leads to meaningful career opportunities.
-                                </p>
-                            </div>
-
-                            <div className={styles.missionBox}>
-                                <div className={styles.missionTitleRow}>
-                                    <div className={styles.missionIcon}>
-                                        <Eye size={24} />
-                                    </div>
-                                    <h2>Our Vision</h2>
-                                </div>
-                                <p>
-                                    To be the most trusted IT training institute in India, known for producing job-ready professionals who excel in their careers. We aim to bridge the gap between academic knowledge and industry requirements, creating a skilled workforce for the digital future.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className={styles.missionImageWrapper}>
-                            <img
-                                src="/images/mission_vision (2).png"
-                                alt="Our Mission and Vision"
-                                className={styles.missionImage}
-                            />
-                        </div>
-=======
-                    <div className={styles.statsGrid}>
+                    <div className={styles.statsWrapper}>
                         {stats.map((stat, i) => (
                             <motion.div
                                 key={i}
-                                className={styles.statItem}
-                                initial={{ opacity: 0, y: 20 }}
+                                className={`${styles.statCard} ${styles[stat.color]}`}
+                                initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 0.4, delay: i * 0.1 }}
+                                transition={{ duration: 0.5, delay: i * 0.1 }}
                             >
-                                <div className={styles.statIcon}>{stat.icon}</div>
-                                <div className={styles.statValue}>{stat.value}</div>
-                                <div className={styles.statLabel}>{stat.label}</div>
+                                <h2>{stat.value}</h2>
+                                <p>{stat.label}</p>
                             </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Who Are We */}
-            <section className={styles.whoWeAreSection}>
+            {/* 3. About Us Split Section */}
+            <section className={styles.aboutSplitSection}>
                 <div className={styles.container}>
-                    <div className={styles.whoWeAreGrid}>
+                    <div className={styles.splitGrid}>
                         <motion.div
-                            className={styles.whoWeAreImage}
-                            initial={{ opacity: 0, x: -40 }}
+                            className={styles.splitImages}
+                            initial={{ opacity: 0, x: -50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.6 }}
                         >
-                            <div className={styles.imageFrame}>
-                                <img
-                                    src="/images/about/who_are_we.png"
-                                    alt="ITROOTS Team"
-                                    className={styles.illustration}
-                                />
-                                <div className={styles.imageBadge}>
-                                    <Star size={16} fill="#ee9602" color="#ee9602" />
-                                    <span>Trusted by 5000+ Students</span>
+                            <div className={styles.imageMain}>
+                                <Image src="/images/Offfice.jpg" alt="Office" width={500} height={600} className={styles.coverImg} />
+                                <div className={styles.playButton}>
+                                    <PlayCircle size={48} />
+                                </div>
+                            </div>
+                            <div className={styles.imageFloat}>
+                                <div className={styles.floatCard}>
+                                    <Award size={40} color="var(--accent-orange)" />
+                                    <div className={styles.floatText}>
+                                        <h4>Award Winning</h4>
+                                        <p>Education Institute</p>
+                                    </div>
                                 </div>
                             </div>
                         </motion.div>
+
                         <motion.div
-                            className={styles.whoWeAreText}
-                            initial={{ opacity: 0, x: 40 }}
+                            className={styles.splitContent}
+                            initial={{ opacity: 0, x: 50 }}
                             whileInView={{ opacity: 1, x: 0 }}
                             viewport={{ once: true }}
-                            transition={{ duration: 0.6, delay: 0.1 }}
+                            transition={{ duration: 0.6, delay: 0.2 }}
                         >
-                            <span className={styles.eyebrow}>Who Are We</span>
-                            <h2>We Are Passionate About Quality IT Education</h2>
-                            <p>
-                                ITROOTS was established in 2015 with a bold vision — to bridge the IT skills gap and create industry-ready professionals. We believe everyone deserves access to quality IT education that leads to meaningful, high-paying career opportunities.
+                            <span className={styles.sectionEyebrow}>About ITROOTS</span>
+                            <h2>Transforming Lives Through <span>Expert Training</span></h2>
+                            <p className={styles.leadText}>
+                                We don't just teach code. We engineer careers. Our philosophy is rooted in hands-on, practical learning that prepares you for real-world challenges.
                             </p>
-                            <ul className={styles.checkList}>
-                                <li>
-                                    <CheckCircle size={20} className={styles.checkIcon} fill="#0c2d4c" color="white" />
-                                    <span>Transform aspiring professionals into industry-ready tech talent through comprehensive training.</span>
-                                </li>
-                                <li>
-                                    <CheckCircle size={20} className={styles.checkIcon} fill="#0c2d4c" color="white" />
-                                    <span>Provide hands-on experience and dedicated 360° placement support from day one.</span>
-                                </li>
-                                <li>
-                                    <CheckCircle size={20} className={styles.checkIcon} fill="#0c2d4c" color="white" />
-                                    <span>Creating a highly skilled workforce ready for the AI-driven digital economy.</span>
-                                </li>
-                                <li>
-                                    <CheckCircle size={20} className={styles.checkIcon} fill="#0c2d4c" color="white" />
-                                    <span>India's most trusted IT training institute — bridging academics and industry since 2015.</span>
-                                </li>
+                            <p className={styles.subText}>
+                                Over the last decade, we have partnered with hundreds of tech companies to understand their exact hiring needs. This allows us to craft a curriculum that makes our students instantly employable.
+                            </p>
+
+                            <ul className={styles.featuresList}>
+                                {features.map((feature, i) => (
+                                    <li key={i}>
+                                        <div className={styles.checkIcon}>
+                                            <CheckCircle2 size={18} />
+                                        </div>
+                                        {feature}
+                                    </li>
+                                ))}
                             </ul>
-                            <Link href="/courses" className={styles.exploreBtn}>
-                                Explore Our Courses
-                                <ArrowRight size={18} />
+
+                            <Link href="/courses" className={styles.primaryBtn}>
+                                Discover Our Programs <ArrowRight size={18} />
                             </Link>
                         </motion.div>
->>>>>>> b8275b344df0c43dcb4d2fcd30dcfe4534e0583c
                     </div>
                 </div>
             </section>
 
-            {/* Why Choose Us — Dark Blue Ribbon */}
-            <section className={styles.whySection}>
-                <div className={styles.container}>
-                    <motion.div
-                        className={styles.whyHeader}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <span className={styles.eyebrowLight}>Why Choose ITROOTS</span>
-                        <h2>The ITROOTS Difference</h2>
-                        <p>We don't just train — we transform. Here's what sets us apart from every other IT institute.</p>
-                    </motion.div>
-                    <div className={styles.whyGrid}>
-                        {whyChooseUs.map((item, i) => (
-                            <motion.div
-                                key={i}
-                                className={styles.whyCard}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.4, delay: i * 0.1 }}
-                            >
-                                <div className={styles.whyStat}>{item.stat}</div>
-                                <div className={styles.whyLabel}>{item.label}</div>
-                                <p className={styles.whyDesc}>{item.desc}</p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Core Values */}
+            {/* 4. Core Values Grid */}
             <section className={styles.valuesSection}>
                 <div className={styles.container}>
-                    <motion.div
-                        className={styles.sectionHeader}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <span className={styles.eyebrow}>What Drives Us</span>
-                        <h2>Our Core Values</h2>
-                        <p>The principles that guide every decision, every program, and every interaction at ITROOTS.</p>
-                    </motion.div>
+                    <div className={styles.sectionHeaderCenter}>
+                        <span className={styles.sectionEyebrow}>What Drives Us</span>
+                        <h2>Our Core Philosophy</h2>
+                        <p>The foundational principles that guide our teaching and operations.</p>
+                    </div>
+
                     <div className={styles.valuesGrid}>
-                        {values.map((value, i) => (
+                        {values.map((v, i) => (
                             <motion.div
                                 key={i}
                                 className={styles.valueCard}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.4, delay: i * 0.08 }}
-                            >
-                                <div className={styles.valueIconWrap} style={{ background: value.bg, color: value.color }}>
-                                    {value.icon}
-                                </div>
-                                <h3>{value.title}</h3>
-                                <p>{value.description}</p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* Our Journey — Timeline */}
-            <section className={styles.timelineSection}>
-                <div className={styles.container}>
-                    <motion.div
-                        className={styles.sectionHeader}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <span className={styles.eyebrow}>Our Story</span>
-                        <h2>Our Journey So Far</h2>
-                        <p>A decade of growth, milestones, and thousands of career transformations.</p>
-                    </motion.div>
-                    <div className={styles.timeline}>
-                        {milestones.map((m, i) => (
-                            <motion.div
-                                key={i}
-                                className={styles.timelineItem}
                                 initial={{ opacity: 0, y: 30 }}
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 0.4, delay: i * 0.1 }}
+                                transition={{ duration: 0.5, delay: i * 0.1 }}
                             >
-                                <div className={styles.timelineYear}>{m.year}</div>
-                                <div className={styles.timelineDot} />
-                                <div className={styles.timelineCard}>
-                                    <h3>{m.title}</h3>
-                                    <p>{m.description}</p>
+                                <div className={styles.valueIcon} style={{ background: v.bg, color: v.color }}>
+                                    {v.icon}
                                 </div>
+                                <h3>{v.title}</h3>
+                                <p>{v.desc}</p>
                             </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* Leadership Team */}
+            {/* 5. Leadership / Team Section */}
             <section className={styles.teamSection}>
                 <div className={styles.container}>
-                    <motion.div
-                        className={styles.sectionHeader}
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <span className={styles.eyebrow}>Meet the Team</span>
-                        <h2>The Leadership Behind ITROOTS</h2>
-                        <p>Experienced educators and industry veterans driving our mission every day.</p>
-                    </motion.div>
+                    <div className={styles.teamHeaderRow}>
+                        <div className={styles.teamTitleArea}>
+                            <span className={styles.sectionEyebrow}>The Brains</span>
+                            <h2>Meet Our Leaders</h2>
+                        </div>
+                        <p className={styles.teamDesc}>
+                            Our seasoned leadership team brings decades of combined experience from academia and the tech industry.
+                        </p>
+                    </div>
+
                     <div className={styles.teamGrid}>
-                        {team.map((member, i) => (
+                        {team.map((t, i) => (
                             <motion.div
                                 key={i}
-                                className={styles.teamCard}
+                                className={styles.teamMemberCard}
                                 initial={{ opacity: 0, scale: 0.95 }}
                                 whileInView={{ opacity: 1, scale: 1 }}
                                 viewport={{ once: true }}
-                                transition={{ duration: 0.4, delay: i * 0.1 }}
+                                transition={{ duration: 0.5, delay: i * 0.1 }}
                             >
-                                <div className={styles.teamAvatar} style={{ background: member.gradient }}>
-                                    {member.initials}
+                                {/* Using initials placeholder since actual photos aren't confirmed */}
+                                <div className={styles.memberAvatarDrop}>
+                                    <div className={styles.initialsAvatar}>
+                                        {t.name.split(' ').map(n => n[0]).join('')}
+                                    </div>
                                 </div>
-                                <h3>{member.name}</h3>
-                                <span className={styles.teamRole}>{member.role}</span>
-                                <p>{member.description}</p>
+                                <div className={styles.memberInfo}>
+                                    <h3>{t.name}</h3>
+                                    <span>{t.role}</span>
+                                </div>
                             </motion.div>
                         ))}
                     </div>
                 </div>
             </section>
 
-            {/* CTA Section */}
-            <section className={styles.ctaSection}>
+            {/* 6. CTA / Bottom Banner */}
+            <section className={styles.ctaBanner}>
+                <div className={styles.ctaBackdrop}>
+                    <div className={styles.ctaPattern}></div>
+                </div>
                 <div className={styles.container}>
-                    <div className={styles.ctaBox}>
-                        <motion.div
-                            className={styles.ctaContent}
-                            initial={{ opacity: 0, y: 30 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <span className={styles.eyebrowLight}>Ready to Begin?</span>
-                            <h2>Transform Your Career with ITROOTS</h2>
-                            <p>Join thousands of successful IT professionals who started their journey with us. Your dream career is just one step away.</p>
-                            <div className={styles.ctaButtons}>
-                                <Link href="/courses" className={styles.ctaPrimary}>
-                                    Explore Courses
-                                    <ArrowRight size={18} />
-                                </Link>
-                                <Link href="/contact" className={styles.ctaSecondary}>
-                                    Talk to Us
-                                </Link>
-                            </div>
-                        </motion.div>
-                        <div className={styles.ctaImageWrap}>
-                            <Image
-                                src="/images/projects/data-science-with-ai/jounery2.png"
-                                alt="Career Journey"
-                                width={420}
-                                height={420}
-                                className={styles.ctaImage}
-                            />
+                    <motion.div
+                        className={styles.ctaContentWrapper}
+                        initial={{ opacity: 0, y: 40 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        <h2>Ready to launch your IT career?</h2>
+                        <p>Join the 5000+ graduates who transformed their lives at ITROOTS.</p>
+                        <div className={styles.ctaButtons}>
+                            <Link href="/courses" className={styles.btnSolid}>
+                                View Courses
+                            </Link>
+                            <Link href="/contact" className={styles.btnOutline}>
+                                Contact Advisor
+                            </Link>
                         </div>
-                    </div>
+                    </motion.div>
                 </div>
             </section>
-        </>
+        </main>
     );
 }

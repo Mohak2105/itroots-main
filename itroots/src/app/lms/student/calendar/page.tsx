@@ -6,7 +6,7 @@ import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { CaretLeft, CaretRight, CalendarDots, Clock, BookOpen, Link as LinkIcon } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
-import styles from "../../Faculty/calendar/calendar.module.css";
+import styles from "../../teacher/calendar/calendar.module.css";
 
 const MONTH_NAMES = [
     "January", "February", "March", "April", "May", "June",
@@ -14,6 +14,18 @@ const MONTH_NAMES = [
 ];
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const EVENT_COLORS = ["#0881ec", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
+
+type LiveClassItem = {
+    id: string;
+    batchId: string;
+    scheduledAt: string;
+    status: string;
+    title: string;
+    meetingLink: string;
+    description?: string;
+    course?: { title?: string };
+    batch?: { name?: string };
+};
 
 const sameDate = (date: Date, value: string) => {
     const eventDate = new Date(value);
@@ -27,7 +39,7 @@ export default function StudentCalendarPage() {
     const router = useRouter();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(new Date());
-    const [liveClasses, setLiveClasses] = useState<any[]>([]);
+    const [liveClasses, setLiveClasses] = useState<LiveClassItem[]>([]);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
@@ -91,11 +103,11 @@ export default function StudentCalendarPage() {
     const selectedEvents = getEventsForDate(selectedDate);
 
     return (
-        <LMSShell pageTitle="Schedule">
+        <LMSShell pageTitle="Live Classes">
             <div className={styles.page}>
                 <div className={styles.banner}>
                     <div>
-                        <div className={styles.bannerTitle}>Live Class Schedule</div>
+                        <div className={styles.bannerTitle}>Live Classes Schedule</div>
                         <div className={styles.bannerSub}>View upcoming live classes for your assigned batches.</div>
                     </div>
                     <CalendarDots size={60} color="rgba(255,255,255,0.2)" weight="duotone" />

@@ -19,7 +19,10 @@
     "next": "16.1.6",
     "poly-decomp": "^0.3.0",
     "react": "19.2.3",
+    "react-calendar": "^6.0.0",
     "react-dom": "19.2.3",
+    "react-hook-form": "^7.71.2",
+    "react-hot-toast": "^2.6.0",
     "svg-path-commander": "^2.1.11",
     "tailwind-merge": "^3.4.0"
   },

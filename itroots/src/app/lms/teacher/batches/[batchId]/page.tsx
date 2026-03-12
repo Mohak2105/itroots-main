@@ -104,7 +104,7 @@ export default function BatchManagementPage() {
 
     const loadAttendanceForDate = useCallback(async (selectedDate: string) => {
         if (!token || !batchId) return;
-        setIsAttendanceLoading(true);
+        setIsAttendanceModal(true);
         try {
             const response = await fetch(`${ENDPOINTS.Faculty.BASE}/attendance/${batchId}?date=${selectedDate}`, {
                 headers: { Authorization: `Bearer ${token}` },
@@ -124,12 +124,12 @@ export default function BatchManagementPage() {
         } catch (error) {
             console.error(error);
         } finally {
-            setIsAttendanceLoading(false);
+            setIsAttendanceModal(false);
         }
     }, [token, batchId, data.data?.enrollments]);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -811,3 +811,4 @@ export default function BatchManagementPage() {
         </LMSShell>
     );
 }
+

@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { Op } from 'sequelize';
 import User from '../models/User';
 import Batch from '../models/Batch';
@@ -10,7 +11,7 @@ import Certificate from '../models/Certificate';
 
 export const getAdminDashboard = async (req: Request, res: Response) => {
     try {
-        const [students, Faculty, courses, batches, recentStudents, totalRevenue, pendingPayments, allCourses, allBatchesRaw] = await Promise.all([
+        const [students, Faculty, courses, batches, recentStudents, totalRevenue, pendingPayments, certificates, allCourses, allBatchesRaw] = await Promise.all([
             User.count({ where: { role: 'STUDENT' } }),
             User.count({ where: { role: 'Faculty' } }),
             Course.count(),
@@ -23,6 +24,7 @@ export const getAdminDashboard = async (req: Request, res: Response) => {
             }),
             Payment.sum('amount', { where: { status: { [Op.in]: ['PAID', 'PARTIAL'] } } }),
             Payment.count({ where: { status: 'PENDING' } }),
+            Certificate.count(),
             Course.findAll({
                 attributes: ['id', 'title', 'category', 'duration', 'status'],
                 include: [{ model: User, as: 'instructor', attributes: ['id', 'name'], required: false }],
@@ -57,6 +59,7 @@ export const getAdminDashboard = async (req: Request, res: Response) => {
             batches,
             revenue: Number(totalRevenue || 0),
             pendingPayments,
+            certificates,
             recentStudents,
             allCourses,
             allBatches,
@@ -223,7 +226,15 @@ export const getAllBatches = async (req: Request, res: Response) => {
 
 export const createBatch = async (req: Request, res: Response) => {
     try {
-        const batch = await Batch.create(req.body);
+        const { name, courseId, FacultyId, schedule, startDate, endDate } = req.body;
+        const batch = await Batch.create({
+            name,
+            courseId,
+            FacultyId: FacultyId || null,
+            schedule,
+            startDate,
+            endDate,
+        } as any);
         res.status(201).json(batch);
     } catch (error) {
         console.error('Create batch error:', error);
@@ -335,6 +346,42 @@ export const deleteUser = async (req: Request, res: Response) => {
     } catch (error) {
         console.error('Delete user error:', error);
         res.status(500).json({ message: 'Server error during user deletion' });
+    }
+};
+
+export const impersonateUser = async (req: Request, res: Response) => {
+    try {
+        const user = await User.findByPk(req.params.id as string);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        if (!user.isActive) {
+            return res.status(403).json({ message: 'Cannot impersonate an inactive user' });
+        }
+
+        const token = jwt.sign(
+            { id: user.id, role: user.role },
+            process.env.JWT_SECRET || 'secret',
+            { expiresIn: '1d' }
+        );
+
+        res.json({
+            token,
+            user: {
+                id: user.id,
+                username: user.username,
+                name: user.name,
+                email: user.email,
+                phone: user.phone,
+                profileImage: user.profileImage,
+                role: user.role,
+                specialization: user.specialization,
+                isActive: user.isActive,
+            },
+        });
+    } catch (error) {
+        console.error('Impersonate user error:', error);
+        res.status(500).json({ message: 'Server error during impersonation' });
     }
 };
 

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
+// removed duplicate import
 import {
     Users,
     Building2,

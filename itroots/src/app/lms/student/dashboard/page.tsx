@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -16,8 +16,6 @@ import {
     BookOpen,
     Megaphone,
     Link as LinkIcon,
-    Scroll,
-    DownloadSimple,
 } from "@phosphor-icons/react";
 
 type DashboardData = {
@@ -27,13 +25,11 @@ type DashboardData = {
         averageTestScore: number;
         pendingAssignments: number;
         upcomingLiveClasses: number;
-        totalCertificates: number;
     };
     enrollments: any[];
     announcements: any[];
     notifications: any[];
     liveClasses: any[];
-    certificates: any[];
 };
 
 type AttendanceBatch = {
@@ -142,13 +138,11 @@ export default function StudentDashboard() {
             averageTestScore: 0,
             pendingAssignments: 0,
             upcomingLiveClasses: 0,
-            totalCertificates: 0,
         },
         enrollments: [],
         announcements: [],
         notifications: [],
         liveClasses: [],
-        certificates: [],
     });
     const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceBatch>>({});
     const [loading, setLoading] = useState(true);
@@ -195,28 +189,6 @@ export default function StudentDashboard() {
         [dashboard.announcements, dashboard.notifications]
     );
 
-    const handleCertificateDownload = async (certificateId: string) => {
-        if (!token) return;
-        try {
-            const response = await fetch(ENDPOINTS.STUDENT.CERTIFICATE_DOWNLOAD(certificateId), {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!response.ok) {
-                throw new Error("Unable to download certificate");
-            }
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "certificate.pdf";
-            link.click();
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error(error);
-            alert(error instanceof Error ? error.message : "Unable to download certificate");
-        }
-    };
-
     if (isLoading || !user) return null;
 
     return (
@@ -225,7 +197,7 @@ export default function StudentDashboard() {
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Dashboard</div>
-                        <div className={styles.bannerSub}>Track your batches, attendance, scores, and issued certificates.</div>
+                        <div className={styles.bannerSub}>Track your batches, attendance, scores, and notifications.</div>
                     </div>
                     <GraduationCap size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
@@ -260,49 +232,105 @@ export default function StudentDashboard() {
                     </div>
                     <div className={styles.statCard}>
                         <div className={`${styles.statIcon} ${styles.statIconBlue}`}>
-                            <Scroll size={22} weight="duotone" />
+                            <BookOpen size={22} weight="duotone" />
                         </div>
                         <div className={styles.statInfo}>
-                            <div className={styles.statValue}>{loading ? "-" : dashboard.summary.totalCertificates}</div>
-                            <div className={styles.statLabel}>Certificates</div>
+                            <div className={styles.statValue}>{loading ? "-" : dashboard.enrollments.length}</div>
+                            <div className={styles.statLabel}>Continue Learning</div>
+                        </div>
+                    </div>
+                    <div className={styles.statCard}>
+                        <div className={`${styles.statIcon} ${styles.statIconOrange}`}>
+                            <Megaphone size={22} weight="duotone" />
+                        </div>
+                        <div className={styles.statInfo}>
+                            <div className={styles.statValue}>{loading ? "-" : feedItems.length}</div>
+                            <div className={styles.statLabel}>Notifications</div>
                         </div>
                     </div>
                 </div>
+                <div className={styles.twoCol}>
+                    <div className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <span className={styles.sectionTitle}>Continue Learning</span>
+                            <Link href="/my-learning" className={styles.viewAll}>View All <ArrowRight size={14} /></Link>
+                        </div>
 
-                <div className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <span className={styles.sectionTitle}>My Certificates</span>
-                        <Link href="/certificates" className={styles.viewAll}>Open Certificates <ArrowRight size={14} /></Link>
+                        {loading ? (
+                            <div className={styles.skeletonList}>
+                                {[1, 2].map((i) => <div key={i} className={styles.skeleton} />)}
+                            </div>
+                        ) : dashboard.enrollments.length === 0 ? (
+                            <div className={styles.emptyState}>
+                                <BookOpen size={40} color="#cbd5e1" weight="duotone" />
+                                <p>No batches enrolled yet.</p>
+                            </div>
+                        ) : (
+                            <div className={styles.batchList}>
+                                {dashboard.enrollments.slice(0, 4).map((item: any) => (
+                                    <Link key={item.id} href={`/learning/${item.batch?.id}`} className={styles.batchCard}>
+                                        <div className={styles.batchAvatar}>{item.batch?.course?.title?.charAt(0) || "B"}</div>
+                                        <div className={styles.batchInfo}>
+                                            <div className={styles.batchName}>{item.batch?.name || "Batch"}</div>
+                                            <div className={styles.batchCourse}>{item.batch?.course?.title}</div>
+                                            <div className={styles.progressBar}>
+                                                <div className={styles.progressFill} style={{ width: `${item.progressPercent || 0}%` }} />
+                                            </div>
+                                        </div>
+                                        <ArrowRight size={18} color="#0881ec" />
+                                    </Link>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
-                    {loading ? (
-                        <div className={styles.skeletonList}>
-                            {[1, 2].map((i) => <div key={i} className={styles.skeleton} />)}
+                    <div className={styles.section}>
+                        <div className={styles.sectionHeader}>
+                            <span className={styles.sectionTitle}>Notifications</span>
+                            <Link href="/announcements" className={styles.viewAll}>Open Feed <ArrowRight size={14} /></Link>
                         </div>
-                    ) : dashboard.certificates.length === 0 ? (
-                        <div className={styles.emptyState}>
-                            <Scroll size={40} color="#cbd5e1" weight="duotone" />
-                            <p>No certificates issued yet.</p>
-                        </div>
-                    ) : (
-                        <div className={styles.batchList}>
-                            {dashboard.certificates.map((certificate: any) => (
-                                <div key={certificate.id} className={styles.batchCard}>
-                                    <div className={styles.batchAvatar}>{certificate.course?.title?.charAt(0) || "C"}</div>
-                                    <div className={styles.batchInfo}>
-                                        <div className={styles.batchName}>{certificate.course?.title || "Certificate"}</div>
-                                        <div className={styles.batchCourse}>{certificate.certificateNumber}</div>
-                                        <div className={styles.annMeta}>Issued on {new Date(certificate.issueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
+
+                        {loading ? (
+                            <div className={styles.skeletonList}>
+                                {[1, 2, 3].map((i) => <div key={i} className={styles.skeleton} />)}
+                            </div>
+                        ) : feedItems.length === 0 ? (
+                            <div className={styles.emptyState}>
+                                <Megaphone size={40} color="#cbd5e1" weight="duotone" />
+                                <p>No notifications yet.</p>
+                            </div>
+                        ) : (
+                            <div className={styles.annList}>
+                                {feedItems.map((item) => (
+                                    <div key={item.id} className={styles.annCard}>
+                                        <div className={styles.annIcon} style={{ color: item.kind === "NOTIFICATION" ? "#0ea5e9" : "#0881ec" }}>
+                                            <Megaphone size={16} weight="fill" />
+                                        </div>
+                                        <div className={styles.annContent}>
+                                            <div className={styles.annTitle}>{item.title}</div>
+                                            <div className={styles.annBody} style={{ whiteSpace: "pre-line" }}>{item.body}</div>
+                                            <div className={styles.annMeta}>
+                                                {new Date(item.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+                                                {" | "}{item.authorName}
+                                            </div>
+                                            {item.actionUrl ? (
+                                                item.opensInNewTab ? (
+                                                    <a href={item.actionUrl} target="_blank" rel="noreferrer" className={styles.viewAll} style={{ display: "inline-flex", marginTop: "0.5rem" }}>
+                                                        {item.actionLabel || "Open"} <LinkIcon size={14} />
+                                                    </a>
+                                                ) : (
+                                                    <Link href={item.actionUrl} className={styles.viewAll} style={{ display: "inline-flex", marginTop: "0.5rem" }}>
+                                                        {item.actionLabel || "View in LMS"} <LinkIcon size={14} />
+                                                    </Link>
+                                                )
+                                            ) : null}
+                                        </div>
                                     </div>
-                                    <button type="button" onClick={() => handleCertificateDownload(certificate.id)} className={styles.viewAll} style={{ background: "none", border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.35rem", whiteSpace: "nowrap" }}>
-                                        PDF <DownloadSimple size={14} />
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                ))}
+                            </div>
+                        )}
+                    </div>
                 </div>
-
                 <div className={styles.section}>
                     <div className={styles.sectionHeader}>
                         <span className={styles.sectionTitle}>Attendance Records</span>
@@ -375,89 +403,6 @@ export default function StudentDashboard() {
                             })}
                         </div>
                     )}
-                </div>
-
-                <div className={styles.twoCol}>
-                    <div className={styles.section}>
-                        <div className={styles.sectionHeader}>
-                            <span className={styles.sectionTitle}>Continue Learning</span>
-                            <Link href="/my-learning" className={styles.viewAll}>View All <ArrowRight size={14} /></Link>
-                        </div>
-
-                        {loading ? (
-                            <div className={styles.skeletonList}>
-                                {[1, 2].map((i) => <div key={i} className={styles.skeleton} />)}
-                            </div>
-                        ) : dashboard.enrollments.length === 0 ? (
-                            <div className={styles.emptyState}>
-                                <BookOpen size={40} color="#cbd5e1" weight="duotone" />
-                                <p>No batches enrolled yet.</p>
-                            </div>
-                        ) : (
-                            <div className={styles.batchList}>
-                                {dashboard.enrollments.slice(0, 4).map((item: any) => (
-                                    <Link key={item.id} href={`/learning/${item.batch?.id}`} className={styles.batchCard}>
-                                        <div className={styles.batchAvatar}>{item.batch?.course?.title?.charAt(0) || "B"}</div>
-                                        <div className={styles.batchInfo}>
-                                            <div className={styles.batchName}>{item.batch?.name || "Batch"}</div>
-                                            <div className={styles.batchCourse}>{item.batch?.course?.title}</div>
-                                            <div className={styles.progressBar}>
-                                                <div className={styles.progressFill} style={{ width: `${item.progressPercent || 0}%` }} />
-                                            </div>
-                                        </div>
-                                        <ArrowRight size={18} color="#0881ec" />
-                                    </Link>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-
-                    <div className={styles.section}>
-                        <div className={styles.sectionHeader}>
-                            <span className={styles.sectionTitle}>Notifications</span>
-                            <Link href="/announcements" className={styles.viewAll}>Open Feed <ArrowRight size={14} /></Link>
-                        </div>
-
-                        {loading ? (
-                            <div className={styles.skeletonList}>
-                                {[1, 2, 3].map((i) => <div key={i} className={styles.skeleton} />)}
-                            </div>
-                        ) : feedItems.length === 0 ? (
-                            <div className={styles.emptyState}>
-                                <Megaphone size={40} color="#cbd5e1" weight="duotone" />
-                                <p>No notifications yet.</p>
-                            </div>
-                        ) : (
-                            <div className={styles.annList}>
-                                {feedItems.map((item) => (
-                                    <div key={item.id} className={styles.annCard}>
-                                        <div className={styles.annIcon} style={{ color: item.kind === "NOTIFICATION" ? "#0ea5e9" : "#0881ec" }}>
-                                            <Megaphone size={16} weight="fill" />
-                                        </div>
-                                        <div className={styles.annContent}>
-                                            <div className={styles.annTitle}>{item.title}</div>
-                                            <div className={styles.annBody} style={{ whiteSpace: "pre-line" }}>{item.body}</div>
-                                            <div className={styles.annMeta}>
-                                                {new Date(item.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}
-                                                {" | "}{item.authorName}
-                                            </div>
-                                            {item.actionUrl ? (
-                                                item.opensInNewTab ? (
-                                                    <a href={item.actionUrl} target="_blank" rel="noreferrer" className={styles.viewAll} style={{ display: "inline-flex", marginTop: "0.5rem" }}>
-                                                        {item.actionLabel || "Open"} <LinkIcon size={14} />
-                                                    </a>
-                                                ) : (
-                                                    <Link href={item.actionUrl} className={styles.viewAll} style={{ display: "inline-flex", marginTop: "0.5rem" }}>
-                                                        {item.actionLabel || "View in LMS"} <LinkIcon size={14} />
-                                                    </Link>
-                                                )
-                                            ) : null}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
                 </div>
             </div>
         </LMSShell>

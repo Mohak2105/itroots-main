@@ -201,9 +201,9 @@ export const createFaculty = async (req: Request, res: Response) => {
     const transaction = await sequelize.transaction();
     try {
         const { name, email, phone, specialization, assignedCourseId, assignedBatchId } = req.body;
-        if (!name || !email || !phone || !specialization) {
+        if (!name || !email || !phone) {
             await transaction.rollback();
-            return res.status(400).json({ message: 'name, email, phone and specialization are required' });
+            return res.status(400).json({ message: 'name, email and phone are required' });
         }
 
         const normalizedEmail = normalizeEmail(email);
@@ -217,7 +217,7 @@ export const createFaculty = async (req: Request, res: Response) => {
         const plainPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-        const Faculty = await User.create({ username, name, email: normalizedEmail, phone, password: hashedPassword, role: 'Faculty', specialization, isActive: true }, { transaction });
+        const Faculty = await User.create({ username, name, email: normalizedEmail, phone, password: hashedPassword, role: 'Faculty', specialization: specialization || 'General', isActive: true }, { transaction });
         const assignment = await assignFacultyToResources(Faculty.id, assignedCourseId, assignedBatchId, transaction);
         await transaction.commit();
 

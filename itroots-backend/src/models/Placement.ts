@@ -3,24 +3,24 @@ import sequelize from '../config/database';
 
 interface PlacementAttributes {
     id: string;
-    studentName: string;
     companyName: string;
     designation: string;
-    package: string;
-    image?: string;
-    testimonial?: string;
-    year: number;
+    salaryRange: string;
+    jobDescription: string;
+    passoutYears: string;
+    applyLink: string;
+    companyLogo?: string;
 }
 
 class Placement extends Model<PlacementAttributes> implements PlacementAttributes {
     public id!: string;
-    public studentName!: string;
     public companyName!: string;
     public designation!: string;
-    public package!: string;
-    public image?: string;
-    public testimonial?: string;
-    public year!: number;
+    public salaryRange!: string;
+    public jobDescription!: string;
+    public passoutYears!: string;
+    public applyLink!: string;
+    public companyLogo!: string;
 
     public readonly createdAt!: Date;
     public readonly updatedAt!: Date;
@@ -33,10 +33,6 @@ Placement.init(
             defaultValue: DataTypes.UUIDV4,
             primaryKey: true,
         },
-        studentName: {
-            type: DataTypes.STRING,
-            allowNull: false,
-        },
         companyName: {
             type: DataTypes.STRING,
             allowNull: false,
@@ -45,21 +41,25 @@ Placement.init(
             type: DataTypes.STRING,
             allowNull: false,
         },
-        package: {
+        salaryRange: {
             type: DataTypes.STRING,
             allowNull: false,
         },
-        image: {
-            type: DataTypes.STRING,
-            allowNull: true,
-        },
-        testimonial: {
+        jobDescription: {
             type: DataTypes.TEXT,
-            allowNull: true,
-        },
-        year: {
-            type: DataTypes.INTEGER,
             allowNull: false,
+        },
+        passoutYears: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        applyLink: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
+        companyLogo: {
+            type: DataTypes.STRING,
+            allowNull: true,
         },
     },
     {

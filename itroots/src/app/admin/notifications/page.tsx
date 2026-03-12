@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,15 +6,10 @@ import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./notifications.module.css";
-import { BellRinging, PaperPlaneRight } from "@phosphor-icons/react";
-
-type UserOption = {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    isActive: boolean;
-};
+import { BellRinging, PaperPlaneRight, Plus, Trash, X } from "@phosphor-icons/react";
+import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
+import toast from "react-hot-toast";
+import { showDeleteConfirmation } from "@/utils/toastUtils";
 
 type CourseOption = {
     id: string;
@@ -42,26 +37,11 @@ type NotificationRecord = {
     recipients?: Array<{ id: string; user?: { id: string; name: string; role: string } }>;
 };
 
-const TYPE_OPTIONS = [
-    { value: "NOTIFICATION", label: "General Notification" },
-    { value: "ANNOUNCEMENT", label: "Announcement" },
-    { value: "REMINDER", label: "Reminder" },
-    { value: "ALERT", label: "Alert" },
-    { value: "PLACEMENT", label: "Placement" },
-    { value: "FEES", label: "Fees" },
-];
-
-const AUDIENCE_OPTIONS = [
+const GROUP_OPTIONS = [
     { value: "ALL_STUDENTS", label: "All Students" },
     { value: "ALL_Faculty", label: "All Faculty" },
-    { value: "SELECTED_STUDENTS", label: "Selected Students" },
-    { value: "SELECTED_Faculty", label: "Selected Faculty" },
     { value: "SELECTED_BATCH", label: "Selected Batch" },
-    { value: "SELECTED_BATCH_STUDENTS", label: "Selected Batch + Students" },
-    { value: "SELECTED_BATCH_Faculty", label: "Selected Batch + Faculty" },
     { value: "SELECTED_COURSE", label: "Selected Course" },
-    { value: "SELECTED_COURSE_STUDENTS", label: "Selected Course + Students" },
-    { value: "SELECTED_COURSE_Faculty", label: "Selected Course + Faculty" },
 ];
 
 const EMPTY_FORM = {
@@ -71,34 +51,76 @@ const EMPTY_FORM = {
     audienceType: "ALL_STUDENTS",
     batchId: "",
     courseId: "",
-    recipientIds: [] as string[],
-    sendEmail: false,
 };
 
-const BATCH_AUDIENCES = new Set(["SELECTED_BATCH", "SELECTED_BATCH_STUDENTS", "SELECTED_BATCH_Faculty"]);
-const COURSE_AUDIENCES = new Set(["SELECTED_COURSE", "SELECTED_COURSE_STUDENTS", "SELECTED_COURSE_Faculty"]);
-const DIRECT_STUDENT_AUDIENCES = new Set(["SELECTED_STUDENTS"]);
-const DIRECT_Faculty_AUDIENCES = new Set(["SELECTED_Faculty"]);
+const BATCH_AUDIENCES = new Set(["SELECTED_BATCH"]);
+const COURSE_AUDIENCES = new Set(["SELECTED_COURSE"]);
 
-const formatDate = (value: string) => new Date(value).toLocaleDateString("en-IN", {
+const formatTimestamp = (value: string) => new Date(value).toLocaleString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
 });
 
-const audienceLabel = (value: string) => AUDIENCE_OPTIONS.find((item) => item.value === value)?.label || value;
-const typeLabel = (value: string) => TYPE_OPTIONS.find((item) => item.value === value)?.label || value;
+const removeMessageTimestamp = (message: string) => message
+    .replace(/\s*\|\s*\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}(?:,\s*\d{1,2}:\d{2}\s*(?:AM|PM))?\s*$/i, "")
+    .replace(/\s*\|\s*\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?\s*$/i, "")
+    .replace(/Date and Time:[^\n]*\n?/ig, "")
+    .trim();
+
+const groupLabel = (value: string) => GROUP_OPTIONS.find((item) => item.value === value)?.label || value;
+
+const ExpandableMessage = ({ message }: { message: string }) => {
+    const [expanded, setExpanded] = useState(false);
+    const cleanMessage = removeMessageTimestamp(message);
+    const isLong = cleanMessage.length > 70;
+
+    if (!isLong) {
+        return <div className={styles.tableSecondary}>{cleanMessage}</div>;
+    }
+
+    return (
+        <div className={styles.tableSecondary} style={expanded ? {} : { display: "flex", alignItems: "center" }}>
+            {expanded ? (
+                <>
+                    {cleanMessage}
+                    <button
+                        onClick={() => setExpanded(false)}
+                        style={{ background: "none", border: "none", color: "#0881ec", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", padding: "0 4px", textDecoration: "underline", whiteSpace: "nowrap" }}
+                    >
+                        Read less
+                    </button>
+                </>
+            ) : (
+                <>
+                    <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", display: "inline-block", maxWidth: "340px" }}>
+                        {cleanMessage.replace(/\n/g, " ")}
+                    </span>
+                    <button
+                        onClick={() => setExpanded(true)}
+                        style={{ background: "none", border: "none", color: "#0881ec", fontSize: "0.78rem", fontWeight: 600, cursor: "pointer", padding: "0 4px", textDecoration: "underline", whiteSpace: "nowrap", flexShrink: 0 }}
+                    >
+                        Read more
+                    </button>
+                </>
+            )}
+        </div>
+    );
+};
 
 export default function AdminNotificationsPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
     const [form, setForm] = useState(EMPTY_FORM);
-    const [users, setUsers] = useState<UserOption[]>([]);
     const [courses, setCourses] = useState<CourseOption[]>([]);
     const [batches, setBatches] = useState<BatchOption[]>([]);
     const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
     const [loadingData, setLoadingData] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [deletingId, setDeletingId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "SUPER_ADMIN")) {
@@ -111,21 +133,18 @@ export default function AdminNotificationsPage() {
         setLoadingData(true);
         try {
             const headers = { Authorization: `Bearer ${token}` };
-            const [usersRes, coursesRes, batchesRes, notificationsRes] = await Promise.all([
-                fetch(ENDPOINTS.ADMIN.USERS, { headers }),
+            const [coursesRes, batchesRes, notificationsRes] = await Promise.all([
                 fetch(ENDPOINTS.ADMIN.COURSES, { headers }),
                 fetch(ENDPOINTS.ADMIN.BATCHES, { headers }),
                 fetch(ENDPOINTS.ADMIN.NOTIFICATIONS, { headers }),
             ]);
 
-            const [usersData, coursesData, batchesData, notificationsData] = await Promise.all([
-                usersRes.json(),
+            const [coursesData, batchesData, notificationsData] = await Promise.all([
                 coursesRes.json(),
                 batchesRes.json(),
                 notificationsRes.json(),
             ]);
 
-            setUsers(Array.isArray(usersData) ? usersData : []);
             setCourses(Array.isArray(coursesData) ? coursesData : []);
             setBatches(Array.isArray(batchesData) ? batchesData : []);
             setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
@@ -142,16 +161,6 @@ export default function AdminNotificationsPage() {
         }
     }, [token]);
 
-    const availableUsers = useMemo(() => {
-        if (DIRECT_STUDENT_AUDIENCES.has(form.audienceType)) {
-            return users.filter((item) => item.role === "STUDENT" && item.isActive);
-        }
-        if (DIRECT_Faculty_AUDIENCES.has(form.audienceType)) {
-            return users.filter((item) => item.role === "Faculty" && item.isActive);
-        }
-        return [];
-    }, [form.audienceType, users]);
-
     const availableBatches = useMemo(() => {
         if (form.courseId && !BATCH_AUDIENCES.has(form.audienceType)) {
             return batches.filter((item) => item.courseId === form.courseId);
@@ -161,16 +170,6 @@ export default function AdminNotificationsPage() {
 
     const needsBatch = BATCH_AUDIENCES.has(form.audienceType);
     const needsCourse = COURSE_AUDIENCES.has(form.audienceType);
-    const needsUsers = DIRECT_STUDENT_AUDIENCES.has(form.audienceType) || DIRECT_Faculty_AUDIENCES.has(form.audienceType);
-
-    const toggleRecipient = (userId: string) => {
-        setForm((current) => ({
-            ...current,
-            recipientIds: current.recipientIds.includes(userId)
-                ? current.recipientIds.filter((id) => id !== userId)
-                : [...current.recipientIds, userId],
-        }));
-    };
 
     const resetTargeting = (audienceType: string) => {
         setForm((current) => ({
@@ -178,7 +177,6 @@ export default function AdminNotificationsPage() {
             audienceType,
             batchId: "",
             courseId: "",
-            recipientIds: [],
         }));
     };
 
@@ -186,18 +184,13 @@ export default function AdminNotificationsPage() {
         event.preventDefault();
         if (!token) return;
 
-        if (needsUsers && form.recipientIds.length === 0) {
-            alert("Select at least one user.");
-            return;
-        }
-
         if (needsBatch && !form.batchId) {
-            alert("Select a batch.");
+            toast.error("Select a batch.");
             return;
         }
 
         if (needsCourse && !form.courseId) {
-            alert("Select a course.");
+            toast.error("Select a course.");
             return;
         }
 
@@ -208,10 +201,8 @@ export default function AdminNotificationsPage() {
                 message: form.message,
                 type: form.type,
                 audienceType: form.audienceType,
-                recipientIds: needsUsers ? form.recipientIds : undefined,
                 batchId: needsBatch ? form.batchId : undefined,
                 courseId: needsCourse ? form.courseId : undefined,
-                sendEmail: form.sendEmail,
             };
 
             const response = await fetch(ENDPOINTS.ADMIN.NOTIFICATIONS, {
@@ -229,14 +220,43 @@ export default function AdminNotificationsPage() {
             }
 
             setForm(EMPTY_FORM);
+            setShowModal(false);
             await fetchData();
-            alert(`Notification sent to ${data?.recipientCount || 0} recipients.`);
+            toast.success(`Notification sent to ${data?.recipientCount || 0} recipients.`);
         } catch (error) {
             console.error("Notification send failed:", error);
-            alert(error instanceof Error ? error.message : "Unable to send notification");
+            toast.error(error instanceof Error ? error.message : "Unable to send notification");
         } finally {
             setSubmitting(false);
         }
+    };
+
+    const handleDelete = (notificationId: string) => {
+        if (!token) return;
+
+        showDeleteConfirmation("Notification", async () => {
+            setDeletingId(notificationId);
+            try {
+                const response = await fetch(`${ENDPOINTS.ADMIN.NOTIFICATIONS}/${notificationId}`, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const data = await response.json().catch(() => ({}));
+                if (!response.ok) {
+                    throw new Error(data?.message || "Unable to delete notification");
+                }
+
+                setNotifications((current) => current.filter((item) => item.id !== notificationId));
+            } catch (error) {
+                console.error("Notification delete failed:", error);
+                toast.error(error instanceof Error ? error.message : "Unable to delete notification");
+            } finally {
+                setDeletingId(null);
+            }
+        });
     };
 
     if (isLoading || !user) return null;
@@ -246,20 +266,81 @@ export default function AdminNotificationsPage() {
             <div className={styles.page}>
                 <div className={styles.banner}>
                     <div>
-                        <div className={styles.bannerEyebrow}>COMMUNICATION CENTER</div>
-                        <div className={styles.bannerTitle}>Admin notifications for students and Faculty</div>
-                        <div className={styles.bannerSub}>Send batch-wise, course-wise, or direct notifications with optional email delivery.</div>
+                        <div className={styles.bannerTitle}>Notification Center</div>
+                        <div className={styles.bannerSub}>Send notifications for students and Faculty</div>
                     </div>
-                    <BellRinging size={58} color="rgba(255,255,255,0.2)" weight="duotone" />
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", zIndex: 2, position: "relative" }}>
+                        <button className={styles.createBtn} onClick={() => setShowModal(true)}>
+                            <Plus size={18} weight="bold" />
+                            <span>Create Notification</span>
+                        </button>
+                    </div>
+                    <BellRinging size={110} color="rgba(255,255,255,0.08)" weight="duotone" style={{ position: "absolute", right: "-20px", top: "-10px", zIndex: 0 }} />
                 </div>
 
-                <div className={styles.grid}>
-                    <section className={styles.card}>
-                        <div className={styles.cardHeader}>
-                            <h3>Create Notification</h3>
-                            <span className={styles.muted}>Real recipients resolved from the database</span>
-                        </div>
+                <section className={styles.tableCard}>
+                    <div className={styles.cardHeader}>
+                        <h3>Notifications</h3>
+                        <span className={styles.muted}>{notifications.length} records</span>
+                    </div>
 
+                    <div className={styles.tableWrap}>
+                        <table className={styles.table}>
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Group</th>
+                                    <th>Recipients</th>
+                                    <th>Timestamp</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loadingData ? (
+                                    <tr>
+                                        <td colSpan={5} className={styles.emptyCell}>Loading notifications...</td>
+                                    </tr>
+                                ) : notifications.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={5} className={styles.emptyCell}>No notifications sent yet.</td>
+                                    </tr>
+                                ) : notifications.map((notification) => (
+                                    <tr key={notification.id}>
+                                        <td>
+                                            <div className={styles.tableStack}>
+                                                <div className={styles.tablePrimary}>{notification.title}</div>
+                                                <ExpandableMessage message={notification.message} />
+                                            </div>
+                                        </td>
+                                        <td>{groupLabel(notification.audienceType)}</td>
+                                        <td>{notification.recipients?.length || 0}</td>
+                                        <td>{formatTimestamp(notification.createdAt)}</td>
+                                        <td className={styles.actionCell}>
+                                            <button
+                                                type="button"
+                                                className={styles.deleteBtn}
+                                                disabled={deletingId === notification.id}
+                                                onClick={() => { void handleDelete(notification.id); }}
+                                                title="Delete"
+                                            >
+                                                <Trash size={16} weight="bold" />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+            </div>
+
+            {showModal && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modal}>
+                        <div className={styles.modalHeader}>
+                            <h3>Create Notification</h3>
+                            <button onClick={() => { setShowModal(false); setForm(EMPTY_FORM); }}><X size={20} /></button>
+                        </div>
                         <form onSubmit={handleSubmit} className={styles.form}>
                             <div className={styles.formGroup}>
                                 <label>Title</label>
@@ -278,148 +359,60 @@ export default function AdminNotificationsPage() {
                                     rows={5}
                                     value={form.message}
                                     onChange={(event) => setForm((current) => ({ ...current, message: event.target.value }))}
-                                    placeholder="Write the notification message for the selected audience"
+                                    placeholder="Write the notification message for the selected group"
                                 />
                             </div>
 
                             <div className={styles.formRow}>
-                                <div className={styles.formGroup}>
-                                    <label>Notification Type</label>
-                                    <select value={form.type} onChange={(event) => setForm((current) => ({ ...current, type: event.target.value }))}>
-                                        {TYPE_OPTIONS.map((item) => (
-                                            <option key={item.value} value={item.value}>{item.label}</option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label>Audience</label>
-                                    <select value={form.audienceType} onChange={(event) => resetTargeting(event.target.value)}>
-                                        {AUDIENCE_OPTIONS.map((item) => (
-                                            <option key={item.value} value={item.value}>{item.label}</option>
-                                        ))}
-                                    </select>
+                                <div className={styles.formGroup} style={{ flex: 1 }}>
+                                    <label>Group</label>
+                                    <CustomSelect
+                                        options={GROUP_OPTIONS}
+                                        value={form.audienceType}
+                                        onChange={(val) => resetTargeting(val)}
+                                        placeholder="Select group"
+                                    />
                                 </div>
                             </div>
 
-                            {needsBatch ? (
+                            {needsBatch && (
                                 <div className={styles.formGroup}>
                                     <label>Select Batch</label>
-                                    <select value={form.batchId} onChange={(event) => setForm((current) => ({ ...current, batchId: event.target.value }))}>
-                                        <option value="">Choose batch</option>
-                                        {availableBatches.map((batch) => (
-                                            <option key={batch.id} value={batch.id}>
-                                                {batch.name}{batch.course?.title ? ` - ${batch.course.title}` : ""}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <CustomSelect
+                                        options={availableBatches.map((batch) => ({
+                                            value: batch.id,
+                                            label: `${batch.name}${batch.course?.title ? ` - ${batch.course.title}` : ""}`,
+                                        }))}
+                                        value={form.batchId}
+                                        onChange={(val) => setForm((current) => ({ ...current, batchId: val }))}
+                                        placeholder="Choose batch"
+                                    />
                                 </div>
-                            ) : null}
+                            )}
 
-                            {needsCourse ? (
+                            {needsCourse && (
                                 <div className={styles.formGroup}>
                                     <label>Select Course</label>
-                                    <select value={form.courseId} onChange={(event) => setForm((current) => ({ ...current, courseId: event.target.value }))}>
-                                        <option value="">Choose course</option>
-                                        {courses.map((course) => (
-                                            <option key={course.id} value={course.id}>
-                                                {course.title}{course.duration ? ` - ${course.duration}` : ""}
-                                            </option>
-                                        ))}
-                                    </select>
+                                    <CustomSelect
+                                        options={courses.map((course) => ({
+                                            value: course.id,
+                                            label: `${course.title}${course.duration ? ` - ${course.duration}` : ""}`,
+                                        }))}
+                                        value={form.courseId}
+                                        onChange={(val) => setForm((current) => ({ ...current, courseId: val }))}
+                                        placeholder="Choose course"
+                                    />
                                 </div>
-                            ) : null}
-
-                            {needsUsers ? (
-                                <div className={styles.formGroup}>
-                                    <label>Select Users</label>
-                                    <div className={styles.userGrid}>
-                                        {availableUsers.length === 0 ? (
-                                            <div className={styles.userEmpty}>No active users found for this audience.</div>
-                                        ) : availableUsers.map((option) => (
-                                            <label key={option.id} className={styles.userOption}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={form.recipientIds.includes(option.id)}
-                                                    onChange={() => toggleRecipient(option.id)}
-                                                />
-                                                <div>
-                                                    <div className={styles.userName}>{option.name}</div>
-                                                    <div className={styles.userMeta}>{option.email}</div>
-                                                </div>
-                                            </label>
-                                        ))}
-                                    </div>
-                                </div>
-                            ) : null}
-
-                            <label className={styles.emailToggle}>
-                                <input
-                                    type="checkbox"
-                                    checked={form.sendEmail}
-                                    onChange={(event) => setForm((current) => ({ ...current, sendEmail: event.target.checked }))}
-                                />
-                                <span>Send email together with dashboard notification</span>
-                            </label>
+                            )}
 
                             <button type="submit" className={styles.submitBtn} disabled={submitting}>
                                 <PaperPlaneRight size={18} weight="bold" />
                                 {submitting ? "Sending..." : "Send Notification"}
                             </button>
                         </form>
-                    </section>
-
-                    <section className={styles.card}>
-                        <div className={styles.cardHeader}>
-                            <h3>Recent Notifications</h3>
-                            <span className={styles.muted}>{notifications.length} records</span>
-                        </div>
-
-                        <div className={styles.tableWrap}>
-                            <table className={styles.table}>
-                                <thead>
-                                    <tr>
-                                        <th>Title</th>
-                                        <th>Type</th>
-                                        <th>Audience</th>
-                                        <th>Target</th>
-                                        <th>Recipients</th>
-                                        <th>Email</th>
-                                        <th>Sent On</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {loadingData ? (
-                                        <tr>
-                                            <td colSpan={7} className={styles.emptyCell}>Loading notifications...</td>
-                                        </tr>
-                                    ) : notifications.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={7} className={styles.emptyCell}>No notifications sent yet.</td>
-                                        </tr>
-                                    ) : notifications.map((notification) => (
-                                        <tr key={notification.id}>
-                                            <td>
-                                                <div className={styles.tableStack}>
-                                                    <div className={styles.tablePrimary}>{notification.title}</div>
-                                                    <div className={styles.tableSecondary}>{notification.message}</div>
-                                                </div>
-                                            </td>
-                                            <td><span className={styles.typeBadge}>{typeLabel(notification.type)}</span></td>
-                                            <td>{audienceLabel(notification.audienceType)}</td>
-                                            <td>
-                                                {notification.batch?.name || notification.course?.title || "Global"}
-                                            </td>
-                                            <td>{notification.recipients?.length || 0}</td>
-                                            <td>{notification.sendEmail ? "Yes" : "No"}</td>
-                                            <td>{formatDate(notification.createdAt)}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
+                    </div>
                 </div>
-            </div>
+            )}
         </LMSShell>
     );
 }

@@ -51,7 +51,7 @@ export default function FacultyCalendarPage() {
     const [formData, setFormData] = useState(emptyForm);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -368,7 +368,7 @@ export default function FacultyCalendarPage() {
                                 <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Description / Agenda</label>
                                 <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={4} style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1", resize: "vertical" }} />
                             </div>
-                            <button type="submit" style={{ marginTop: "0.5rem", border: "none", background: "#0f172a", color: "#fff", borderRadius: "14px", padding: "0.95rem", fontWeight: 700, cursor: "pointer" }}>
+                            <button type="submit" style={{ marginTop: "0.5rem", border: "none", background: "linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%)", color: "#fff", borderRadius: "999px", padding: "0.95rem", fontWeight: 700, cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", transition: "transform 0.2s ease, box-shadow 0.2s ease" }}>
                                 {formData.id ? "Save Live Class" : "Create Live Class"}
                             </button>
                         </form>
@@ -378,3 +378,4 @@ export default function FacultyCalendarPage() {
         </LMSShell>
     );
 }
+

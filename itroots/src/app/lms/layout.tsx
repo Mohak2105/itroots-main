@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { LMSAuthProvider } from "./auth-context";
+import { Toaster } from "react-hot-toast";
 
 export const metadata: Metadata = {
     title: {
@@ -13,6 +14,7 @@ export default function LMSLayout({ children }: { children: React.ReactNode }) {
     return (
         <LMSAuthProvider>
             <div className="lms-root">{children}</div>
+            <Toaster position="top-right" />
         </LMSAuthProvider>
     );
 }

@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
-import styles from "./Faculty-announcements.module.css";
+import styles from "./teacher-announcements.module.css";
 import { Bell, CheckCircle, MegaphoneSimple } from "@phosphor-icons/react";
 
 type NotificationRecipient = {
@@ -25,14 +25,20 @@ type NotificationRecipient = {
     };
 };
 
-const formatDate = (value?: string) => {
+const formatTimestamp = (value?: string) => {
     if (!value) return "-";
-    return new Date(value).toLocaleDateString("en-IN", {
+    return new Date(value).toLocaleString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
     });
 };
+const removeMessageTimestamp = (message: string) => message
+    .replace(/\s*\|\s*\d{1,2}\s+[A-Za-z]{3,9}\s+\d{4}(?:,\s*\d{1,2}:\d{2}\s*(?:AM|PM))?\s*$/i, "")
+    .replace(/\s*\|\s*\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?\s*$/i, "")
+    .trim();
 
 export default function FacultyAnnouncementsPage() {
     const { user, isLoading, token } = useLMSAuth();
@@ -42,7 +48,7 @@ export default function FacultyAnnouncementsPage() {
     const [markingId, setMarkingId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -129,6 +135,7 @@ export default function FacultyAnnouncementsPage() {
                                 const notification = item.notification;
                                 const targetName = notification?.batch?.name || notification?.course?.title || "General";
                                 const isRead = Boolean(item.readAt);
+                                const cleanMessage = removeMessageTimestamp(notification?.message || "");
 
                                 return (
                                     <div key={item.id} className={styles.item}>
@@ -140,7 +147,10 @@ export default function FacultyAnnouncementsPage() {
                                                 <div>
                                                     <div className={styles.title}>{notification?.title || "Notification"}</div>
                                                     <div className={styles.meta}>
-                                                        {notification?.type || "NOTIFICATION"} | {targetName} | {formatDate(notification?.createdAt || item.createdAt)}
+                                                        {notification?.type || "NOTIFICATION"} | {targetName}
+                                                    </div>
+                                                    <div className={styles.meta}>
+                                                        Timestamp: {formatTimestamp(notification?.createdAt || item.createdAt)}
                                                     </div>
                                                 </div>
                                                 {isRead ? (
@@ -157,7 +167,7 @@ export default function FacultyAnnouncementsPage() {
                                                     </button>
                                                 )}
                                             </div>
-                                            <div className={styles.message}>{notification?.message || ""}</div>
+                                            <div className={styles.message}>{cleanMessage}</div>
                                             <div className={styles.footer}>
                                                 From {notification?.creator?.name || "Admin"}
                                             </div>
@@ -172,3 +182,5 @@ export default function FacultyAnnouncementsPage() {
         </LMSShell>
     );
 }
+
+

@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { ENDPOINTS, FRONTEND_ONLY_MODE } from "@/config/api";
 import { USERS } from "@/data/lms-data";
 
-export type UserRole = "SUPER_ADMIN" | "CMS_MANAGER" | "Faculty" | "STUDENT";
+export type UserRole = "SUPER_ADMIN" | "CMS_MANAGER" | "FACULTY" | "STUDENT";
 
 export interface User {
     id: string;
@@ -20,8 +20,9 @@ export interface User {
 
 interface AuthContextType {
     user: User | null;
-    login: (email: string, password: string) => Promise<{ success: boolean; message: string; user?: User }>;
+    login: (identifier: string, password: string) => Promise<{ success: boolean; message: string; user?: User }>;
     register: (name: string, email: string, password: string, role: string) => Promise<{ success: boolean; message: string }>;
+    impersonate: (user: User, token: string) => void;
     logout: () => void;
     refreshUser: () => Promise<User | null>;
     isLoading: boolean;
@@ -45,7 +46,8 @@ type MockUser = {
 function toPortalRole(role: string): UserRole {
     const normalizedRole = role.toUpperCase();
 
-    if (normalizedRole === "Faculty") return "Faculty";
+    if (normalizedRole === "FACULTY") return "FACULTY";
+    if (normalizedRole === "Faculty") return "FACULTY";
     if (normalizedRole === "SUPER_ADMIN" || normalizedRole === "ADMIN") return "SUPER_ADMIN";
     if (normalizedRole === "CMS_MANAGER" || normalizedRole === "CMS") return "CMS_MANAGER";
     return "STUDENT";
@@ -158,7 +160,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
             });
     }, [fetchCurrentUser, persistAuthState]);
 
-    const login = useCallback(async (email: string, password: string) => {
+    const login = useCallback(async (identifier: string, password: string) => {
         if (!FRONTEND_ONLY_MODE) {
             try {
                 const response = await fetch(ENDPOINTS.AUTH.LOGIN, {
@@ -166,7 +168,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
                     headers: {
                         "Content-Type": "application/json",
                     },
-                    body: JSON.stringify({ email, password }),
+                    body: JSON.stringify({ identifier, password }),
                 });
 
                 const data = await response.json();
@@ -186,7 +188,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
 
         const mockUsers = [...getSeedUsers(), ...getSavedMockUsers()];
         const matchedUser = mockUsers.find(
-            (u) => u.email.toLowerCase() === email.toLowerCase() && u.password === password
+            (u) => (u.email.toLowerCase() === identifier.toLowerCase() || u.name.toLowerCase() === identifier.toLowerCase()) && u.password === password
         );
 
         if (!matchedUser) {
@@ -236,7 +238,8 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
             return { success: false, message: "Email already registered" };
         }
 
-        const safeRole = role.toUpperCase() === "Faculty" ? "Faculty" : "STUDENT";
+        const normalizedRole = role.toUpperCase();
+        const safeRole = normalizedRole === "FACULTY" || normalizedRole === "Faculty" ? "FACULTY" : "STUDENT";
         const savedUsers = getSavedMockUsers();
         savedUsers.push({
             id: `mock-${Date.now()}`,
@@ -267,8 +270,12 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
         persistAuthState(null, null);
     }, [persistAuthState]);
 
+    const impersonate = useCallback((newUser: User, newToken: string) => {
+        persistAuthState(newUser, newToken);
+    }, [persistAuthState]);
+
     return (
-        <AuthContext.Provider value={{ user, login, register, logout, refreshUser, isLoading, token }}>
+        <AuthContext.Provider value={{ user, login, register, impersonate, logout, refreshUser, isLoading, token }}>
             {children}
         </AuthContext.Provider>
     );
@@ -279,3 +286,4 @@ export function useLMSAuth() {
     if (!ctx) throw new Error("useLMSAuth must be used inside LMSAuthProvider");
     return ctx;
 }
+

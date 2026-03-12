@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
@@ -17,12 +17,11 @@ import {
     CalendarDots,
     UsersThree,
     Gear,
-    CreditCard,
     SignOut,
     User,
     CaretDown,
     List,
-    ChalkboardTeacher,
+    Chalkboard,
     Trophy,
     Bell,
     Scroll,
@@ -30,26 +29,33 @@ import {
 
 const ICON_MAP: Record<string, React.ElementType> = {
     "Dashboard": SquaresFour,
-    "Course Overview": ChalkboardTeacher,
+    "Course Overview": Chalkboard,
     "Analytics & Reporting": ChartBar,
+    "Students Overview": ChartBar,
+    "Students Test": Exam,
     "Event Calendar": CalendarDots,
     "Grades": Trophy,
     "Students Engagement": ChartBar,
     "Assignments": PencilSimpleLine,
     "Notifications": Bell,
-    "My Learning": GraduationCap,
-    "Online Exams": Exam,
+    "Send Notifications": Bell,
+    "My Courses": GraduationCap,
+    "Online Test": Exam,
     "Attendance": CalendarDots,
+    "Live Class": CalendarDots,
+    "Live Classes": CalendarDots,
     "Resources": BookOpen,
+    "Study Material": BookOpen,
+    "Study Materials": BookOpen,
     "Performance": ChartBar,
     "Profile Settings": Gear,
-    "Admin Analytics": ChartBar,
+    "Admin Dashboard": SquaresFour,
+    "Placements": Trophy,
     "Manage Students": UsersThree,
-    "Manage Faculty": ChalkboardTeacher,
-    "Batch Manage": CalendarDots,
-    "Course Manage": BookOpen,
-    "Fees Management": CreditCard,
-    "Portal Settings": Gear,
+    "Manage Faculty": Chalkboard,
+    "Batch Management": CalendarDots,
+    "Course Management": BookOpen,
+    "Settings": Gear,
     "Certificates": Scroll,
 };
 
@@ -57,24 +63,31 @@ const ICON_COLOR_MAP: Record<string, string> = {
     "Dashboard": "#f59e0b",
     "Course Overview": "#0ea5e9",
     "Analytics & Reporting": "#ef4444",
+    "Students Overview": "#ef4444",
+    "Students Test": "#f97316",
     "Event Calendar": "#14b8a6",
     "Grades": "#f59e0b",
     "Students Engagement": "#ec4899",
     "Assignments": "#f97316",
     "Notifications": "#06b6d4",
-    "My Learning": "#3b82f6",
-    "Online Exams": "#ef4444",
+    "Send Notifications": "#06b6d4",
+    "My Courses": "#3b82f6",
+    "Online Test": "#ef4444",
     "Attendance": "#14b8a6",
+    "Live Class": "#14b8a6",
+    "Live Classes": "#14b8a6",
     "Resources": "#6366f1",
+    "Study Material": "#6366f1",
+    "Study Materials": "#6366f1",
     "Performance": "#ec4899",
     "Profile Settings": "#64748b",
-    "Admin Analytics": "#f59e0b",
+    "Admin Dashboard": "#f59e0b",
+    "Placements": "#22c55e",
     "Manage Students": "#8b5cf6",
     "Manage Faculty": "#0ea5e9",
-    "Batch Manage": "#14b8a6",
-    "Course Manage": "#3b82f6",
-    "Fees Management": "#22c55e",
-    "Portal Settings": "#64748b",
+    "Batch Management": "#14b8a6",
+    "Course Management": "#3b82f6",
+    "Settings": "#64748b",
     "Certificates": "#f59e0b",
 };
 
@@ -83,13 +96,14 @@ const STUDENT_NAV = [
         section: "",
         items: [
             { href: "/dashboard", label: "Dashboard" },
-            { href: "/my-learning", label: "My Learning" },
+            { href: "/my-learning", label: "My Courses" },
             { href: "/assignments", label: "Assignments" },
             { href: "/attendance", label: "Attendance" },
-            { href: "/calendar", label: "Schedule" },
-            { href: "/resources", label: "Resources" },
-            { href: "/tests", label: "Online Exams" },
+            { href: "/calendar", label: "Live Classes" },
+            { href: "/resources", label: "Study Materials" },
+            { href: "/tests", label: "Online Test" },
             { href: "/progress", label: "Performance" },
+            { href: "/announcements", label: "Notifications" },
             { href: "/certificates", label: "Certificates" },
         ],
     },
@@ -100,31 +114,32 @@ const Faculty_NAV = [
         section: "",
         items: [
             { href: "/dashboard", label: "Course Overview" },
-            { href: "/analytics", label: "Analytics & Reporting" },
+            { href: "/analytics", label: "Students Overview" },
             { href: "/calendar", label: "Event Calendar" },
             { href: "/grades", label: "Grades" },
             { href: "/engagement", label: "Students Engagement" },
-            { href: "/assignments", label: "Assignments" },
-            { href: "/announcements", label: "Notifications" },
+            { href: "/assignments", label: "Students Test" },
+            { href: "/announcements", label: "Send Notifications" },
         ],
     },
 ];
 
 const ADMIN_NAV = [
     {
-        section: "LMS Management System",
+        section: "",
         items: [
             { href: "/dashboard", label: "Admin Dashboard" },
             { href: "/courses", label: "Course Management" },
             { href: "/batches", label: "Batch Management" },
-            { href: "/Faculty", label: "Manage Faculty" },
+            { href: "/teachers", label: "Manage Faculty" },
             { href: "/students", label: "Manage Students" },
+            { href: "/placements", label: "Placements" },
             { href: "/notifications", label: "Notifications" },
             { href: "/certificates", label: "Certificates" },
+            { href: "/settings", label: "Settings" },
         ],
     },
 ];
-
 export default function LMSShell({ children, pageTitle }: { children: React.ReactNode; pageTitle: string }) {
     const { user, logout, isLoading } = useLMSAuth();
     const pathname = usePathname();
@@ -147,13 +162,13 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
 
     const hostname = typeof window !== "undefined" ? window.location.hostname : "";
     const isAdminDomain = hostname.startsWith("admin");
-    const isSubdomain = hostname.startsWith("admin") || hostname.startsWith("student") || hostname.startsWith("Faculty");
+    const isSubdomain = hostname.toLowerCase().startsWith("admin") || hostname.toLowerCase().startsWith("student") || hostname.toLowerCase().startsWith("faculty");
+    const isAdminSidebar = isAdminDomain && user?.role === "SUPER_ADMIN";
 
     const navGroups =
         isAdminDomain && user?.role === "SUPER_ADMIN"
             ? ADMIN_NAV
-            : user?.role === "Faculty"
-                ? Faculty_NAV
+            : user?.role?.toUpperCase() === "FACULTY" ? Faculty_NAV
                 : user?.role === "CMS_MANAGER"
                     ? []
                     : STUDENT_NAV;
@@ -192,11 +207,11 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
             return "/dashboard";
         }
 
-        if (pathname.startsWith("/lms/Faculty/")) {
-            return pathname.replace("/lms/Faculty", "") || "/";
+        if (pathname.toLowerCase().startsWith("/lms/teacher/")) {
+            return pathname.replace(/\/lms\/teacher/i, "") || "/";
         }
 
-        if (pathname === "/lms/Faculty") {
+        if (pathname.toLowerCase() === "/lms/teacher") {
             return "/dashboard";
         }
 
@@ -221,7 +236,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                     />
                 </div>
 
-                <nav className={styles.sidebarNav} aria-label="LMS">
+                <nav className={`${styles.sidebarNav} ${isAdminSidebar ? styles.adminSidebarNav : ""}`} aria-label="LMS">
                     {navGroups.map((group) => (
                         <div key={group.section || "default"}>
                             {group.section && <div className={styles.navSectionLabel}>{group.section}</div>}
@@ -236,8 +251,8 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                         className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
                                         onClick={() => setSidebarOpen(false)}
                                     >
-                                        <span className={styles.navIcon}>
-                                            <IconComponent size={20} weight={isActive ? "fill" : "duotone"} color={iconColor} />
+                                        <span className={styles.navIcon} style={{ color: iconColor }}>
+                                            <IconComponent size={20} weight={isActive ? "fill" : "duotone"} />
                                         </span>
                                         {item.label}
                                     </Link>
@@ -246,6 +261,8 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                         </div>
                     ))}
                 </nav>
+
+                <div className={styles.sidebarVersion}>LMS V.1</div>
             </aside>
 
             <div className={styles.main}>
@@ -305,9 +322,8 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                     <div className={styles.dropdownHeader}>
                                         <div className={styles.dropdownAvatar}>{profileImageUrl ? <img src={profileImageUrl} alt={user?.name || "User"} className={styles.dropdownAvatarImage} /> : userInitials}</div>
                                         <div>
-                                            <div className={styles.dropdownName}>{user?.role === "Faculty" ? "Faculty" : user?.role === "SUPER_ADMIN" ? "Admin" : "Student"}</div>
+                                            <div className={styles.dropdownName}>{user?.role?.toUpperCase() === "FACULTY" ? "Faculty" : user?.role === "SUPER_ADMIN" ? "Admin" : "Student"}</div>
                                             <div className={styles.dropdownEmail}>{user?.email}</div>
-                                            <div className={styles.dropdownBadge}>{user?.role}</div>
                                         </div>
                                     </div>
 
@@ -321,13 +337,6 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                         <User size={18} weight="regular" />
                                         My Profile
                                     </Link>
-
-                                    {user?.role === "SUPER_ADMIN" && (
-                                        <Link href="/settings" className={styles.dropdownItem} onClick={() => setProfileDropdownOpen(false)}>
-                                            <Gear size={18} weight="regular" />
-                                            Portal Settings
-                                        </Link>
-                                    )}
 
                                     <div className={styles.dropdownDivider} />
 
@@ -352,4 +361,3 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
         </div>
     );
 }
-

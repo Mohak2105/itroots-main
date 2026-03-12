@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -6,7 +6,7 @@ import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { API_BASE_URL, ENDPOINTS } from "@/config/api";
 import { ClipboardText, CheckCircle, DownloadSimple } from "@phosphor-icons/react";
-import styles from "./Faculty-assignments.module.css";
+import styles from "./teacher-assignments.module.css";
 
 type Submission = {
     id: string;
@@ -73,7 +73,7 @@ export default function FacultyAssignmentsPage() {
     const [savingSubmissionId, setSavingSubmissionId] = useState<string | null>(null);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -269,3 +269,5 @@ export default function FacultyAssignmentsPage() {
         </LMSShell>
     );
 }
+
+

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -7,10 +7,8 @@ import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import {
     Users,
-    ChalkboardTeacher,
+    Chalkboard,
     Calendar,
-    CreditCard,
-    ArrowRight,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./admin-dashboard.module.css";
@@ -20,6 +18,7 @@ type DashboardData = {
     Faculty: number;
     courses: number;
     batches: number;
+    certificates: number;
     revenue: number;
     recentStudents: Array<{
         id: string;
@@ -69,9 +68,10 @@ const formatDate = (value?: string) => {
     });
 };
 
-const getStatusClassName = (status?: string) => {
-    if (status === "ACTIVE") return `${styles.statusBadge} ${styles.statusActive}`;
-    if (status === "ARCHIVED") return `${styles.statusBadge} ${styles.statusArchived}`;
+const getStatusClass = (status?: string) => {
+    const normalized = (status || "DRAFT").toUpperCase();
+    if (normalized === "ACTIVE") return `${styles.statusBadge} ${styles.statusActive}`;
+    if (normalized === "ARCHIVED") return `${styles.statusBadge} ${styles.statusArchived}`;
     return `${styles.statusBadge} ${styles.statusDraft}`;
 };
 
@@ -83,6 +83,7 @@ export default function AdminDashboard() {
         Faculty: 0,
         courses: 0,
         batches: 0,
+        certificates: 0,
         revenue: 0,
         recentStudents: [],
         allCourses: [],
@@ -122,17 +123,21 @@ export default function AdminDashboard() {
                 <div className={styles.welcome}>
                     <div>
                         <h2>Admin Dashboard</h2>
-                        <p>Overview of students, Faculty, courses, batches.</p>
+                        <p>Overview of Students, Faculty, Courses, Batches.</p>
                     </div>
                 </div>
 
                 <section className={styles.statsGrid}>
                     <div className={styles.statCard}>
-                        <span className={styles.statLabel}>Total Students</span>
+                        <span className={styles.statLabel}>Issued Certificates</span>
+                        <span className={styles.statValue}>{dashboard.certificates}</span>
+                    </div>
+                    <div className={styles.statCard}>
+                        <span className={styles.statLabel}>Active Students</span>
                         <span className={styles.statValue}>{dashboard.students}</span>
                     </div>
                     <div className={styles.statCard}>
-                        <span className={styles.statLabel}>Expert Faculty</span>
+                        <span className={styles.statLabel}>Active Faculty</span>
                         <span className={styles.statValue}>{dashboard.Faculty}</span>
                     </div>
                     <div className={styles.statCard}>
@@ -147,67 +152,20 @@ export default function AdminDashboard() {
 
                 <div className={styles.mainGrid}>
                     <div className={styles.section} style={{ gridColumn: "1 / -1" }}>
-                        
-                        <div className={styles.controlsGrid} style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1.5rem", padding: "1.5rem" }}>
+
+                        <div className={styles.controlsGrid} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem", padding: "1.5rem" }}>
                             <Link href="/students" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
                                 <Users size={48} color="#0881ec" />
                                 <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Student Records</span>
                             </Link>
                             <Link href="/Faculty" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
-                                <ChalkboardTeacher size={48} color="#0881ec" />
+                                <Chalkboard size={48} color="#0881ec" />
                                 <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Faculty Management</span>
                             </Link>
                             <Link href="/batches" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
                                 <Calendar size={48} color="#0881ec" />
                                 <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Batch Scheduling</span>
                             </Link>
-                            <Link href="/payments" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
-                                <CreditCard size={48} color="#0881ec" />
-                                <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Finances & Fees</span>
-                            </Link>
-                        </div>
-                    </div>
-
-                    <div className={styles.section} style={{ gridColumn: "1 / -1" }}>
-                        <div className={styles.sectionHeader}>
-                            <span>Course Library</span>
-                            <Link href="/courses" style={{ color: "#0881ec", textDecoration: "none", fontSize: "0.85rem", fontWeight: 700 }}>
-                                Open All Courses
-                            </Link>
-                        </div>
-                        <div className={styles.tableWrapper}>
-                            <table className={styles.table}>
-                                <thead>
-                                    <tr>
-                                        <th>Course</th>
-                                        <th>Category</th>
-                                        <th>Duration</th>
-                                        <th>Faculty</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {dashboard.allCourses.length === 0 ? (
-                                        <tr>
-                                            <td colSpan={5} className={styles.emptyTableCell}>No courses available yet.</td>
-                                        </tr>
-                                    ) : (
-                                        dashboard.allCourses.map((course) => (
-                                            <tr key={course.id}>
-                                                <td>
-                                                    <Link href="/courses" className={styles.tableLink}>{course.title}</Link>
-                                                </td>
-                                                <td>{course.category || "General"}</td>
-                                                <td>{course.duration || "Not set"}</td>
-                                                <td>{course.instructor?.name || "Unassigned"}</td>
-                                                <td>
-                                                    <span className={getStatusClassName(course.status)}>{course.status || "DRAFT"}</span>
-                                                </td>
-                                            </tr>
-                                        ))
-                                    )}
-                                </tbody>
-                            </table>
                         </div>
                     </div>
 
@@ -285,19 +243,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
                 </div>
-
-                <div className={styles.ctaSection}>
-                    <div>
-                        <h3 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "0.5rem" }}>Manage Portal Global Settings</h3>
-                        <p style={{ color: "#94a3b8", fontSize: "0.9rem" }}>Update pricing, announcements, and operational configuration from one place.</p>
-                    </div>
-                    <Link href="/settings" style={{ background: "#0881ec", color: "#fff", padding: "0.8rem 1.5rem", borderRadius: "10px", textDecoration: "none", fontWeight: 700, fontSize: "0.9rem", display: "flex", alignItems: "center", gap: "8px" }}>
-                        Open System Config <ArrowRight size={18} />
-                    </Link>
-                </div>
             </div>
         </LMSShell>
     );
 }
-
-

@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { Op } from 'sequelize';
 import Announcement from '../models/Announcement';
 import User from '../models/User';
@@ -313,4 +313,35 @@ export const getNotifications = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error fetching notifications' });
     }
 };
+export const deleteNotification = async (req: Request, res: Response) => {
+    const transaction = await sequelize.transaction();
 
+    try {
+        const rawId = req.params.id;
+        const id = Array.isArray(rawId) ? rawId[0] : rawId;
+
+        if (!id) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'Notification id is required' });
+        }
+
+        const notification = await Notification.findByPk(id, { transaction });
+        if (!notification) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'Notification not found' });
+        }
+
+        await NotificationRecipient.destroy({
+            where: { notificationId: id },
+            transaction,
+        });
+
+        await notification.destroy({ transaction });
+        await transaction.commit();
+
+        return res.json({ message: 'Notification deleted successfully' });
+    } catch (error) {
+        await transaction.rollback();
+        return res.status(500).json({ message: 'Server error deleting notification' });
+    }
+};

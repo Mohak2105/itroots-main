@@ -18,7 +18,7 @@ export const authenticate = async (
             return res.status(401).json({ message: 'Authentication required' });
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || '') as { id: string };
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as { id: string };
         const user = await User.findByPk(decoded.id);
 
         if (!user || !(user.dataValues as any)?.isActive) {

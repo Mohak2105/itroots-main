@@ -32,7 +32,7 @@ export default function TestResultsPage() {
     }, [token, testId]);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,6 +14,8 @@ import {
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import styles from "../students/admin-students.module.css";
+import toast from "react-hot-toast";
+import { showDeleteConfirmation, showStatusConfirmation } from "@/utils/toastUtils";
 
 interface CourseInfo {
     id: string;
@@ -44,6 +46,7 @@ interface IssuedCredentials {
     name: string;
     username: string;
     password: string;
+    loginWith?: string[];
 }
 
 const EMPTY_FORM = {
@@ -71,14 +74,14 @@ const getInitials = (name: string) =>
         .toUpperCase();
 
 export default function AdminFacultyPage() {
-    const { user, isLoading, token } = useLMSAuth();
+    const { user, isLoading, token, impersonate } = useLMSAuth();
     const router = useRouter();
     const [Faculty, setFaculty] = useState<Faculty[]>([]);
     const [courses, setCourses] = useState<CourseInfo[]>([]);
     const [batches, setBatches] = useState<BatchInfo[]>([]);
-    const [searchQuery, setSearchQuery] = useState("");
     const [loadingData, setLoadingData] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [statusFilter, setStatusFilter] = useState("ACTIVE");
     const [selectedFacultyId, setSelectedFacultyId] = useState<string | null>(null);
     const [issuedCredentials, setIssuedCredentials] = useState<IssuedCredentials | null>(null);
     const [formData, setFormData] = useState(EMPTY_FORM);
@@ -98,9 +101,7 @@ export default function AdminFacultyPage() {
         if (!token) return;
         setLoadingData(true);
         try {
-            const url = searchQuery
-                ? `${ENDPOINTS.ADMIN.Faculty}?search=${encodeURIComponent(searchQuery)}`
-                : ENDPOINTS.ADMIN.Faculty;
+            const url = ENDPOINTS.ADMIN.Faculty;
             const res = await fetch(url, {
                 headers: { Authorization: `Bearer ${token}` },
             });
@@ -132,7 +133,7 @@ export default function AdminFacultyPage() {
         if (token) {
             void fetchFaculty();
         }
-    }, [token, searchQuery]);
+    }, [token]);
 
     useEffect(() => {
         if (token) {
@@ -232,15 +233,16 @@ export default function AdminFacultyPage() {
             }
 
             resetModal();
+            toast.success(selectedFacultyId ? "Faculty mapped correctly!" : "Faculty processed correctly!");
             await Promise.all([fetchFaculty(), fetchAcademicData()]);
         } catch (err) {
             console.error("Faculty save failed:", err);
-            alert(err instanceof Error ? err.message : "Faculty save failed");
+            toast.error(err instanceof Error ? err.message : "Faculty save failed");
         }
     };
 
-    const handleToggleStatus = async (FacultyId: string, currentStatus: boolean) => {
-        try {
+    const handleToggleStatus = (FacultyId: string, currentStatus: boolean) => {
+        showStatusConfirmation("Faculty", currentStatus, async () => {
             const res = await fetch(`${ENDPOINTS.ADMIN.USERS}/${FacultyId}`, {
                 method: "PUT",
                 headers: {
@@ -249,11 +251,30 @@ export default function AdminFacultyPage() {
                 },
                 body: JSON.stringify({ isActive: !currentStatus }),
             });
-            if (res.ok) {
-                void fetchFaculty();
+            if (!res.ok) {
+                throw new Error("Status toggle failed");
             }
+            void fetchFaculty();
+        });
+    };
+
+    const handleImpersonate = async (faculty: Faculty) => {
+        if (!token) return;
+        try {
+            const res = await fetch(ENDPOINTS.ADMIN.IMPERSONATE(faculty.id), {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data?.message || "Impersonation failed");
+            }
+            impersonate(data.user, data.token);
+            toast.success(`Logged in as ${data.user.name}`);
+            router.push("/lms/teacher/dashboard");
         } catch (err) {
-            console.error("Status toggle failed:", err);
+            console.error("Impersonation error:", err);
+            toast.error(err instanceof Error ? err.message : "Impersonation failed");
         }
     };
 
@@ -274,29 +295,31 @@ export default function AdminFacultyPage() {
                 password: data?.credentials?.password || "",
                 loginWith: data?.credentials?.loginWith || [Faculty.email],
             });
-            alert(`Welcome mail sent to ${data?.user?.email || Faculty.email}`);
+            toast.success(`Welcome mail sent to ${data?.user?.email || Faculty.email}`);
         } catch (err) {
             console.error("Welcome mail failed:", err);
-            alert(err instanceof Error ? err.message : "Unable to send welcome mail");
+            toast.error(err instanceof Error ? err.message : "Unable to send welcome mail");
         }
     };
 
-    const handleDeleteFaculty = async (FacultyId: string) => {
-        if (!confirm("Are you sure you want to delete this Faculty permanently?")) return;
-        try {
+    const handleDeleteFaculty = (FacultyId: string) => {
+        showDeleteConfirmation("Faculty", async () => {
             const res = await fetch(`${ENDPOINTS.ADMIN.USERS}/${FacultyId}`, {
                 method: "DELETE",
                 headers: { Authorization: `Bearer ${token}` },
             });
-            if (res.ok) {
-                void fetchFaculty();
+            if (!res.ok) {
+                throw new Error("Deletion failed");
             }
-        } catch (err) {
-            console.error("Deletion failed:", err);
-        }
+            void fetchFaculty();
+        });
     };
 
     if (isLoading || !user) return null;
+
+    const activeFaculty = Faculty.filter((f) => f.isActive);
+    const inactiveFaculty = Faculty.filter((f) => !f.isActive);
+    const displayedFaculty = statusFilter === "ACTIVE" ? activeFaculty : inactiveFaculty;
 
     return (
         <LMSShell pageTitle="Faculty Faculty">
@@ -307,15 +330,14 @@ export default function AdminFacultyPage() {
                         <p>Create Faculty accounts, optionally assign courses and batches, and manage instructor access.</p>
                     </div>
                     <div className={styles.headerActions}>
-                        <div className={styles.searchBox}>
-                            <MagnifyingGlass size={20} />
-                            <input
-                                type="text"
-                                placeholder="Search Faculty"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                            />
-                        </div>
+                        <select 
+                            className={styles.statusSelect}
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="ACTIVE">Active Faculty ({activeFaculty.length})</option>
+                            <option value="INACTIVE">Inactive Faculty ({inactiveFaculty.length})</option>
+                        </select>
                         <button className={styles.enrollBtn} onClick={handleCreateClick}>
                             <Plus size={18} weight="bold" /> Create Faculty
                         </button>
@@ -328,112 +350,119 @@ export default function AdminFacultyPage() {
                     </div>
                 ) : null}
 
-                <div className={styles.tableWrapper}>
-                    <table className={styles.studentTable}>
-                        <thead>
-                            <tr>
-                                <th>Faculty</th>
-                                <th>Contact</th>
-                                <th>Specialization</th>
-                                <th>Course / Batch</th>
-                                <th>Joined Date</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {loadingData ? (
-                                <tr>
-                                    <td colSpan={7} className={styles.empty}>Loading Faculty records...</td>
-                                </tr>
-                            ) : Faculty.length === 0 ? (
-                                <tr>
-                                    <td colSpan={7} className={styles.empty}>No Faculty found.</td>
-                                </tr>
-                            ) : (
-                                Faculty.map((Faculty) => {
-                                    const primaryBatch = Faculty.FacultyBatches?.[0];
-                                    const primaryCourse = Faculty.courses?.[0]?.title || primaryBatch?.course?.title || "Not assigned";
-                                    const extraBatchCount = Math.max((Faculty.FacultyBatches?.length || 0) - 1, 0);
+                {(() => {
+                    const renderFacultyRow = (faculty: Faculty) => {
+                        const isActiveSection = statusFilter === "ACTIVE";
+                        const primaryBatch = faculty.FacultyBatches?.[0];
+                        const primaryCourse = faculty.courses?.[0]?.title || primaryBatch?.course?.title || "Not assigned";
+                        const extraBatchCount = Math.max((faculty.FacultyBatches?.length || 0) - 1, 0);
 
-                                    return (
-                                        <tr key={Faculty.id}>
-                                            <td>
-                                                <div className={styles.studentInfo}>
-                                                    <div className={styles.avatar} style={{ background: "linear-gradient(135deg, #0881ec, #06b6d4)" }}>
-                                                        {getInitials(Faculty.name)}
-                                                    </div>
-                                                    <div>
-                                                        <div className={styles.name}>{Faculty.name}</div>
-                                                        <div className={styles.email}>{Faculty.username || Faculty.email}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div className={styles.tableStack}>
-                                                    <div className={styles.tablePrimary}>{Faculty.phone || "No phone"}</div>
-                                                    <div className={styles.tableSecondary}>{Faculty.email}</div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                {Faculty.specialization ? (
-                                                    <div className={styles.tableStack}>
-                                                        <div className={styles.tablePrimary}>{Faculty.specialization}</div>
-                                                    </div>
-                                                ) : (
-                                                    <span className={styles.unassigned}>Not assigned</span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                {primaryBatch ? (
-                                                    <div className={styles.tableStack}>
-                                                        <div className={styles.tablePrimary}>{primaryCourse}</div>
-                                                        <div className={styles.tableSecondary}>
-                                                            {primaryBatch.name}
-                                                            {extraBatchCount > 0 ? ` +${extraBatchCount} more` : ""}
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <span className={styles.unassigned}>No batch assigned</span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <span className={styles.dateBadge}>{formatDate(Faculty.createdAt)}</span>
-                                            </td>
-                                            <td>
-                                                <button
-                                                    onClick={() => handleToggleStatus(Faculty.id, Faculty.isActive)}
-                                                    className={styles.toggleSwitch}
-                                                    title={Faculty.isActive ? "Click to block" : "Click to activate"}
-                                                >
-                                                    <div className={`${styles.toggleTrack} ${Faculty.isActive ? styles.on : styles.off}`}>
-                                                        <div className={styles.toggleThumb} />
-                                                    </div>
-                                                    <span className={`${styles.toggleLabel} ${!Faculty.isActive ? styles.off : ""}`}>
-                                                        {Faculty.isActive ? "Active" : "Blocked"}
-                                                    </span>
-                                                </button>
-                                            </td>
-                                            <td>
-                                                <div className={styles.actions}>
-                                                    <button onClick={() => handleSendWelcomeMail(Faculty)} className={styles.mailBtn} title="Send welcome mail">
-                                                        <EnvelopeSimple size={18} weight="bold" />
-                                                    </button>
-                                                    <button onClick={() => handleEditClick(Faculty)} className={styles.editBtn} title="Edit Faculty">
-                                                        <PencilSimple size={18} weight="bold" />
-                                                    </button>
-                                                    <button onClick={() => handleDeleteFaculty(Faculty.id)} className={styles.deleteBtn} title="Delete Faculty">
-                                                        <Trash size={18} weight="bold" />
-                                                    </button>
-                                                </div>
-                                            </td>
+                        return (
+                            <tr key={faculty.id}>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    <div className={styles.studentInfo}>
+                                        <div className={styles.avatar} style={{ background: isActiveSection ? "linear-gradient(135deg, #0881ec, #06b6d4)" : "linear-gradient(135deg, #94a3b8, #64748b)" }}>
+                                            {getInitials(faculty.name)}
+                                        </div>
+                                        <div>
+                                            <a href="#" onClick={(e) => { e.preventDefault(); handleImpersonate(faculty); }} className={styles.nameLink}>
+                                                {faculty.name}
+                                            </a>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    <span className={styles.tableSecondary}>{faculty.phone || "No phone"}</span>
+                                </td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    <span className={styles.tableSecondary}>{faculty.specialization || "Not assigned"}</span>
+                                </td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    <span className={styles.tableSecondary}>{primaryCourse}</span>
+                                </td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    {primaryBatch ? (
+                                        <span className={styles.tableSecondary}>
+                                            {primaryBatch.name}
+                                            {extraBatchCount > 0 ? ` +${extraBatchCount} more` : ""}
+                                        </span>
+                                    ) : (
+                                        <span className={styles.tableSecondary}>No batch assigned</span>
+                                    )}
+                                </td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    <span className={styles.tableSecondary}>{formatDate(faculty.createdAt)}</span>
+                                </td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    <button
+                                        onClick={() => handleToggleStatus(faculty.id, faculty.isActive)}
+                                        className={styles.toggleSwitch}
+                                        title={faculty.isActive ? "Click to deactivate" : "Click to activate"}
+                                        style={{ transform: "scale(0.8)", transformOrigin: "left center" }}
+                                    >
+                                        <div className={`${styles.toggleTrack} ${faculty.isActive ? styles.on : styles.off}`}>
+                                            <div className={styles.toggleThumb} />
+                                        </div>
+                                        <span className={`${styles.toggleLabel} ${!faculty.isActive ? styles.off : ""}`}>
+                                            {faculty.isActive ? "Active" : "Inactive"}
+                                        </span>
+                                    </button>
+                                </td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    <div className={styles.actions}>
+                                        <button onClick={() => handleSendWelcomeMail(faculty)} className={styles.mailBtn} title="Send welcome mail">
+                                            <EnvelopeSimple size={18} weight="bold" />
+                                        </button>
+                                        <button onClick={() => handleEditClick(faculty)} className={styles.editBtn} title="Edit Faculty">
+                                            <PencilSimple size={18} weight="bold" />
+                                        </button>
+                                        <button onClick={() => handleDeleteFaculty(faculty.id)} className={styles.deleteBtn} title="Delete Faculty">
+                                            <Trash size={18} weight="bold" />
+                                        </button>
+                                    </div>
+                                </td>
+                                <td style={{ whiteSpace: "nowrap" }}>
+                                    <span className={styles.tableSecondary}>{faculty.email}</span>
+                                </td>
+                            </tr>
+                        );
+                    };
+
+                    return (
+                        <div className={styles.tableSection}>
+                            <div className={styles.tableWrapper}>
+                                <table className={styles.studentTable}>
+                                    <thead>
+                                        <tr>
+                                            <th>Faculty</th>
+                                            <th>Contact</th>
+                                            <th>Specialization</th>
+                                            <th>Course</th>
+                                            <th>Batch</th>
+                                            <th>{statusFilter === "ACTIVE" ? "Joined Date" : "Inactive Date"}</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                            <th>Email</th>
                                         </tr>
-                                    );
-                                })
-                            )}
-                        </tbody>
-                    </table>
-                </div>
+                                    </thead>
+                                    <tbody>
+                                        {loadingData ? (
+                                            <tr>
+                                                <td colSpan={9} className={styles.empty}>Loading Faculty records...</td>
+                                            </tr>
+                                        ) : displayedFaculty.length === 0 ? (
+                                            <tr>
+                                                <td colSpan={9} className={styles.empty}>No {statusFilter.toLowerCase()} faculty found.</td>
+                                            </tr>
+                                        ) : (
+                                            displayedFaculty.map((f) => renderFacultyRow(f))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    );
+                })()}
             </div>
 
             {showModal ? (
@@ -450,11 +479,14 @@ export default function AdminFacultyPage() {
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Email Address</label>
-                                <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="Faculty@example.com" />
+                                <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="Enter Email Address" />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Phone Number</label>
-                                <input required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+91 98765 43210" />
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                    <span style={{ padding: "0.7rem 0.75rem", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "0.9rem", fontWeight: 600, color: "#475569", whiteSpace: "nowrap" }}>+91</span>
+                                    <input required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="98765 43210" style={{ flex: 1 }} />
+                                </div>
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Specialization</label>

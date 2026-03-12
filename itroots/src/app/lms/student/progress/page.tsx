@@ -53,7 +53,7 @@ export default function StudentProgressPage() {
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Learning Analytics</div>
-                        <div className={styles.bannerSub}>Track your academic progress and engagement across all enrolled programs.</div>
+                        <div className={styles.bannerSub}>Track your academic progress.</div>
                     </div>
                     <ChartLineUp size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
@@ -127,35 +127,6 @@ export default function StudentProgressPage() {
                     </div>
                 )}
 
-                {/* Attendance Per Batch */}
-                {attBatches.length > 0 && (
-                    <div className={styles.section}>
-                        <div className={styles.sectionTitle}>Attendance by Batch</div>
-                        <div className={styles.attGrid}>
-                            {Object.entries(attendanceData).map(([name, data]: [string, any]) => {
-                                const pct = Math.round((data.present / data.total) * 100) || 0;
-                                const color = pct >= 85 ? "#10b981" : pct >= 70 ? "#f59e0b" : "#ef4444";
-                                return (
-                                    <div key={name} className={styles.attCard}>
-                                        <div className={styles.attCardName}>{name}</div>
-                                        <div className={styles.attStats}>
-                                            <div className={styles.attCircle} style={{ background: `conic-gradient(${color} ${pct}%, #f3f4f6 0)` }}>
-                                                <div className={styles.attCircleInner}>
-                                                    <span style={{ color }}>{pct}%</span>
-                                                </div>
-                                            </div>
-                                            <div className={styles.attNumbers}>
-                                                <div><span style={{ color: "#10b981" }}>{data.present}</span> Present</div>
-                                                <div><span style={{ color: "#ef4444" }}>{data.absent}</span> Absent</div>
-                                                <div><span style={{ color: "#f59e0b" }}>{data.late}</span> Late</div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-                )}
             </div>
         </LMSShell>
     );

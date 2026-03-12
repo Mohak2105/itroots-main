@@ -44,7 +44,8 @@ Batch.init(
         },
         FacultyId: {
             type: DataTypes.UUID,
-            allowNull: false,
+            allowNull: true,
+            field: 'teacherId',
             references: { model: User, key: 'id' }
         },
         schedule: {
@@ -69,8 +70,8 @@ Batch.init(
 );
 
 Batch.belongsTo(Course, { as: 'course', foreignKey: 'courseId' });
-Batch.belongsTo(User, { as: 'Faculty', foreignKey: 'FacultyId' });
+Batch.belongsTo(User, { as: 'Faculty', foreignKey: 'teacherId' });
 Course.hasMany(Batch, { as: 'batches', foreignKey: 'courseId' });
-User.hasMany(Batch, { as: 'FacultyBatches', foreignKey: 'FacultyId' });
+User.hasMany(Batch, { as: 'FacultyBatches', foreignKey: 'teacherId' });
 
 export default Batch;

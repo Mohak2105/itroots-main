@@ -18,7 +18,7 @@ export default function FacultyAnalyticsPage() {
     const [loadingStudents, setLoadingStudents] = useState(false);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -81,7 +81,7 @@ export default function FacultyAnalyticsPage() {
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Analytics & Reporting</div>
-                        <div className={styles.bannerSub}>Monitor individual student progress, attendance, and assessment completion.</div>
+                        <div className={styles.bannerSub}>Monitor individual student progress, attendance, and assessments.</div>
                     </div>
                     <ChartBar size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
@@ -98,7 +98,7 @@ export default function FacultyAnalyticsPage() {
                         >
                             {batches.length === 0 && <option>No assigned batches</option>}
                             {batches.map(b => (
-                                <option key={b.id} value={b.id}>{b.name} — {b.course?.title}</option>
+                                <option key={b.id} value={b.id}>{b.name} - {b.course?.title}</option>
                             ))}
                         </select>
                     </div>
@@ -237,3 +237,4 @@ export default function FacultyAnalyticsPage() {
         </LMSShell>
     );
 }
+

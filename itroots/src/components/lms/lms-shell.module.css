@@ -1,4 +1,4 @@
-﻿.shell {
+.shell {
     display: flex;
     min-height: 100vh;
     background: #f8fafc;
@@ -20,10 +20,12 @@
 }
 
 .sidebarLogo {
-    padding: 1.25rem 1.5rem 0.9rem;
+    padding: 1.25rem 1.5rem 1.25rem;
     display: flex;
     align-items: center;
     gap: 0.75rem;
+    border-bottom: none;
+    margin-bottom: 1.25rem;
 }
 
 .logoIcon {
@@ -66,15 +68,32 @@
     border-radius: 10px;
 }
 
-.navSectionLabel {
+.sidebarVersion {
+    padding: 1rem 1.5rem;
     font-size: 0.75rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #94a3b8;
+    text-align: center;
+    border-top: 1px solid #e5e7eb;
+    letter-spacing: 0.05em;
+}
+
+.navSectionLabel {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #f59e0b;
+    background: transparent;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-    padding: 1rem 0.75rem 0.55rem;
-    margin-top: 0.15rem;
-    border-top: none;
+    letter-spacing: 0.05em;
+    padding: 0.8rem 0.85rem;
+    border-radius: 14px;
+    margin-top: 0.5rem;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .navItem {
@@ -88,6 +107,30 @@
     letter-spacing: 0.01em;
     font-weight: 600;
     text-decoration: none;
+    transition: color 0.15s ease, background 0.15s ease;
+    margin-bottom: 0.5rem;
+}
+
+.navItem:hover {
+    color: #0881ec;
+    background: #f0f7ff;
+}
+
+.adminSidebarNav .navItem:hover {
+    color: #f59e0b;
+    background: #fffbeb;
+}
+
+.adminSidebarNav .navItemActive,
+.adminSidebarNav .navItemActive:hover {
+    background: linear-gradient(90deg, #0c4a7f 0%, #1d8ef0 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 20px rgba(12, 74, 127, 0.18);
+}
+
+.navItemActive:hover {
+    background: linear-gradient(90deg, #0c4a7f 0%, #1d8ef0 100%);
+    color: #ffffff;
 }
 
 .navItemActive {
@@ -540,6 +583,9 @@
         font-size: 0.75rem;
     }
 }
+
+
+
 
 
 

@@ -85,15 +85,15 @@ export default function EnrollModal({ isOpen, onClose }: EnrollModalProps) {
                                 <form className={styles.form} onSubmit={handleSubmit}>
                                     <div className={styles.formGroup}>
                                         <label htmlFor="modal-name">Full Name *</label>
-                                        <input type="text" id="modal-name" name="name" required placeholder="Enter your full name" autoFocus />
+                                        <input type="text" id="modal-name" name="name" required placeholder="Enter full name" autoFocus />
                                     </div>
                                     <div className={styles.formGroup}>
                                         <label htmlFor="modal-email">Email Address *</label>
-                                        <input type="email" id="modal-email" name="email" required placeholder="Enter your email" />
+                                        <input type="email" id="modal-email" name="email" required placeholder="Enter email" />
                                     </div>
                                     <div className={styles.formGroup}>
                                         <label htmlFor="modal-phone">Phone Number *</label>
-                                        <input type="tel" id="modal-phone" name="phone" required placeholder="Enter your phone number" />
+                                        <input type="tel" id="modal-phone" name="phone" required placeholder="Enter phone number" />
                                     </div>
                                     <div className={styles.formGroup}>
                                         <label>Select Course *</label>

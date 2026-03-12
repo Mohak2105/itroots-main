@@ -67,7 +67,6 @@ const createStudentNotification = async ({
         `${liveClass.title}`,
         `Course: ${liveClass.course?.title || 'Course'}`,
         `Batch: ${liveClass.batch?.name || 'Batch'}`,
-        `Date and Time: ${scheduledAt}`,
         action === 'cancelled' ? 'Status: Cancelled' : `Meeting Link: ${liveClass.meetingLink}`,
         liveClass.description ? `Agenda: ${liveClass.description}` : null,
     ].filter(Boolean).join('\n');

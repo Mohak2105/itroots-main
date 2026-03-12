@@ -1,4 +1,4 @@
-﻿export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
 export const FRONTEND_ONLY_MODE = process.env.NEXT_PUBLIC_FRONTEND_ONLY_MODE === "true";
 export const API_ORIGIN = (() => {
     try {
@@ -31,6 +31,7 @@ export const ENDPOINTS = {
         DASHBOARD: `${API_BASE_URL}/admin/dashboard`,
         USERS: `${API_BASE_URL}/admin/users`,
         USER_DETAIL: (userId: string) => `${API_BASE_URL}/admin/users/${userId}`,
+        IMPERSONATE: (userId: string) => `${API_BASE_URL}/admin/users/${userId}/impersonate`,
         SEND_WELCOME_EMAIL: (userId: string) => `${API_BASE_URL}/admin/users/${userId}/send-welcome-email`,
         STATS: `${API_BASE_URL}/admin/system-stats`,
         COURSES: `${API_BASE_URL}/admin/courses`,

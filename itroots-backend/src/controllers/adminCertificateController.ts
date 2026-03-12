@@ -1,4 +1,5 @@
-﻿import { Response } from 'express';
+import { Response } from 'express';
+import { Op } from 'sequelize';
 import Certificate from '../models/Certificate';
 import User from '../models/User';
 import Course from '../models/Course';
@@ -15,11 +16,19 @@ const certificateInclude = [
     { model: Batch, as: 'batch', attributes: ['id', 'name', 'schedule'] },
 ];
 
-const generateCertificateNumber = () => {
-    const now = new Date();
-    const datePart = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
-    const randomPart = Math.floor(1000 + Math.random() * 9000);
-    return `ITR-CERT-${datePart}-${randomPart}`;
+const generateSequentialCertificateNumber = async () => {
+    const year = new Date().getFullYear();
+    const prefix = `ITR/CERT/${year}/`;
+    
+    const count = await Certificate.count({
+        where: {
+            certificateNumber: {
+                [Op.like]: `${prefix}%`
+            }
+        }
+    });
+
+    return `${prefix}${String(count + 1).padStart(4, '0')}`;
 };
 
 const getCertificateRecord = async (certificateId: string) => Certificate.findByPk(certificateId, {
@@ -129,9 +138,11 @@ export const createCertificate = async (req: any, res: Response) => {
                 createdBy: adminId,
             });
         } else {
-            let certificateNumber = generateCertificateNumber();
+            let certificateNumber = await generateSequentialCertificateNumber();
             while (await Certificate.findOne({ where: { certificateNumber } })) {
-                certificateNumber = generateCertificateNumber();
+                const parts = certificateNumber.split('/');
+                const currentNum = parseInt(parts[parts.length - 1], 10);
+                certificateNumber = `ITR/CERT/${new Date().getFullYear()}/${String(currentNum + 1).padStart(4, '0')}`;
             }
 
             certificate = await Certificate.create({

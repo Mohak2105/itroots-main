@@ -1,4 +1,4 @@
-﻿import dotenv from 'dotenv';
+import dotenv from 'dotenv';
 dotenv.config();
 
 import express from 'express';
@@ -47,6 +47,7 @@ app.get('/', (req, res) => {
             cms: '/api/v1/cms',
             admin: '/api/v1/admin',
             teacher: '/api/v1/teacher',
+            Faculty: '/api/v1/Faculty',
             student: '/api/v1/student',
             public: '/api/v1/public',
         },
@@ -58,6 +59,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/cms', cmsRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/teacher', teacherRoutes);
+app.use('/api/v1/Faculty', teacherRoutes);
 app.use('/api/v1/student', studentRoutes);
 app.use('/api/v1/public', publicRoutes);
 

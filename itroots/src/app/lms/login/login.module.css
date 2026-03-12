@@ -379,15 +379,15 @@
 .submitBtn {
     width: 100%;
     padding: 0.9rem;
-    background: linear-gradient(135deg, #0881ec, #0c5db5);
+    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
     border: none;
-    border-radius: 12px;
+    border-radius: 999px;
     color: #ffffff;
     font-size: 0.95rem;
     font-weight: 700;
     font-family: 'Outfit', sans-serif;
     cursor: pointer;
-    transition: all 0.25s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -402,6 +402,7 @@
 .submitBtn:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+    transform: none;
 }
 
 /* Back link */

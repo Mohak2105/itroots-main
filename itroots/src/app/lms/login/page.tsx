@@ -37,7 +37,7 @@ export default function LMSLoginPage() {
     const router = useRouter();
     const { login, logout } = useLMSAuth();
 
-    const [email, setEmail] = useState("");
+    const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
     const [showPass, setShowPass] = useState(false);
     const [error, setError] = useState("");
@@ -48,7 +48,7 @@ export default function LMSLoginPage() {
         setError("");
         setIsLoading(true);
 
-        const result = await login(email.trim(), password);
+        const result = await login(identifier.trim(), password);
 
         if (result.success) {
             const userRole = result.user?.role;
@@ -156,18 +156,18 @@ export default function LMSLoginPage() {
                     <form onSubmit={handleSubmit} noValidate>
                         <div className={styles.fieldGroup}>
                             <div>
-                                <label className={styles.fieldLabel} htmlFor="lms-email">Email Address</label>
+                                <label className={styles.fieldLabel} htmlFor="lms-email">Email or Username</label>
                                 <div className={styles.fieldWrapper}>
                                     <Envelope size={16} className={styles.fieldIconSvg} />
                                     <input
                                         id="lms-email"
-                                        type="email"
+                                        type="text"
                                         className={styles.fieldInput}
-                                        placeholder="your@email.com"
-                                        value={email}
-                                        onChange={(e) => setEmail(e.target.value)}
+                                        placeholder="Email or Username"
+                                        value={identifier}
+                                        onChange={(e) => setIdentifier(e.target.value)}
                                         required
-                                        autoComplete="email"
+                                        autoComplete="username"
                                     />
                                 </div>
                             </div>

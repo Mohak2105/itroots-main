@@ -141,6 +141,7 @@
     flex-direction: column;
     align-items: center;
     gap: 0.3rem;
+    border: 1px solid #d1d5db;
 }
 
 .dayCellClickable {

@@ -13,21 +13,19 @@ import {
     FilePpt,
     Books,
     FileText,
-    VideoCamera,
     MagnifyingGlass,
     DownloadSimple,
     Tray,
     Folder,
 } from "@phosphor-icons/react";
 
-const TYPE_TABS = ["All", "PDF", "PPT", "Book", "Video"];
+const TYPE_TABS = ["All", "PDF", "PPT", "E-Book"];
 
 const typeIcon = (type: string) => {
     const normalizedType = type?.toUpperCase();
     if (normalizedType === "PDF") return FilePdf;
     if (normalizedType === "PPT") return FilePpt;
-    if (normalizedType === "BOOK") return Books;
-    if (normalizedType === "VIDEO") return VideoCamera;
+    if (normalizedType === "E-BOOK" || normalizedType === "BOOK") return Books;
     return FileText;
 };
 
@@ -35,8 +33,7 @@ const typeColor = (type: string) => {
     const normalizedType = type?.toUpperCase();
     if (normalizedType === "PDF") return { color: "#ef4444", bg: "#fee2e2" };
     if (normalizedType === "PPT") return { color: "#f59e0b", bg: "#fef3c7" };
-    if (normalizedType === "BOOK") return { color: "#8b5cf6", bg: "#ede9fe" };
-    if (normalizedType === "VIDEO") return { color: "#0881ec", bg: "#eff6ff" };
+    if (normalizedType === "E-BOOK" || normalizedType === "BOOK") return { color: "#8b5cf6", bg: "#ede9fe" };
     return { color: "#6b7280", bg: "#f3f4f6" };
 };
 
@@ -80,12 +77,12 @@ export default function ResourcesPage() {
     });
 
     return (
-        <LMSShell pageTitle="Resources">
+        <LMSShell pageTitle="Study Materials">
             <div className={styles.page}>
                 <div className={styles.banner}>
                     <div>
-                        <div className={styles.bannerTitle}>Learning Resources</div>
-                        <div className={styles.bannerSub}>View PDFs, slides, books, and videos for your enrolled courses inside the LMS.</div>
+                        <div className={styles.bannerTitle}>Study Materials</div>
+                        <div className={styles.bannerSub}>View PDFs, slides, and e-books for your enrolled courses inside the LMS.</div>
                     </div>
                     <Folder size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
@@ -106,7 +103,7 @@ export default function ResourcesPage() {
                         <MagnifyingGlass size={16} className={styles.searchIcon} />
                         <input
                             type="text"
-                            placeholder="Search resources..."
+                            placeholder="Search study materials..."
                             className={styles.searchInput}
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
@@ -114,7 +111,7 @@ export default function ResourcesPage() {
                     </div>
                 </div>
 
-                <div className={styles.resultCount}>{filtered.length} resource{filtered.length !== 1 ? "s" : ""} found</div>
+                <div className={styles.resultCount}>{filtered.length} study materials found</div>
 
                 {loading ? (
                     <div className={styles.grid}>
@@ -123,7 +120,7 @@ export default function ResourcesPage() {
                 ) : filtered.length === 0 ? (
                     <div className={styles.emptyState}>
                         <Tray size={52} color="#cbd5e1" />
-                        <h3>No Resources Found</h3>
+                        <h3>No Study Materials Found</h3>
                         <p>Try adjusting your filter or search term.</p>
                     </div>
                 ) : (

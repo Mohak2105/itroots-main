@@ -22,7 +22,7 @@ export default function GradeSubmissionPage() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -46,7 +46,7 @@ export default function GradeSubmissionPage() {
     return (
         <LMSShell pageTitle="Review Submission">
             <div style={{ maxWidth: '800px', margin: '0 auto' }}>
-                <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#0881ec', fontWeight: 600, cursor: 'pointer', marginBottom: '1rem' }}>← Back to Dashboard</button>
+                <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#0881ec', fontWeight: 600, cursor: 'pointer', marginBottom: '1rem' }}>â† Back to Dashboard</button>
 
                 <div style={{ background: '#fff', borderRadius: '24px', border: '1px solid #e2e8f0', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.05)' }}>
                     <div style={{ padding: '2rem', borderBottom: '1px solid #f1f5f9', background: '#f8fafc' }}>
@@ -101,7 +101,7 @@ export default function GradeSubmissionPage() {
                             <button
                                 type="submit"
                                 disabled={isSubmitting}
-                                style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #059669, #10b981)', color: '#fff', border: 'none', borderRadius: '12px', fontWeight: 700, fontSize: '1rem', cursor: 'pointer' }}
+                                style={{ width: '100%', padding: '1rem', background: 'linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%)', color: '#fff', border: 'none', borderRadius: '999px', fontWeight: 700, fontSize: '1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', transition: 'transform 0.2s ease, box-shadow 0.2s ease' }}
                             >
                                 {isSubmitting ? "Submitting Grade..." : <><CheckCircle size={20} /> Finish Grading</>}
                             </button>
@@ -112,3 +112,4 @@ export default function GradeSubmissionPage() {
         </LMSShell>
     );
 }
+

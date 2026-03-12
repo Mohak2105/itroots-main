@@ -106,3 +106,9 @@
 .optionsList::-webkit-scrollbar-thumb:hover {
     background: var(--gray);
 }
+
+.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}

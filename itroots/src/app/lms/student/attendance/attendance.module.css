@@ -1,7 +1,7 @@
-﻿.page {
+.page {
     display: flex;
     flex-direction: column;
-    gap: 1.75rem;
+    gap: 1.5rem;
 }
 
 .banner {
@@ -23,43 +23,78 @@
 }
 
 .bannerSub {
-    font-size: 0.875rem;
-    color: rgba(255,255,255,0.75);
-    max-width: 480px;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.8);
 }
 
-.tableSections {
+.calendarToolbar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 0.65rem;
+    width: fit-content;
+}
+
+.monthLabel {
+    min-width: 170px;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.navBtn,
+.todayBtn {
+    border: 1px solid #d1d5db;
+    background: #f8fafc;
+    color: #334155;
+    border-radius: 8px;
+    height: 34px;
+    padding: 0 0.65rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.todayBtn {
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.calendarSections {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1rem;
 }
 
-.tableCard {
-    background: #fff;
-    border-radius: 18px;
+.calendarCard {
+    background: #ffffff;
+    border-radius: 16px;
     border: 1px solid #e5e7eb;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.05);
     overflow: hidden;
 }
 
-.tableHeader {
-    padding: 1.35rem 1.5rem 1rem;
+.cardHeader {
+    padding: 1.1rem 1.25rem 0.85rem;
     display: flex;
     justify-content: space-between;
-    gap: 1rem;
     align-items: flex-start;
+    gap: 0.75rem;
 }
 
 .batchTitle {
-    font-family: 'Outfit', 'Inter', sans-serif;
-    font-size: 1.1rem;
+    margin: 0;
+    font-size: 1.05rem;
     font-weight: 700;
     color: #111827;
-    margin: 0;
 }
 
 .batchSubtitle {
-    margin: 0.3rem 0 0;
+    margin: 0.25rem 0 0;
     font-size: 0.82rem;
     color: #6b7280;
 }
@@ -68,15 +103,15 @@
     display: flex;
     flex-wrap: wrap;
     justify-content: flex-end;
-    gap: 0.55rem;
+    gap: 0.45rem;
 }
 
 .summaryBadge {
     display: inline-flex;
     align-items: center;
-    padding: 0.42rem 0.78rem;
+    padding: 0.35rem 0.68rem;
     border-radius: 999px;
-    font-size: 0.76rem;
+    font-size: 0.72rem;
     font-weight: 700;
 }
 
@@ -88,83 +123,145 @@
 .warningBanner {
     display: flex;
     align-items: center;
-    gap: 0.5rem;
-    margin: 0 1.5rem 1rem;
+    gap: 0.45rem;
+    margin: 0 1.25rem 0.9rem;
     background: #fee2e2;
     color: #b91c1c;
-    padding: 0.75rem 1rem;
+    padding: 0.65rem 0.85rem;
     border-radius: 10px;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     font-weight: 600;
 }
 
-.tableWrapper {
-    overflow-x: auto;
+.calendarGridWrap {
+    padding: 0 1rem 1rem;
 }
 
-.attendanceTable {
-    width: 100%;
-    min-width: 640px;
-    border-collapse: collapse;
+.weekHeader {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.45rem;
+    margin-bottom: 0.45rem;
 }
 
-.attendanceTable thead {
-    background: #f8fafc;
-}
-
-.attendanceTable th {
-    padding: 0.95rem 1.5rem;
-    text-align: left;
-    font-size: 0.76rem;
+.weekDay {
+    text-align: center;
+    font-size: 0.72rem;
+    color: #64748b;
     font-weight: 700;
-    color: #94a3b8;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    border-bottom: 1px solid #e2e8f0;
+    letter-spacing: 0.03em;
+    padding: 0.3rem 0;
 }
 
-.attendanceTable td {
-    padding: 1rem 1.5rem;
-    border-bottom: 1px solid #f1f5f9;
-    font-size: 0.9rem;
+.daysGrid {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+.dayCell {
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    border-radius: 10px;
+    min-height: 58px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.3rem;
+    cursor: pointer;
+}
+
+.dayNumber {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 999px;
+    background: #cbd5e1;
+}
+
+.outsideMonth {
+    opacity: 0.45;
+}
+
+.todayCell {
+    border-color: #93c5fd;
+    box-shadow: 0 0 0 1px #93c5fd inset;
+}
+
+.selectedCell {
+    box-shadow: 0 0 0 2px #0881ec inset;
+}
+
+.present {
+    color: #166534;
+    background: #dcfce7;
+    border-color: #86efac;
+}
+
+.absent {
+    color: #991b1b;
+    background: #fee2e2;
+    border-color: #fca5a5;
+}
+
+.late {
+    color: #92400e;
+    background: #fef3c7;
+    border-color: #fcd34d;
+}
+
+.dayDetail {
+    border-top: 1px solid #e5e7eb;
+    background: #f8fafc;
+    padding: 0.95rem 1.1rem;
+}
+
+.dayDetailTitle {
+    font-size: 0.82rem;
+    font-weight: 700;
     color: #334155;
+    margin-bottom: 0.55rem;
 }
 
-.attendanceTable tbody tr:last-child td {
-    border-bottom: none;
+.dayDetailEmpty {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.dayDetailList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.dayDetailItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 0.55rem 0.7rem;
+    font-size: 0.82rem;
+    color: #334155;
 }
 
 .statusPill {
     display: inline-flex;
     align-items: center;
-    padding: 0.35rem 0.7rem;
+    padding: 0.28rem 0.6rem;
     border-radius: 999px;
-    font-size: 0.74rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    text-transform: capitalize;
-}
-
-.statusPill.present,
-.present {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.statusPill.absent,
-.absent {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.statusPill.late,
-.late {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.emptyTableCell {
-    text-align: center;
-    color: #94a3b8;
 }
 
 .emptyState {
@@ -172,30 +269,28 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 4rem 2rem;
-    background: #fff;
-    border-radius: 16px;
-    border: 2px dashed #e2e8f0;
-    text-align: center;
     gap: 0.75rem;
+    background: #ffffff;
+    border: 1px dashed #cbd5e1;
+    border-radius: 14px;
+    padding: 3.2rem 1.25rem;
+    text-align: center;
 }
 
 .emptyState h3 {
-    font-family: 'Outfit', 'Inter', sans-serif;
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: #374151;
     margin: 0;
+    font-size: 1.1rem;
+    color: #334155;
 }
 
 .emptyState p {
-    font-size: 0.9rem;
-    color: #6b7280;
     margin: 0;
+    font-size: 0.88rem;
+    color: #64748b;
 }
 
 .skeleton {
-    height: 240px;
+    height: 300px;
     background: linear-gradient(90deg, #f0f4f8 25%, #e5eaf0 50%, #f0f4f8 75%);
     background-size: 200% 100%;
     border-radius: 16px;
@@ -207,22 +302,33 @@
     100% { background-position: 200% 0; }
 }
 
-@media (max-width: 768px) {
-    .banner {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
-    .tableHeader {
+@media (max-width: 900px) {
+    .cardHeader {
         flex-direction: column;
     }
 
     .summaryRow {
         justify-content: flex-start;
     }
+}
 
-    .attendanceTable {
-        min-width: 560px;
+@media (max-width: 640px) {
+    .calendarToolbar {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .monthLabel {
+        min-width: 130px;
+        font-size: 0.84rem;
+    }
+
+    .dayCell {
+        min-height: 50px;
+    }
+
+    .dayNumber {
+        font-size: 0.75rem;
     }
 }

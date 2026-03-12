@@ -1,4 +1,4 @@
-﻿import fs from 'fs';
+import fs from 'fs';
 import path from 'path';
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
@@ -87,7 +87,7 @@ export const register = async (req: Request, res: Response) => {
             specialization,
             password: hashedPassword,
             role: role || 'STUDENT',
-            isActive: false,
+            isActive: true,
         });
 
         res.status(201).json({

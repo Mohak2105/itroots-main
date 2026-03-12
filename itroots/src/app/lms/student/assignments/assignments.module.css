@@ -1,4 +1,4 @@
-﻿/* â”€â”€â”€ Assignments Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* â”€â”€â”€ Assignments Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 
 .page {
     display: flex;
@@ -229,25 +229,26 @@
 .submitBtn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.4rem;
     padding: 0.55rem 1.25rem;
-    background: linear-gradient(135deg, #0c2d4c, #0881ec);
+    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
     color: #fff;
     border: none;
-    border-radius: 8px;
+    border-radius: 999px;
     font-size: 0.875rem;
     font-weight: 600;
     cursor: pointer;
     font-family: inherit;
-    transition: all 0.2s;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .submitBtn:hover:not(:disabled) {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 15px rgba(8,129,236,0.35);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(8, 129, 236, 0.35);
 }
 
-.submitBtn:disabled { opacity: 0.65; cursor: not-allowed; }
+.submitBtn:disabled { opacity: 0.65; cursor: not-allowed; transform: none; }
 
 /* â”€â”€ Empty State â”€â”€ */
 .emptyState {

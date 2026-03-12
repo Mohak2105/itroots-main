@@ -1,11 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "../../auth-context";
 
 import {
-    ChalkboardTeacher,
+    Chalkboard,
     Eye,
     EyeSlash,
     Warning,
@@ -13,14 +13,13 @@ import {
     Envelope,
     Lock,
 } from "@phosphor-icons/react";
-import Link from "next/link";
-import styles from "./Faculty-login.module.css";
+import styles from "./teacher-login.module.css";
 
 export default function FacultyLoginPage() {
     const router = useRouter();
     const { login, logout } = useLMSAuth();
 
-    const [email, setEmail] = useState("");
+    const [identifier, setIdentifier] = useState("");
     const [password, setPassword] = useState("");
     const [showPass, setShowPass] = useState(false);
     const [error, setError] = useState("");
@@ -31,11 +30,11 @@ export default function FacultyLoginPage() {
         setError("");
         setIsLoading(true);
 
-        const result = await login(email.trim(), password);
+        const result = await login(identifier.trim(), password);
 
         if (result.success) {
             const userRole = result.user?.role;
-            if (userRole === "Faculty") {
+            if (userRole?.toUpperCase() === "FACULTY") {
                 router.push("/dashboard");
             } else if (userRole === "SUPER_ADMIN" || userRole === "CMS_MANAGER") {
                 logout();
@@ -62,7 +61,7 @@ export default function FacultyLoginPage() {
             <div className={styles.glassCard}>
                 <div className={styles.logoContainer}>
                     <div className={styles.iconWrapper}>
-                        <ChalkboardTeacher size={42} weight="duotone" />
+                        <Chalkboard size={42} weight="duotone" />
                     </div>
                 </div>
 
@@ -76,17 +75,17 @@ export default function FacultyLoginPage() {
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} noValidate>
                     <div className={styles.formGroup}>
-                        <label className={styles.label}>Email Address</label>
+                        <label className={styles.label}>Email or Username</label>
                         <div className={styles.inputWrapper}>
                             <Envelope size={20} className={styles.inputIcon} />
                             <input
-                                type="email"
+                                type="text"
                                 className={styles.input}
-                                placeholder="Faculty@itroots.com"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
+                                placeholder="Email or Username"
+                                value={identifier}
+                                onChange={(e) => setIdentifier(e.target.value)}
                                 required
                             />
                         </div>
@@ -99,7 +98,7 @@ export default function FacultyLoginPage() {
                             <input
                                 type={showPass ? "text" : "password"}
                                 className={styles.input}
-                                placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                                placeholder="********"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
@@ -133,5 +132,6 @@ export default function FacultyLoginPage() {
         </div>
     );
 }
+
 
 

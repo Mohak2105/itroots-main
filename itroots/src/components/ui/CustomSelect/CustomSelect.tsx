@@ -17,6 +17,7 @@ interface CustomSelectProps {
     onChange?: (value: string) => void;
     name?: string;
     required?: boolean;
+    disabled?: boolean;
 }
 
 export default function CustomSelect({
@@ -25,11 +26,16 @@ export default function CustomSelect({
     value,
     onChange,
     name,
-    required
+    required,
+    disabled = false,
 }: CustomSelectProps) {
     const [isOpen, setIsOpen] = useState(false);
     const [selectedValue, setSelectedValue] = useState(value || '');
     const dropdownRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        setSelectedValue(value || '');
+    }, [value]);
 
     const selectedOption = options.find(opt => opt.value === selectedValue);
 
@@ -54,10 +60,11 @@ export default function CustomSelect({
         <div className={styles.selectWrapper} ref={dropdownRef}>
             <button
                 type="button"
-                className={`${styles.selectButton} ${isOpen ? styles.open : ''} ${selectedValue ? styles.hasValue : ''}`}
-                onClick={() => setIsOpen(!isOpen)}
+                className={`${styles.selectButton} ${isOpen ? styles.open : ''} ${selectedValue ? styles.hasValue : ''} ${disabled ? styles.disabled : ''}`}
+                onClick={() => !disabled && setIsOpen(!isOpen)}
                 aria-haspopup="listbox"
                 aria-expanded={isOpen}
+                disabled={disabled}
             >
                 <span className={selectedValue ? styles.selectedText : styles.placeholderText}>
                     {selectedOption?.label || placeholder}
@@ -77,7 +84,7 @@ export default function CustomSelect({
             />
 
             <AnimatePresence>
-                {isOpen && (
+                {isOpen && !disabled && (
                     <motion.ul
                         className={styles.optionsList}
                         initial={{ opacity: 0, y: -10 }}

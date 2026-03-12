@@ -85,7 +85,7 @@ export default function StudentLearningView() {
                                 className={`${styles.tabBtn} ${activeTab === "resources" ? styles.tabBtnActive : ""}`}
                                 onClick={() => setActiveTab("resources")}
                             >
-                                <FilePdf size={16} /> Resources
+                                <FilePdf size={16} /> Study Materials
                                 {resources.length > 0 && <span className={styles.tabCount}>{resources.length}</span>}
                             </button>
                             <button
@@ -123,7 +123,7 @@ export default function StudentLearningView() {
                         ) : activeTab === "resources" ? (
                             <div className={styles.playlist}>
                                 {resources.length === 0 ? (
-                                    <div className={styles.empty}>No resources uploaded for this batch yet.</div>
+                                    <div className={styles.empty}>No study materials uploaded for this batch yet.</div>
                                 ) : (
                                     resources.map((resource: any) => (
                                         <div key={resource.id} className={`${styles.vItem} ${styles.resourceItem}`}>
@@ -135,7 +135,7 @@ export default function StudentLearningView() {
                                                 <p>{resource.fileType || "Document"}{resource.fileSize ? ` | ${resource.fileSize}` : ""}</p>
                                             </div>
                                             <Link href={buildStudentContentViewerHref(resource.fileUrl || resource.contentUrl, resource.title)} className={`${styles.watchBtn} ${styles.downloadBtnStyle}`}>
-                                                View Resource
+                                                View Materials
                                             </Link>
                                         </div>
                                     ))

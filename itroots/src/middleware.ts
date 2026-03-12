@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-// Shared static-asset bypass check
 function isStaticPath(pathname: string) {
     return (
         pathname.startsWith('/_next') ||
@@ -17,9 +16,10 @@ export function middleware(request: NextRequest) {
 
     const isAdminSubdomain = hostname.startsWith('admin.') || hostname.startsWith('admin.localhost');
     const isStudentSubdomain = hostname.startsWith('student.') || hostname.startsWith('student.localhost');
-    const isFacultyubdomain = hostname.startsWith('Faculty.') || hostname.startsWith('Faculty.localhost');
+    const isFacultySubdomain =
+        hostname.toLowerCase().startsWith('faculty.') ||
+        hostname.toLowerCase().startsWith('faculty.localhost');
 
-    // ── Admin subdomain: admin.itroots.com → /admin/* ──────────────────────
     if (isAdminSubdomain) {
         if (pathname.startsWith('/admin')) return NextResponse.next();
         if (isStaticPath(pathname)) return NextResponse.next();
@@ -30,13 +30,10 @@ export function middleware(request: NextRequest) {
         return NextResponse.rewrite(url);
     }
 
-    // ── Student subdomain: student.itroots.com → /lms/student/* ────────────
     if (isStudentSubdomain) {
-        // Allow already-correct internal paths (router.push after login uses full /lms/ paths)
-        if (pathname.startsWith('/lms/')) return NextResponse.next();
+        if (pathname.startsWith('/lms/student/') || pathname === '/lms/login') return NextResponse.next();
         if (isStaticPath(pathname)) return NextResponse.next();
 
-        // / or /login → student login page; everything else → /lms/student/*
         const studentPath =
             pathname === '/' || pathname === '/login'
                 ? '/lms/login'
@@ -46,23 +43,19 @@ export function middleware(request: NextRequest) {
         return NextResponse.rewrite(url);
     }
 
-    // ── Faculty subdomain: Faculty.itroots.com → /lms/Faculty/* ────────────
-    if (isFacultyubdomain) {
-        // Allow already-correct internal paths
-        if (pathname.startsWith('/lms/')) return NextResponse.next();
+    if (isFacultySubdomain) {
+        if (pathname.startsWith('/lms/teacher/')) return NextResponse.next();
         if (isStaticPath(pathname)) return NextResponse.next();
 
-        // / or /login → Faculty login page; everything else → /lms/Faculty/*
-        const FacultyPath =
-            pathname === '/' || pathname === '/login'
-                ? '/lms/Faculty/login'
-                : `/lms/Faculty${pathname}`;
+        const facultyPath =
+            pathname === '/' || pathname === '/login' || pathname === '/lms/login'
+                ? '/lms/teacher/login'
+                : `/lms/teacher${pathname}`;
         const url = request.nextUrl.clone();
-        url.pathname = FacultyPath;
+        url.pathname = facultyPath;
         return NextResponse.rewrite(url);
     }
 
-    // ── Main domain: block direct /admin/* and /lms/* access ───────────────
     if (pathname.startsWith('/admin') || pathname.startsWith('/lms')) {
         const url = request.nextUrl.clone();
         url.pathname = '/';
@@ -73,8 +66,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-    matcher: [
-        // Match all paths except static files and API routes
-        '/((?!_next/static|_next/image|favicon.ico).*)',
-    ],
+    matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

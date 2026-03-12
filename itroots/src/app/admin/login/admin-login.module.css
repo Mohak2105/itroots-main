@@ -228,26 +228,26 @@
 .submitBtn {
     width: 100%;
     padding: 1rem;
-    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
     color: #fff;
     border: none;
-    border-radius: 12px;
+    border-radius: 999px;
     font-size: 1rem;
     font-weight: 700;
     font-family: 'Outfit', sans-serif;
     cursor: pointer;
-    transition: all 0.3s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     margin-top: 1rem;
-    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+    box-shadow: 0 4px 12px rgba(8, 129, 236, 0.2);
 }
 
 .submitBtn:hover:not(:disabled) {
     transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(220, 38, 38, 0.3);
+    box-shadow: 0 8px 25px rgba(8, 129, 236, 0.35);
 }
 
 .submitBtn:disabled {

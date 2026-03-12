@@ -24,13 +24,13 @@ export default function FacultyGradesPage() {
     const [loadingStudents, setLoadingStudents] = useState(false);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
 
     useEffect(() => {
-        if (!user || user.role !== "Faculty") return;
+        if (!user || user?.role?.toUpperCase() !== "FACULTY") return;
 
         const FacultyBatches = BATCHES
             .filter((batch) => batch.FacultyId === user.id)
@@ -86,7 +86,7 @@ export default function FacultyGradesPage() {
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Grades & Results</div>
-                        <div className={styles.bannerSub}>View and manage student grades across assignments, midterms and projects.</div>
+                        <div className={styles.bannerSub}>View and manage student grades across assignments.</div>
                     </div>
                     <Trophy size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
@@ -135,7 +135,7 @@ export default function FacultyGradesPage() {
                         >
                             {batches.length === 0 && <option>No assigned batches</option>}
                             {batches.map(b => (
-                                <option key={b.id} value={b.id}>{b.name} — {b.course?.title}</option>
+                                <option key={b.id} value={b.id}>{b.name} - {b.course?.title}</option>
                             ))}
                         </select>
                     </div>
@@ -213,3 +213,4 @@ export default function FacultyGradesPage() {
         </LMSShell>
     );
 }
+

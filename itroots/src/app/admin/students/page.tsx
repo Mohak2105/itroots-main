@@ -8,12 +8,14 @@ import {
     MagnifyingGlass,
     Plus,
     X,
-    Trash,
     PencilSimple,
     EnvelopeSimple,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
+import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import styles from "./admin-students.module.css";
+import toast from "react-hot-toast";
+import { showStatusConfirmation } from "@/utils/toastUtils";
 
 interface CourseInfo {
     id: string;
@@ -47,7 +49,9 @@ interface IssuedCredentials {
 }
 
 const EMPTY_FORM = {
-    name: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
     email: "",
     phone: "",
     courseId: "",
@@ -71,7 +75,7 @@ const getInitials = (name: string) =>
         .toUpperCase();
 
 export default function AdminStudentsPage() {
-    const { user, isLoading, token } = useLMSAuth();
+    const { user, isLoading, token, impersonate } = useLMSAuth();
     const router = useRouter();
     const [students, setStudents] = useState<Student[]>([]);
     const [courses, setCourses] = useState<CourseInfo[]>([]);
@@ -79,6 +83,7 @@ export default function AdminStudentsPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [loadingData, setLoadingData] = useState(true);
     const [showModal, setShowModal] = useState(false);
+    const [statusFilter, setStatusFilter] = useState("ACTIVE");
     const [isEditing, setIsEditing] = useState(false);
     const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
     const [issuedCredentials, setIssuedCredentials] = useState<IssuedCredentials | null>(null);
@@ -91,7 +96,7 @@ export default function AdminStudentsPage() {
     }, [user, isLoading, router]);
 
     const activeStudents = useMemo(() => students.filter((student) => student.isActive), [students]);
-    const blockedStudents = useMemo(() => students.filter((student) => !student.isActive), [students]);
+    const inactiveStudents = useMemo(() => students.filter((student) => !student.isActive), [students]);
 
 
     const availableBatches = useMemo(
@@ -166,8 +171,23 @@ export default function AdminStudentsPage() {
         setIssuedCredentials(null);
         setIsEditing(true);
         setSelectedStudentId(student.id);
+
+        const nameParts = student.name ? student.name.split(" ") : ["", "", ""];
+        const firstName = nameParts[0] || "";
+        let middleName = "";
+        let lastName = "";
+
+        if (nameParts.length > 2) {
+            lastName = nameParts.pop() || "";
+            middleName = nameParts.slice(1).join(" ");
+        } else if (nameParts.length === 2) {
+            lastName = nameParts[1] || "";
+        }
+
         setFormData({
-            name: student.name,
+            firstName,
+            middleName,
+            lastName,
             email: student.email,
             phone: student.phone || "",
             courseId: primaryBatch?.courseId || "",
@@ -189,7 +209,7 @@ export default function AdminStudentsPage() {
                         Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        name: formData.name,
+                        name: [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ").trim(),
                         email: formData.email,
                         phone: formData.phone,
                     }),
@@ -226,7 +246,13 @@ export default function AdminStudentsPage() {
                         "Content-Type": "application/json",
                         Authorization: `Bearer ${token}`,
                     },
-                    body: JSON.stringify(formData),
+                    body: JSON.stringify({
+                        name: [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ").trim(),
+                        email: formData.email,
+                        phone: formData.phone,
+                        courseId: formData.courseId,
+                        batchId: formData.batchId,
+                    }),
                 });
                 const created = await createRes.json();
 
@@ -235,7 +261,7 @@ export default function AdminStudentsPage() {
                 }
 
                 setIssuedCredentials({
-                    name: created?.student?.name || formData.name,
+                    name: created?.student?.name || [formData.firstName, formData.middleName, formData.lastName].filter(Boolean).join(" ").trim(),
                     username: created?.credentials?.username || "",
                     password: created?.credentials?.password || "",
                     loginWith: created?.credentials?.loginWith || [],
@@ -244,14 +270,15 @@ export default function AdminStudentsPage() {
             }
 
             await Promise.all([fetchStudents(), fetchAcademicData()]);
+            toast.success(isEditing ? "Student updated successfully!" : "Student created successfully!");
         } catch (err) {
             console.error("Student save failed:", err);
-            alert(err instanceof Error ? err.message : "Student save failed");
+            toast.error(err instanceof Error ? err.message : "Student save failed");
         }
     };
 
-    const handleToggleStatus = async (studentId: string, currentStatus: boolean) => {
-        try {
+    const handleToggleStatus = (studentId: string, currentStatus: boolean) => {
+        showStatusConfirmation("Student", currentStatus, async () => {
             const res = await fetch(`${ENDPOINTS.ADMIN.USERS}/${studentId}`, {
                 method: "PUT",
                 headers: {
@@ -260,11 +287,30 @@ export default function AdminStudentsPage() {
                 },
                 body: JSON.stringify({ isActive: !currentStatus }),
             });
-            if (res.ok) {
-                void fetchStudents();
+            if (!res.ok) {
+                throw new Error("Status toggle failed");
             }
+            void fetchStudents();
+        });
+    };
+
+    const handleImpersonate = async (student: Student) => {
+        if (!token) return;
+        try {
+            const res = await fetch(ENDPOINTS.ADMIN.IMPERSONATE(student.id), {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data?.message || "Impersonation failed");
+            }
+            impersonate(data.user, data.token);
+            toast.success(`Logged in as ${data.user.name}`);
+            router.push("/lms/student/dashboard");
         } catch (err) {
-            console.error("Status toggle failed:", err);
+            console.error("Impersonation error:", err);
+            toast.error(err instanceof Error ? err.message : "Impersonation failed");
         }
     };
 
@@ -285,25 +331,10 @@ export default function AdminStudentsPage() {
                 password: data?.credentials?.password || "",
                 loginWith: data?.credentials?.loginWith || [student.email],
             });
-            alert(`Welcome mail sent to ${data?.user?.email || student.email}`);
+            toast.success(`Welcome mail sent to ${data?.user?.email || student.email}`);
         } catch (err) {
             console.error("Welcome mail failed:", err);
-            alert(err instanceof Error ? err.message : "Unable to send welcome mail");
-        }
-    };
-
-    const handleDeleteStudent = async (studentId: string) => {
-        if (!confirm("Are you sure you want to delete this student permanently?")) return;
-        try {
-            const res = await fetch(`${ENDPOINTS.ADMIN.USERS}/${studentId}`, {
-                method: "DELETE",
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (res.ok) {
-                void fetchStudents();
-            }
-        } catch (err) {
-            console.error("Deletion failed:", err);
+            toast.error(err instanceof Error ? err.message : "Unable to send welcome mail");
         }
     };
 
@@ -311,7 +342,7 @@ export default function AdminStudentsPage() {
         if (loadingData) {
             return (
                 <tr>
-                    <td colSpan={6} className={styles.empty}>Loading student records...</td>
+                    <td colSpan={8} className={styles.empty}>Loading student records...</td>
                 </tr>
             );
         }
@@ -319,7 +350,7 @@ export default function AdminStudentsPage() {
         if (records.length === 0) {
             return (
                 <tr>
-                    <td colSpan={6} className={styles.empty}>No students found in this list.</td>
+                    <td colSpan={8} className={styles.empty}>No students found in this list.</td>
                 </tr>
             );
         }
@@ -330,54 +361,51 @@ export default function AdminStudentsPage() {
 
             return (
                 <tr key={student.id}>
-                    <td>
+                    <td style={{ whiteSpace: "nowrap" }}>
                         <div className={styles.studentInfo}>
                             <div className={styles.avatar}>{getInitials(student.name)}</div>
                             <div>
-                                <a href={`/students/${student.id}`} className={styles.nameLink}>
+                                <a href="#" onClick={(e) => { e.preventDefault(); handleImpersonate(student); }} className={styles.nameLink}>
                                     {student.name}
                                 </a>
-                                <div className={styles.email}>{student.username || student.email}</div>
                             </div>
                         </div>
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                        <span className={styles.tableSecondary}>{primaryBatch?.course?.title || "Unassigned"}</span>
+                    </td>
+                    <td style={{ whiteSpace: "nowrap" }}>
                         {primaryBatch ? (
-                            <div className={styles.tableStack}>
-                                <div className={styles.tablePrimary}>{primaryBatch.course?.title || "Course"}</div>
-                                <div className={styles.tableSecondary}>
-                                    {primaryBatch.name}
-                                    {extraBatchCount > 0 ? ` +${extraBatchCount} more` : ""}
-                                </div>
-                            </div>
+                            <span className={styles.tableSecondary}>
+                                {primaryBatch.name}
+                                {extraBatchCount > 0 ? ` +${extraBatchCount} more` : ""}
+                            </span>
                         ) : (
-                            <span className={styles.unassigned}>No batch assigned</span>
+                            <span className={styles.tableSecondary}>No batch assigned</span>
                         )}
                     </td>
-                    <td>
-                        <div className={styles.tableStack}>
-                            <div className={styles.tablePrimary}>{student.phone || "No phone"}</div>
-                            <div className={styles.tableSecondary}>{student.email}</div>
-                        </div>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                        <span className={styles.tableSecondary}>{student.phone || "No phone"}</span>
                     </td>
-                    <td>
-                        <span className={styles.dateBadge}>{formatDate(student.createdAt)}</span>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                        <span className={styles.tableSecondary}>{formatDate(student.createdAt)}</span>
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: "nowrap" }}>
                         <button
                             onClick={() => handleToggleStatus(student.id, student.isActive)}
                             className={styles.toggleSwitch}
-                            title={student.isActive ? "Click to block" : "Click to activate"}
+                            title={student.isActive ? "Click to set inactive" : "Click to activate"}
+                            style={{ transform: "scale(0.8)", transformOrigin: "left center" }}
                         >
                             <div className={`${styles.toggleTrack} ${student.isActive ? styles.on : styles.off}`}>
                                 <div className={styles.toggleThumb} />
                             </div>
                             <span className={`${styles.toggleLabel} ${!student.isActive ? styles.off : ""}`}>
-                                {student.isActive ? "Active" : "Blocked"}
+                                {student.isActive ? "Active" : "Inactive"}
                             </span>
                         </button>
                     </td>
-                    <td>
+                    <td style={{ whiteSpace: "nowrap" }}>
                         <div className={styles.actions}>
                             <button onClick={() => handleSendWelcomeMail(student)} className={styles.mailBtn} title="Send welcome mail">
                                 <EnvelopeSimple size={18} weight="bold" />
@@ -385,10 +413,10 @@ export default function AdminStudentsPage() {
                             <button onClick={() => handleEditClick(student)} className={styles.editBtn} title="Edit student">
                                 <PencilSimple size={18} weight="bold" />
                             </button>
-                            <button onClick={() => handleDeleteStudent(student.id)} className={styles.deleteBtn} title="Delete student">
-                                <Trash size={18} weight="bold" />
-                            </button>
                         </div>
+                    </td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                        <span className={styles.tableSecondary}>{student.email}</span>
                     </td>
                 </tr>
             );
@@ -415,6 +443,14 @@ export default function AdminStudentsPage() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
+                        <select 
+                            className={styles.statusSelect}
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                        >
+                            <option value="ACTIVE">Active Students ({activeStudents.length})</option>
+                            <option value="INACTIVE">Inactive Students ({inactiveStudents.length})</option>
+                        </select>
                         <button className={styles.enrollBtn} onClick={handleCreateClick}>
                             <Plus size={18} weight="bold" />
                             <span>Create Student</span>
@@ -429,42 +465,24 @@ export default function AdminStudentsPage() {
                 ) : null}
 
                 <section className={styles.tableSection}>
-                    <div className={styles.tableSectionHeader}>Active Students</div>
-                    <div className={styles.tableWrapper}>
-                        <table className={styles.studentTable}>
-                            <thead>
-                                <tr>
-                                    <th>Student</th>
-                                    <th>Course / Batch</th>
-                                    <th>Contact</th>
-                                    <th>Joined Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>{renderRows(activeStudents)}</tbody>
-                        </table>
-                    </div>
-                </section>
-
-                <section className={styles.tableSection}>
-                    <div className={styles.tableSectionHeader}>Blocked Students</div>
-                    <div className={styles.tableWrapper}>
-                        <table className={styles.studentTable}>
-                            <thead>
-                                <tr>
-                                    <th>Student</th>
-                                    <th>Course / Batch</th>
-                                    <th>Contact</th>
-                                    <th>Joined Date</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>{renderRows(blockedStudents)}</tbody>
-                        </table>
-                    </div>
-                </section>
+                            <div className={styles.tableWrapper}>
+                                <table className={styles.studentTable}>
+                                    <thead>
+                                        <tr>
+                                            <th>Student</th>
+                                            <th>Course</th>
+                                            <th>Batch</th>
+                                            <th>Contact</th>
+                                            <th>{statusFilter === "ACTIVE" ? "Joined Date" : "Inactive Date"}</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                            <th>Email</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>{renderRows(statusFilter === "ACTIVE" ? activeStudents : inactiveStudents)}</tbody>
+                                </table>
+                            </div>
+                        </section>
             </div>
 
             {showModal ? (
@@ -475,42 +493,50 @@ export default function AdminStudentsPage() {
                             <button onClick={resetModal}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className={styles.form}>
-                            <div className={styles.formGroup}>
-                                <label>Full Name</label>
-                                <input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Rahul Sharma" />
+                            <div style={{ display: "flex", gap: "1rem" }}>
+                                <div className={styles.formGroup} style={{ flex: 1 }}>
+                                    <label>First Name</label>
+                                    <input required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="Enter First Name" />
+                                </div>
+                                <div className={styles.formGroup} style={{ flex: 1 }}>
+                                    <label>Middle Name</label>
+                                    <input value={formData.middleName} onChange={(e) => setFormData({ ...formData, middleName: e.target.value })} placeholder="Enter Middle Name" />
+                                </div>
+                                <div className={styles.formGroup} style={{ flex: 1 }}>
+                                    <label>Last Name</label>
+                                    <input required value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Enter Last Name" />
+                                </div>
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Email Address</label>
-                                <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="student@example.com" />
+                                <input type="email" required value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} placeholder="Enter Email Address" />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Phone Number</label>
-                                <input required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="+91 98765 43210" />
+                                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                    <span style={{ padding: "0.7rem 0.75rem", background: "#f1f5f9", border: "1px solid #e2e8f0", borderRadius: "10px", fontSize: "0.9rem", fontWeight: 600, color: "#475569", whiteSpace: "nowrap" }}>+91</span>
+                                    <input required value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} placeholder="98765 43210" style={{ flex: 1 }} />
+                                </div>
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Assign Course</label>
-                                <select
+                                <CustomSelect
+                                    options={courses.map((course) => ({ value: course.id, label: course.title }))}
                                     value={formData.courseId}
-                                    onChange={(e) => setFormData({ ...formData, courseId: e.target.value, batchId: "" })}
-                                >
-                                    <option value="">Select a course</option>
-                                    {courses.map((course) => (
-                                        <option key={course.id} value={course.id}>{course.title}</option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setFormData({ ...formData, courseId: val, batchId: "" })}
+                                    placeholder="Select a course"
+                                    required
+                                />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Assign Batch</label>
-                                <select
+                                <CustomSelect
+                                    options={availableBatches.map((batch) => ({ value: batch.id, label: batch.name }))}
                                     value={formData.batchId}
-                                    onChange={(e) => setFormData({ ...formData, batchId: e.target.value })}
-                                    disabled={!formData.courseId}
-                                >
-                                    <option value="">Select a batch</option>
-                                    {availableBatches.map((batch) => (
-                                        <option key={batch.id} value={batch.id}>{batch.name}</option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setFormData({ ...formData, batchId: val })}
+                                    placeholder="Select a batch"
+                                    required
+                                />
                             </div>
                             <button type="submit" className={styles.submitBtn}>
                                 {isEditing ? "Save Student" : "Create Student Account"}

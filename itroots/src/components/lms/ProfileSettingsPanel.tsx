@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -8,7 +8,7 @@ import LMSShell from "@/components/lms/LMSShell";
 import { API_ORIGIN, ENDPOINTS } from "@/config/api";
 import styles from "./profile-settings.module.css";
 
-type SupportedRole = "STUDENT" | "Faculty";
+type SupportedRole = "STUDENT" | "FACULTY";
 
 type Props = {
     requiredRole: SupportedRole;
@@ -53,11 +53,17 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
     });
 
     useEffect(() => {
-        const isPortalSubdomain = typeof window !== "undefined" && (window.location.hostname.startsWith("student") || window.location.hostname.startsWith("Faculty"));
+        const isPortalSubdomain = typeof window !== "undefined" && (window.location.hostname.startsWith("student") || window.location.hostname.startsWith("Faculty") || window.location.hostname.startsWith("Faculty"));
         const loginPath = isPortalSubdomain ? "/login" : "/lms/login";
 
-        if (!isLoading && (!user || user.role !== requiredRole)) {
-            router.push(loginPath);
+        if (!isLoading) {
+            const isFacultyRoleRequired = requiredRole === "FACULTY";
+            const isFacultyUser = user?.role?.toUpperCase() === "FACULTY";
+            const hasRole = isFacultyRoleRequired ? isFacultyUser : user?.role === requiredRole;
+
+            if (!user || !hasRole) {
+                router.push(loginPath);
+            }
         }
     }, [isLoading, requiredRole, router, user]);
 
@@ -77,7 +83,7 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
 
     const userInitials = useMemo(() => {
         if (!user?.name) {
-            return requiredRole === "Faculty" ? "TR" : "ST";
+            return requiredRole === "FACULTY" ? "TR" : "ST";
         }
 
         return user.name
@@ -347,4 +353,5 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
         </LMSShell>
     );
 }
+
 

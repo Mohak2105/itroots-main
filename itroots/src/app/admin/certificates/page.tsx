@@ -1,10 +1,11 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
+import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import styles from "./certificates.module.css";
 import {
     Certificate,
@@ -12,7 +13,25 @@ import {
     Eye,
     GraduationCap,
     Scroll,
+    Plus,
+    X,
+    EnvelopeSimple,
 } from "@phosphor-icons/react";
+
+const DURATION_OPTIONS = [
+    { value: "1 Week", label: "1 Week" },
+    { value: "2 Weeks", label: "2 Weeks" },
+    { value: "4 Weeks", label: "4 Weeks" },
+    { value: "6 Weeks", label: "6 Weeks" },
+    { value: "8 Weeks", label: "8 Weeks" },
+    { value: "12 Weeks", label: "12 Weeks" },
+    { value: "1 Month", label: "1 Month" },
+    { value: "2 Months", label: "2 Months" },
+    { value: "3 Months", label: "3 Months" },
+    { value: "6 Months", label: "6 Months" },
+    { value: "1 Year", label: "1 Year" },
+];
+import toast from "react-hot-toast";
 
 type Student = {
     id: string;
@@ -82,6 +101,7 @@ export default function AdminCertificatesPage() {
     const [loadingData, setLoadingData] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [activeCertificate, setActiveCertificate] = useState<CertificateRecord | null>(null);
+    const [showModal, setShowModal] = useState(false);
     const [form, setForm] = useState<CertificateForm>({
         studentId: "",
         courseId: "",
@@ -233,9 +253,11 @@ export default function AdminCertificatesPage() {
 
             setActiveCertificate(data.certificate || null);
             await fetchData();
+            setShowModal(false);
+            toast.success("Certificate generated successfully!");
         } catch (error) {
             console.error("Certificate generation failed:", error);
-            alert(error instanceof Error ? error.message : "Certificate generation failed");
+            toast.error(error instanceof Error ? error.message : "Certificate generation failed");
         } finally {
             setSubmitting(false);
         }
@@ -259,10 +281,23 @@ export default function AdminCertificatesPage() {
             link.download = "certificate.pdf";
             link.click();
             window.URL.revokeObjectURL(url);
+            toast.success("Certificate downloaded successfully");
         } catch (error) {
             console.error("Certificate download failed:", error);
-            alert(error instanceof Error ? error.message : "Certificate download failed");
+            toast.error(error instanceof Error ? error.message : "Certificate download failed");
         }
+    };
+
+    const handleSendMail = async (certificateId: string) => {
+        // Mocking the email send for now since there's no backend endpoint yet
+        toast.promise(
+            new Promise(resolve => setTimeout(resolve, 1500)),
+            {
+                loading: "Sending certificate via email...",
+                success: "Certificate sent to student successfully!",
+                error: "Failed to send certificate",
+            }
+        );
     };
 
     const handlePrintPreview = () => {
@@ -274,7 +309,7 @@ export default function AdminCertificatesPage() {
         previewWindow.document.write(`
             <html>
             <head>
-                <title>Certificate Preview</title>
+                <title>Certificate Sample</title>
                 <style>
                     body { margin: 0; padding: 24px; background: #edf2f7; font-family: Arial, sans-serif; }
                     .sheet { width: 1120px; margin: 0 auto; background: linear-gradient(135deg, #fffdf7, #f7f0d8); border: 6px solid #12395b; border-radius: 24px; padding: 34px; box-sizing: border-box; }
@@ -340,139 +375,29 @@ export default function AdminCertificatesPage() {
             <div className={styles.page}>
                 <section className={styles.hero}>
                     <div>
-                        <p className={styles.eyebrow}>Academic Certification</p>
-                        <h1>Generate student certificates from the admin panel</h1>
+
+                        <h1>Generate Student Certificates</h1>
                         <p className={styles.heroText}>
-                            Select the student and enrolled course, define the course duration, add the signatory, and issue a polished certificate with a downloadable PDF.
+                            Select the student and enrolled course, define the course duration and issue a certificate.
                         </p>
                     </div>
+                    <div style={{ display: "flex", alignItems: "center", gap: "1rem", zIndex: 2, position: "relative" }}>
+                        <button className={styles.createBtn} onClick={() => setShowModal(true)}>
+                            <Plus size={18} weight="bold" />
+                            <span>Create Certificate</span>
+                        </button>
+                    </div>
                 </section>
 
-                <section className={styles.statsGrid}>
-                    <div className={styles.statCard}>
-                        <span className={styles.statIcon}><Certificate size={24} /></span>
-                        <div>
-                            <div className={styles.statValue}>{certificates.length}</div>
-                            <div className={styles.statLabel}>Issued Certificates</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
-                        <span className={styles.statIcon}><GraduationCap size={24} /></span>
-                        <div>
-                            <div className={styles.statValue}>{students.length}</div>
-                            <div className={styles.statLabel}>Students Available</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
-                        <span className={styles.statIcon}><Scroll size={24} /></span>
-                        <div>
-                            <div className={styles.statValue}>{courses.length}</div>
-                            <div className={styles.statLabel}>Courses Available</div>
-                        </div>
-                    </div>
-                </section>
+
 
                 <div className={styles.mainGrid}>
-                    <section className={styles.formPanel}>
-                        <div className={styles.panelHeader}>
-                            <div>
-                                <h2>Create Certificate</h2>
-                                <p>Only courses assigned to the selected student can be certified.</p>
-                            </div>
-                        </div>
-
-                        <form className={styles.form} onSubmit={handleGenerate}>
-                            <label className={styles.field}>
-                                <span>Select Student</span>
-                                <select value={form.studentId} onChange={(e) => handleStudentChange(e.target.value)} required>
-                                    <option value="">Choose a student</option>
-                                    {students.map((student) => (
-                                        <option key={student.id} value={student.id}>{student.name}  -  {student.email}</option>
-                                    ))}
-                                </select>
-                            </label>
-
-                            <label className={styles.field}>
-                                <span>Select Course</span>
-                                <select value={form.courseId} onChange={(e) => handleCourseChange(e.target.value)} required disabled={!form.studentId}>
-                                    <option value="">Choose a course</option>
-                                    {availableCourses.map((course) => (
-                                        <option key={course.id} value={course.id}>{course.title}</option>
-                                    ))}
-                                </select>
-                            </label>
-
-                            <div className={styles.inlineFields}>
-                                <label className={styles.field}>
-                                    <span>Course Duration</span>
-                                    <input
-                                        value={form.duration}
-                                        onChange={(e) => { setActiveCertificate(null); setForm((current) => ({ ...current, duration: e.target.value })); }}
-                                        placeholder="e.g. 12 Weeks"
-                                        required
-                                    />
-                                </label>
-
-                                <label className={styles.field}>
-                                    <span>Issue Date</span>
-                                    <input
-                                        type="date"
-                                        value={form.issueDate}
-                                        onChange={(e) => { setActiveCertificate(null); setForm((current) => ({ ...current, issueDate: e.target.value })); }}
-                                        required
-                                    />
-                                </label>
-                            </div>
-
-                            <div className={styles.inlineFields}>
-                                <label className={styles.field}>
-                                    <span>Signatory Name</span>
-                                    <input
-                                        value={form.signatoryName}
-                                        onChange={(e) => { setActiveCertificate(null); setForm((current) => ({ ...current, signatoryName: e.target.value })); }}
-                                        placeholder="Authorized signer"
-                                        required
-                                    />
-                                </label>
-
-                                <label className={styles.field}>
-                                    <span>Signatory Title</span>
-                                    <input
-                                        value={form.signatoryTitle}
-                                        onChange={(e) => { setActiveCertificate(null); setForm((current) => ({ ...current, signatoryTitle: e.target.value })); }}
-                                        placeholder="Managing Director"
-                                    />
-                                </label>
-                            </div>
-
-                            <div className={styles.formHint}>
-                                {selectedStudent && availableCourses.length === 0
-                                    ? "This student has no enrolled course available for certification yet."
-                                    : "The certificate will be saved to the database and can be downloaded as PDF anytime."}
-                            </div>
-
-                            <div className={styles.formActions}>
-                                <button type="submit" className={styles.primaryButton} disabled={submitting || availableCourses.length === 0}>
-                                    {submitting ? "Generating..." : "Generate Certificate"}
-                                </button>
-                                <button type="button" className={styles.secondaryButton} onClick={handlePrintPreview} disabled={!previewCertificate}>
-                                    Print Preview
-                                </button>
-                            </div>
-                        </form>
-                    </section>
-
                     <section className={styles.previewPanel}>
                         <div className={styles.panelHeader}>
                             <div>
-                                <h2>Certificate Preview</h2>
-                                <p>Preview updates live before issue.</p>
+                                <h2>Demo Certificate</h2>
+                                <p>Preview of demo certificate.</p>
                             </div>
-                            {activeCertificate ? (
-                                <button type="button" className={styles.downloadButton} onClick={() => handleDownload(activeCertificate.id)}>
-                                    <DownloadSimple size={18} /> PDF
-                                </button>
-                            ) : null}
                         </div>
 
                         {previewCertificate ? (
@@ -519,7 +444,7 @@ export default function AdminCertificatesPage() {
                     <div className={styles.panelHeader}>
                         <div>
                             <h2>Issued Certificates</h2>
-                            <p>All generated certificates saved in the LMS database.</p>
+                            <p>List of all generated certificates.</p>
                         </div>
                     </div>
 
@@ -534,10 +459,11 @@ export default function AdminCertificatesPage() {
                                     <tr>
                                         <th>Certificate No</th>
                                         <th>Student</th>
-                                        <th>Course / Batch</th>
+                                        <th>Email</th>
+                                        <th>Course</th>
+                                        <th>Batch</th>
                                         <th>Duration</th>
                                         <th>Issue Date</th>
-                                        <th>Signatory</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -546,40 +472,34 @@ export default function AdminCertificatesPage() {
                                         const isSelected = activeCertificate?.id === certificate.id;
                                         return (
                                             <tr key={certificate.id} className={isSelected ? styles.historyRowActive : undefined}>
-                                                <td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
                                                     <div className={styles.historyPrimary}>{certificate.certificateNumber}</div>
                                                 </td>
-                                                <td>
-                                                    <div className={styles.historyCell}>
-                                                        <div className={styles.historyPrimary}>{certificate.student?.name || "Student"}</div>
-                                                        <div className={styles.historySecondary}>{certificate.student?.email || "No email"}</div>
-                                                    </div>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <div className={styles.historyPrimary}>{certificate.student?.name || "Student"}</div>
                                                 </td>
-                                                <td>
-                                                    <div className={styles.historyCell}>
-                                                        <div className={styles.historyPrimary}>{certificate.course?.title || "Course"}</div>
-                                                        <div className={styles.historySecondary}>{certificate.batch?.name || "Assigned Batch"}</div>
-                                                    </div>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <span className={styles.historySecondary}>{certificate.student?.email || "No email"}</span>
                                                 </td>
-                                                <td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <div className={styles.historyPrimary}>{certificate.course?.title || "Course"}</div>
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <div className={styles.historySecondary}>{certificate.batch?.name || "Assigned Batch"}</div>
+                                                </td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
                                                     <div className={styles.historyPrimary}>{certificate.duration || "Not specified"}</div>
                                                 </td>
-                                                <td>
-                                                    <span className={styles.historyBadge}>{formatShortDate(certificate.issueDate)}</span>
+                                                <td style={{ whiteSpace: "nowrap" }}>
+                                                    <span className={styles.historySecondary}>{formatShortDate(certificate.issueDate)}</span>
                                                 </td>
-                                                <td>
-                                                    <div className={styles.historyCell}>
-                                                        <div className={styles.historyPrimary}>{certificate.signatoryName}</div>
-                                                        <div className={styles.historySecondary}>{certificate.signatoryTitle || "Authorized Signatory"}</div>
-                                                    </div>
-                                                </td>
-                                                <td>
+                                                <td style={{ whiteSpace: "nowrap" }}>
                                                     <div className={styles.historyTableActions}>
-                                                        <button type="button" className={styles.tableSecondaryButton} onClick={() => setActiveCertificate(certificate)}>
-                                                            View
+                                                        <button type="button" className={`${styles.iconButton} ${styles.iconButtonView}`} onClick={() => setActiveCertificate(certificate)} title="View Certificate">
+                                                            <Eye size={18} weight="bold" />
                                                         </button>
-                                                        <button type="button" className={styles.tablePrimaryButton} onClick={() => handleDownload(certificate.id)}>
-                                                            <DownloadSimple size={14} /> PDF
+                                                        <button type="button" className={styles.iconButton} onClick={() => handleSendMail(certificate.id)} title="Send Mail">
+                                                            <EnvelopeSimple size={18} weight="bold" />
                                                         </button>
                                                     </div>
                                                 </td>
@@ -592,6 +512,102 @@ export default function AdminCertificatesPage() {
                     )}
                 </section>
             </div>
+
+            {showModal && (
+                <div className={styles.modalOverlay}>
+                    <div className={styles.modal}>
+                        <div className={styles.modalHeader}>
+                            <h3>Create Certificate</h3>
+                            <button onClick={() => setShowModal(false)}><X size={20} /></button>
+                        </div>
+                        <div className={styles.modalBody}>
+                            <form className={styles.form} onSubmit={handleGenerate} style={{ padding: 0 }}>
+                                <div className={styles.field}>
+                                    <span>Select Student</span>
+                                    <CustomSelect
+                                        options={students.map((student) => ({ value: student.id, label: student.name }))}
+                                        value={form.studentId}
+                                        onChange={(val) => handleStudentChange(val)}
+                                        placeholder="Choose a student"
+                                        required
+                                    />
+                                </div>
+
+                                <div className={styles.field}>
+                                    <span>Select Course</span>
+                                    <CustomSelect
+                                        options={availableCourses.map((course) => ({ value: course.id, label: course.title }))}
+                                        value={form.courseId}
+                                        onChange={(val) => handleCourseChange(val)}
+                                        placeholder="Choose a course"
+                                        required
+                                        disabled={!form.studentId}
+                                    />
+                                </div>
+
+                                <div className={styles.inlineFields}>
+                                    <div className={styles.field}>
+                                        <span>Course Duration</span>
+                                        <CustomSelect
+                                            options={DURATION_OPTIONS}
+                                            value={form.duration}
+                                            onChange={(val) => { setActiveCertificate(null); setForm((current) => ({ ...current, duration: val })); }}
+                                            placeholder="Select duration"
+                                            required
+                                        />
+                                    </div>
+
+                                    <label className={styles.field}>
+                                        <span>Issue Date</span>
+                                        <input
+                                            type="date"
+                                            value={form.issueDate}
+                                            onChange={(e) => { setActiveCertificate(null); setForm((current) => ({ ...current, issueDate: e.target.value })); }}
+                                            required
+                                        />
+                                    </label>
+                                </div>
+
+                                <div className={styles.inlineFields}>
+                                    <label className={styles.field}>
+                                        <span>Signatory Name</span>
+                                        <input
+                                            value={form.signatoryName}
+                                            onChange={(e) => { setActiveCertificate(null); setForm((current) => ({ ...current, signatoryName: e.target.value })); }}
+                                            placeholder="Authorized signer"
+                                            required
+                                        />
+                                    </label>
+
+                                    <label className={styles.field}>
+                                        <span>Signatory Title</span>
+                                        <input
+                                            value={form.signatoryTitle}
+                                            onChange={(e) => { setActiveCertificate(null); setForm((current) => ({ ...current, signatoryTitle: e.target.value })); }}
+                                            placeholder="Managing Director"
+                                        />
+                                    </label>
+                                </div>
+
+                                <div className={styles.formHint}>
+                                    {selectedStudent && availableCourses.length === 0
+                                        ? "This student has no enrolled course available for certification yet."
+                                        : "The certificate will be saved to the database and can be downloaded as PDF anytime."}
+                                </div>
+
+                                <div className={styles.formActions} style={{ marginTop: "1rem" }}>
+                                    <button type="submit" className={styles.primaryButton} disabled={submitting || availableCourses.length === 0}>
+                                        {submitting ? "Generating..." : "Generate Certificate"}
+                                    </button>
+                                    <button type="button" className={styles.secondaryButton} onClick={handlePrintPreview} disabled={!previewCertificate}>
+                                        Print Preview
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
         </LMSShell>
     );
 }

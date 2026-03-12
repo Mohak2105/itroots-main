@@ -1,0 +1,35 @@
+﻿.next/types/validator.ts(42,39): error TS2307: Cannot find module '../../src/app/about-new/page.js' or its corresponding type declarations.
+.next/types/validator.ts(222,39): error TS2307: Cannot find module '../../src/app/contact-new/page.js' or its corresponding type declarations.
+src/app/lms/teacher/analytics/page.tsx(21,38): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/analytics/page.tsx(21,65): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/announcements/page.tsx(51,39): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/announcements/page.tsx(51,66): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/announcements/page.tsx(51,94): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/assignments/page.tsx(76,39): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/assignments/page.tsx(76,66): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/assignments/page.tsx(76,94): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/assignments/review/[id]/page.tsx(25,38): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/assignments/review/[id]/page.tsx(25,65): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/batches/[batchId]/page.tsx(107,9): error TS2552: Cannot find name 'setIsAttendanceLoading'. Did you mean 'setIsAttendanceModal'?
+src/app/lms/teacher/batches/[batchId]/page.tsx(127,13): error TS2552: Cannot find name 'setIsAttendanceLoading'. Did you mean 'setIsAttendanceModal'?
+src/app/lms/teacher/batches/[batchId]/page.tsx(132,38): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/batches/[batchId]/page.tsx(132,65): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/calendar/page.tsx(54,38): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/calendar/page.tsx(54,65): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/engagement/page.tsx(15,38): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/engagement/page.tsx(15,65): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/grades/page.tsx(27,38): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/grades/page.tsx(27,65): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/grades/page.tsx(33,23): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/grades/page.tsx(33,50): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/students/page.tsx(28,38): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/students/page.tsx(28,65): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/students/page.tsx(34,23): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/students/page.tsx(34,50): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/lms/teacher/tests/[testId]/results/page.tsx(35,37): error TS2367: This comparison appears to be unintentional because the types 'UserRole' and '"Faculty"' have no overlap.
+src/app/placements/page.tsx(4,8): error TS2300: Duplicate identifier 'Image'.
+src/app/placements/page.tsx(6,8): error TS2300: Duplicate identifier 'Image'.
+src/components/lms/ProfileSettingsPanel.tsx(60,73): error TS2367: This comparison appears to be unintentional because the types '"STUDENT"' and '"Faculty"' have no overlap.
+src/components/lms/ProfileSettingsPanel.tsx(61,35): error TS2367: This comparison appears to be unintentional because the types 'UserRole | undefined' and '"Faculty"' have no overlap.
+src/components/lms/ProfileSettingsPanel.tsx(61,63): error TS2367: This comparison appears to be unintentional because the types 'UserRole | undefined' and '"Faculty"' have no overlap.
+src/components/lms/ProfileSettingsPanel.tsx(86,50): error TS2367: This comparison appears to be unintentional because the types '"STUDENT"' and '"Faculty"' have no overlap.

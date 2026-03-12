@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -221,15 +221,15 @@ function AnnouncementCard({
             </div>
             <div className={styles.content}>
                 <div className={styles.meta}>
-                    <span className={styles.badge} style={{ background: bg, color }}>{item.priority}</span>
+                    {item.priority !== "NORMAL" ? (
+                        <span className={styles.badge} style={{ background: bg, color }}>{item.priority}</span>
+                    ) : null}
                     {targetName ? (
                         <span className={styles.batchBadge}>{item.batchName ? `Batch: ${item.batchName}` : `Course: ${item.courseName}`}</span>
-                    ) : (
-                        <span className={styles.globalBadge}>Global Notice</span>
-                    )}
+                    ) : null}
                     <span className={styles.date}>
                         {new Date(item.createdAt).toLocaleDateString("en-US", {
-                            month: "short", day: "numeric", year: "numeric",
+                            month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit"
                         })}
                     </span>
                 </div>

@@ -4,6 +4,10 @@ import slugify from 'slugify';
 import Course from '../models/Course';
 import Batch from '../models/Batch';
 import User from '../models/User';
+import Payment from '../models/Payment';
+import LiveClass from '../models/LiveClass';
+import Certificate from '../models/Certificate';
+import Notification from '../models/Notification';
 
 const normalizeCourseStatus = (status?: string) => {
     const normalized = (status || 'DRAFT').toUpperCase();
@@ -112,10 +116,21 @@ export const updateCourse = async (req: Request, res: Response) => {
 export const deleteCourse = async (req: Request, res: Response) => {
     try {
         const courseId = req.params.id as string;
-        await Course.destroy({ where: { id: courseId } });
+        const course = await Course.findByPk(courseId);
+        if (!course) return res.status(404).json({ message: 'Course not found' });
+
+        // Delete related records first to avoid foreign key constraints
+        await Batch.destroy({ where: { courseId } });
+        await Payment.destroy({ where: { courseId } });
+        await LiveClass.destroy({ where: { courseId } });
+        await Certificate.destroy({ where: { courseId } });
+        await Notification.destroy({ where: { courseId } });
+
+        await course.destroy();
         res.json({ message: 'Course deleted successfully' });
-    } catch (error) {
-        res.status(500).json({ message: 'Server error during course deletion' });
+    } catch (error: any) {
+        console.error('Delete course error:', error);
+        res.status(500).json({ message: error.message || 'Server error during course deletion' });
     }
 };
 
@@ -126,6 +141,7 @@ export const updateBatch = async (req: Request, res: Response) => {
         if (!batch) return res.status(404).json({ message: 'Batch not found' });
 
         if (req.body.FacultyId) await ensureFaculty(req.body.FacultyId as string);
+        else req.body.FacultyId = null;
         if (req.body.courseId) {
             const course = await Course.findByPk(req.body.courseId as string);
             if (!course) return res.status(404).json({ message: 'Course not found' });

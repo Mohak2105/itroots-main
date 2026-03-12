@@ -1,13 +1,13 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { ChalkboardTeacher, ArrowRight, CalendarDots } from "@phosphor-icons/react";
+import { Chalkboard, ArrowRight, CalendarDots } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
-import styles from "./Faculty-dashboard.module.css";
+import styles from "./teacher-dashboard.module.css";
 
 type DashboardData = {
     summary: {
@@ -39,7 +39,7 @@ export default function FacultyDashboard() {
     });
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
@@ -65,14 +65,14 @@ export default function FacultyDashboard() {
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Course Overview</div>
-                        <div className={styles.bannerSub}>Manage your assigned batches, content, and tests from one place.</div>
+                        <div className={styles.bannerSub}>Manage your assigned batches, content, and tests.</div>
                     </div>
-                    <ChalkboardTeacher size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
+                    <Chalkboard size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
 
                 <section className={styles.statsGrid}>
                     <div className={styles.statCard}>
-                        <div className={`${styles.statIcon} ${styles.statIconBlue}`}><ChalkboardTeacher size={24} /></div>
+                        <div className={`${styles.statIcon} ${styles.statIconBlue}`}><Chalkboard size={24} /></div>
                         <div className={styles.statInfo}>
                             <span className={styles.statValue}>{dashboard.summary.totalBatches}</span>
                             <span className={styles.statLabel}>Active Batches</span>
@@ -121,4 +121,6 @@ export default function FacultyDashboard() {
         </LMSShell>
     );
 }
+
+
 

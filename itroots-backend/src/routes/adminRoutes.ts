@@ -11,7 +11,8 @@ import {
     enrollNewStudent,
     deleteUser,
     getAllFaculty,
-    getAdminDashboard
+    getAdminDashboard,
+    impersonateUser
 } from '../controllers/adminController';
 import {
     createStudent,
@@ -39,6 +40,7 @@ import {
     getAnnouncements,
     createTargetedNotification,
     getNotifications,
+    deleteNotification,
 } from '../controllers/adminNotificationController';
 import {
     getCertificates,
@@ -57,6 +59,7 @@ router.get('/users', getAllUsers);
 router.get('/users/:id', getUserById);
 router.put('/users/:id', updateUser);
 router.post('/users/:id/send-welcome-email', sendUserWelcomeMail);
+router.post('/users/:id/impersonate', impersonateUser);
 router.delete('/users/:id', deleteUser);
 
 router.get('/system-stats', getSystemStats);
@@ -94,5 +97,7 @@ router.get('/announcements', getAnnouncements);
 router.post('/announcements', createAdminAnnouncement);
 router.get('/notifications', getNotifications);
 router.post('/notifications', createTargetedNotification);
+router.delete('/notifications/:id', deleteNotification);
 
 export default router;
+

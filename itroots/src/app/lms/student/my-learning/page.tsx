@@ -42,12 +42,12 @@ export default function StudentLearningPage() {
     if (isLoading || !user) return null;
 
     return (
-        <LMSShell pageTitle="My Learning">
+        <LMSShell pageTitle="My Courses">
             <div className={styles.page}>
                 {/* Header Banner */}
                 <div className={styles.banner}>
                     <div className={styles.bannerContent}>
-                        <div className={styles.bannerTitle}>My Enrolled Batches</div>
+                        <div className={styles.bannerTitle}>My Courses</div>
                         <div className={styles.bannerSub}>
                             {loading ? "Loading..." : `${enrollments.length} batch${enrollments.length !== 1 ? "es" : ""} enrolled`}
                         </div>

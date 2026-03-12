@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import {
     getFacultyDashboard,
     getMyBatches,
@@ -23,7 +23,7 @@ import { authenticate, authorizeRole } from '../middlewares/auth';
 const router = express.Router();
 
 router.use(authenticate);
-router.use(authorizeRole('TEACHER'));
+router.use(authorizeRole('Faculty', 'TEACHER'));
 
 router.get('/dashboard', getFacultyDashboard);
 router.get('/my-batches', getMyBatches);

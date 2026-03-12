@@ -25,13 +25,13 @@ export default function FacultytudentsPage() {
     const [search, setSearch] = useState("");
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "Faculty")) {
+        if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/lms/login");
         }
     }, [user, isLoading, router]);
 
     useEffect(() => {
-        if (!user || user.role !== "Faculty") return;
+        if (!user || user?.role?.toUpperCase() !== "FACULTY") return;
 
         const FacultyBatches = BATCHES
             .filter((batch) => batch.FacultyId === user.id)
@@ -128,7 +128,7 @@ export default function FacultytudentsPage() {
                         >
                             {batches.length === 0 && <option>No assigned batches</option>}
                             {batches.map(b => (
-                                <option key={b.id} value={b.id}>{b.name} — {b.course?.title}</option>
+                                <option key={b.id} value={b.id}>{b.name} - {b.course?.title}</option>
                             ))}
                         </select>
                     </div>
@@ -227,3 +227,4 @@ export default function FacultytudentsPage() {
         </LMSShell>
     );
 }
+

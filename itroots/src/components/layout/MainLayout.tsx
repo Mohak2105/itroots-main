@@ -52,13 +52,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const isAppPath = pathname?.startsWith("/lms") || pathname?.startsWith("/admin");
 
     // Hostname-based detection (admin / student / Faculty subdomains)
-    const [isAppHost, setIsAppHost] = useState(false);
+    const [isAppHost, setIsAppHost] = useState<boolean | null>(null);
 
     useEffect(() => {
-        const h = window.location.hostname;
-        if (h.startsWith("admin") || h.startsWith("student") || h.startsWith("Faculty")) {
-            setIsAppHost(true);
-        }
+        const h = window.location.hostname.toLowerCase();
+        setIsAppHost(h.startsWith("admin") || h.startsWith("student") || h.startsWith("faculty"));
     }, []);
 
     useEffect(() => {
@@ -354,6 +352,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }, []);
 
     if (isAppPath || isAppHost) {
+        return <main>{children}</main>;
+    }
+
+    // Still detecting hostname (first render) — don't flash header/footer
+    if (isAppHost === null) {
         return <main>{children}</main>;
     }
 

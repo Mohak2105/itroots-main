@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import LMSShell from "@/components/lms/LMSShell";
 import { ArrowSquareOut, ArrowLeft, Browser, PlayCircle } from "@phosphor-icons/react";
@@ -47,7 +47,7 @@ const getYouTubeEmbedUrl = (rawUrl: string) => {
     }
 };
 
-export default function StudentContentViewerPage() {
+function ContentViewer() {
     const searchParams = useSearchParams();
     const contentUrl = searchParams.get("url") || "";
     const title = searchParams.get("title") || "Content Viewer";
@@ -110,5 +110,13 @@ export default function StudentContentViewerPage() {
                 </div>
             </div>
         </LMSShell>
+    );
+}
+
+export default function StudentContentViewerPage() {
+    return (
+        <Suspense fallback={<LMSShell pageTitle="Loading..."><div className={styles.page}>Loading content...</div></LMSShell>}>
+            <ContentViewer />
+        </Suspense>
     );
 }

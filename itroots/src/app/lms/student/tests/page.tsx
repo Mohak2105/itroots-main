@@ -68,7 +68,7 @@ const formatDuration = (seconds: number) => {
 };
 
 export default function StudentTestsPage() {
-    const { user, isLoading, token } = useLMSAuth();
+    const { user, isLoading, token, logout } = useLMSAuth();
     const router = useRouter();
     const submitInFlightRef = useRef(false);
 
@@ -85,13 +85,24 @@ export default function StudentTestsPage() {
         }
     }, [user, isLoading, router]);
 
+    const handleSessionExpired = useCallback(() => {
+        logout();
+        router.push("/lms/login");
+    }, [logout, router]);
+
     const fetchTests = useCallback(async () => {
         if (!token) return;
         try {
             const res = await fetch(ENDPOINTS.STUDENT.TESTS, {
                 headers: { Authorization: `Bearer ${token}` },
             });
-            const json = await res.json();
+            const json = await res.json().catch(() => null);
+
+            if (res.status === 401 || json?.message === "Invalid or expired token") {
+                handleSessionExpired();
+                return;
+            }
+
             if (!res.ok) {
                 throw new Error(json?.message || "Unable to fetch tests");
             }
@@ -99,7 +110,7 @@ export default function StudentTestsPage() {
         } catch (error) {
             console.error(error);
         }
-    }, [token]);
+    }, [token, handleSessionExpired]);
 
     useEffect(() => {
         void fetchTests();
@@ -153,7 +164,11 @@ export default function StudentTestsPage() {
                     violationReason,
                 }),
             });
-            const json = await res.json();
+            const json = await res.json().catch(() => null);
+            if (res.status === 401 || json?.message === "Invalid or expired token") {
+                handleSessionExpired();
+                return;
+            }
             if (!res.ok) {
                 throw new Error(json?.message || "Unable to submit test");
             }
@@ -179,7 +194,7 @@ export default function StudentTestsPage() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [activeTest, answers, remainingSeconds, token]);
+    }, [activeTest, answers, remainingSeconds, token, handleSessionExpired]);
 
     useEffect(() => {
         if (!activeTest || submission) return;
@@ -351,11 +366,11 @@ export default function StudentTestsPage() {
     }
 
     return (
-        <LMSShell pageTitle="Tests & Quizzes">
+        <LMSShell pageTitle="Online Test">
             <div className={styles.page}>
                 <div className={styles.banner}>
                     <div>
-                        <div className={styles.bannerTitle}>Tests & Quizzes</div>
+                        <div className={styles.bannerTitle}>Online Test</div>
                         <div className={styles.bannerSub}>{tests.length} test{tests.length !== 1 ? "s" : ""} available across your enrolled batches.</div>
                     </div>
                     <Exam size={60} color="rgba(255,255,255,0.2)" weight="duotone" />

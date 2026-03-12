@@ -232,25 +232,11 @@ export default function Header() {
                                             About Us
                                         </Link>
                                         <Link
-                                            href="/about-new"
-                                            className={styles.dropdownItem}
-                                            onClick={() => setActiveDropdown(null)}
-                                        >
-                                            About Us New
-                                        </Link>
-                                        <Link
                                             href="/contact"
                                             className={styles.dropdownItem}
                                             onClick={() => setActiveDropdown(null)}
                                         >
-                                            Contact Us (Old)
-                                        </Link>
-                                        <Link
-                                            href="/contact-new"
-                                            className={styles.dropdownItem}
-                                            onClick={() => setActiveDropdown(null)}
-                                        >
-                                            Contact Us (New)
+                                            Contact Us
                                         </Link>
                                     </motion.div>
                                 )}
@@ -456,25 +442,11 @@ export default function Header() {
                                                     <span>About Us</span>
                                                 </Link>
                                                 <Link
-                                                    href="/about-new"
-                                                    className={styles.mobileSubmenuLink}
-                                                    onClick={closeMobileMenu}
-                                                >
-                                                    <span>About Us New</span>
-                                                </Link>
-                                                <Link
                                                     href="/contact"
                                                     className={styles.mobileSubmenuLink}
                                                     onClick={closeMobileMenu}
                                                 >
-                                                    <span>Contact Us (Old)</span>
-                                                </Link>
-                                                <Link
-                                                    href="/contact-new"
-                                                    className={styles.mobileSubmenuLink}
-                                                    onClick={closeMobileMenu}
-                                                >
-                                                    <span>Contact Us (New)</span>
+                                                    <span>Contact Us</span>
                                                 </Link>
                                             </motion.div>
                                         )}
