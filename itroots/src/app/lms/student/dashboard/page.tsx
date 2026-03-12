@@ -16,6 +16,10 @@ import {
     BookOpen,
     Megaphone,
     Link as LinkIcon,
+    Scroll,
+    Eye,
+    DownloadSimple,
+    X,
 } from "@phosphor-icons/react";
 
 type DashboardData = {
@@ -145,7 +149,10 @@ export default function StudentDashboard() {
         liveClasses: [],
     });
     const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceBatch>>({});
+    const [certificates, setCertificates] = useState<any[]>([]);
+    const [certViewUrl, setCertViewUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [fetchError, setFetchError] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
@@ -163,9 +170,14 @@ export default function StudentDashboard() {
             .then((data) => {
                 if (data?.summary) {
                     setDashboard(data);
+                    setFetchError(null);
+                } else {
+                    const msg = data?.message || "Failed to load dashboard data.";
+                    const detail = data?.detail ? ` (${data.detail})` : "";
+                    setFetchError(msg + detail);
                 }
             })
-            .catch(console.error)
+            .catch(() => setFetchError("Could not reach the server. Please check your connection."))
             .finally(() => setLoading(false));
     }, [token]);
 
@@ -184,6 +196,57 @@ export default function StudentDashboard() {
             .catch(console.error);
     }, [token]);
 
+    useEffect(() => {
+        if (!token) return;
+        fetch(ENDPOINTS.STUDENT.CERTIFICATES, {
+            headers: { Authorization: `Bearer ${token}` },
+        })
+            .then((r) => r.json())
+            .then((data) => setCertificates(Array.isArray(data) ? data : []))
+            .catch(console.error);
+    }, [token]);
+
+    const handleViewCertificate = async (certificateId: string) => {
+        if (!token) return;
+        try {
+            const response = await fetch(ENDPOINTS.STUDENT.CERTIFICATE_DOWNLOAD(certificateId), {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) throw new Error("Unable to fetch certificate");
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            setCertViewUrl(url);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    const closeCertViewer = () => {
+        if (certViewUrl) {
+            window.URL.revokeObjectURL(certViewUrl);
+            setCertViewUrl(null);
+        }
+    };
+
+    const handleDownloadCertificate = async (certificateId: string) => {
+        if (!token) return;
+        try {
+            const response = await fetch(ENDPOINTS.STUDENT.CERTIFICATE_DOWNLOAD(certificateId), {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!response.ok) throw new Error("Unable to download certificate");
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "certificate.pdf";
+            link.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     const feedItems = useMemo(
         () => toFeedItems(dashboard.announcements || [], dashboard.notifications || []),
         [dashboard.announcements, dashboard.notifications]
@@ -201,6 +264,12 @@ export default function StudentDashboard() {
                     </div>
                     <GraduationCap size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
+
+                {fetchError && (
+                    <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c", borderRadius: "10px", padding: "0.85rem 1.2rem", fontSize: "0.9rem" }}>
+                        <strong>Dashboard Error:</strong> {fetchError}
+                    </div>
+                )}
 
                 <div className={styles.statsGrid}>
                     <div className={styles.statCard}>
@@ -221,15 +290,7 @@ export default function StudentDashboard() {
                             <div className={styles.statLabel}>Attendance</div>
                         </div>
                     </div>
-                    <div className={styles.statCard}>
-                        <div className={`${styles.statIcon} ${styles.statIconPurple}`}>
-                            <Trophy size={22} weight="duotone" />
-                        </div>
-                        <div className={styles.statInfo}>
-                            <div className={styles.statValue}>{loading ? "-" : `${dashboard.summary.averageTestScore}%`}</div>
-                            <div className={styles.statLabel}>Average Test Score</div>
-                        </div>
-                    </div>
+                    
                     <div className={styles.statCard}>
                         <div className={`${styles.statIcon} ${styles.statIconBlue}`}>
                             <BookOpen size={22} weight="duotone" />
@@ -353,18 +414,7 @@ export default function StudentDashboard() {
 
                                 return (
                                     <div key={batchName} className={styles.attendanceCard}>
-                                        <div className={styles.attendanceHeader}>
-                                            <div>
-                                                <div className={styles.batchName}>{batchName}</div>
-                                                <div className={styles.batchCourse}>{data.total} total classes recorded</div>
-                                            </div>
-                                            <div className={styles.attendanceBadges}>
-                                                <span className={`${styles.attendanceBadge} ${styles.attendanceBlue}`}>Attendance {percentage}%</span>
-                                                <span className={`${styles.attendanceBadge} ${styles.attendanceGreen}`}>Present {data.present}</span>
-                                                <span className={`${styles.attendanceBadge} ${styles.attendanceRed}`}>Absent {data.absent}</span>
-                                                <span className={`${styles.attendanceBadge} ${styles.attendanceAmber}`}>Late {data.late}</span>
-                                            </div>
-                                        </div>
+                                       
 
                                         <div className={styles.attendanceTableWrap}>
                                             <table className={styles.attendanceTable}>
@@ -373,7 +423,7 @@ export default function StudentDashboard() {
                                                         <th>Date</th>
                                                         <th>Status</th>
                                                         <th>Batch</th>
-                                                        <th>Attendance %</th>
+                                                        
                                                     </tr>
                                                 </thead>
                                                 <tbody>
@@ -387,7 +437,7 @@ export default function StudentDashboard() {
                                                                     </span>
                                                                 </td>
                                                                 <td>{batchName}</td>
-                                                                <td>{percentage}%</td>
+                                                                
                                                             </tr>
                                                         ))
                                                     ) : (
@@ -404,7 +454,61 @@ export default function StudentDashboard() {
                         </div>
                     )}
                 </div>
+
+                {/* Certificates */}
+                <div className={styles.section}>
+                    <div className={styles.sectionHeader}>
+                        <span className={styles.sectionTitle}>Certificates</span>
+                        <Link href="/certificates" className={styles.viewAll}>View All <ArrowRight size={14} /></Link>
+                    </div>
+
+                    {certificates.length === 0 ? (
+                        <div className={styles.emptyState}>
+                            <Scroll size={40} color="#cbd5e1" weight="duotone" />
+                            <p>No certificates issued yet.</p>
+                        </div>
+                    ) : (
+                        <div className={styles.certGrid}>
+                            {certificates.slice(0, 3).map((cert: any) => (
+                                <div key={cert.id} className={styles.certCard}>
+                                    <div className={styles.certIcon}>
+                                        <Scroll size={24} weight="duotone" color="#0f4c81" />
+                                    </div>
+                                    <div className={styles.certInfo}>
+                                        <div className={styles.certTitle}>{cert.course?.title || "Course Certificate"}</div>
+                                        <div className={styles.certMeta}>{cert.certificateNumber}</div>
+                                        <div className={styles.certMeta}>
+                                            Issued: {new Date(cert.issueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                                        </div>
+                                    </div>
+                                    <div className={styles.certActions}>
+                                        <button type="button" className={styles.certViewBtn} onClick={() => handleViewCertificate(cert.id)}>
+                                            <Eye size={16} /> View
+                                        </button>
+                                        <button type="button" className={styles.certDownloadBtn} onClick={() => handleDownloadCertificate(cert.id)}>
+                                            <DownloadSimple size={16} /> Download
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
             </div>
+
+            {certViewUrl && (
+                <div className={styles.viewerOverlay} onClick={closeCertViewer}>
+                    <div className={styles.viewerModal} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.viewerHeader}>
+                            <span className={styles.viewerTitle}>Certificate Preview</span>
+                            <button type="button" className={styles.viewerClose} onClick={closeCertViewer}>
+                                <X size={20} weight="bold" />
+                            </button>
+                        </div>
+                        <iframe src={`${certViewUrl}#toolbar=0&navpanes=0`} className={styles.viewerFrame} title="Certificate Preview" />
+                    </div>
+                </div>
+            )}
         </LMSShell>
     );
 }

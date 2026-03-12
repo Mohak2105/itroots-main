@@ -102,7 +102,6 @@ const STUDENT_NAV = [
             { href: "/calendar", label: "Live Classes" },
             { href: "/resources", label: "Study Materials" },
             { href: "/tests", label: "Online Test" },
-            { href: "/progress", label: "Performance" },
             { href: "/announcements", label: "Notifications" },
             { href: "/certificates", label: "Certificates" },
         ],

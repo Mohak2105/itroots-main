@@ -110,14 +110,40 @@
     font-size: 0.92rem;
 }
 
-.downloadButton {
+.cardActions {
     margin-top: 1.1rem;
-    width: auto;
-    max-width: 100%;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.viewButton {
+    flex: 1;
+    border: 2px solid #0881ec;
+    border-radius: 999px;
+    padding: 0.75rem 1rem;
+    background: transparent;
+    color: #0881ec;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    transition: background 0.2s, color 0.2s;
+}
+
+.viewButton:hover {
+    background: #0881ec;
+    color: #fff;
+}
+
+.downloadButton {
+    flex: 1;
     border: none;
     border-radius: 999px;
-    padding: 0.85rem 1rem;
-    background: linear-gradient(135deg, #0b2744, #0f4c81);
+    padding: 0.75rem 1rem;
+    background: linear-gradient(135deg, #d4860a, #ee9602);
     color: #fff;
     font-weight: 700;
     display: inline-flex;
@@ -125,6 +151,13 @@
     justify-content: center;
     gap: 0.5rem;
     cursor: pointer;
+    font-size: 0.875rem;
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.downloadButton:hover {
+    opacity: 0.9;
+    transform: translateY(-1px);
 }
 
 .emptyState {
@@ -152,9 +185,92 @@
     max-width: 420px;
 }
 
+/* ── Certificate Viewer Modal ── */
+.viewerOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+}
+
+.viewerModal {
+    background: #fff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 900px;
+    height: 85vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.viewerHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #e2e8f0;
+    flex-shrink: 0;
+}
+
+.viewerTitle {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.viewerClose {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: #f1f5f9;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+
+.viewerClose:hover {
+    background: #fee2e2;
+    color: #dc2626;
+}
+
+.viewerFrame {
+    flex: 1;
+    width: 100%;
+    border: none;
+}
+
+.viewerLoading {
+    background: #fff;
+    padding: 2rem 3rem;
+    border-radius: 14px;
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.95rem;
+}
+
 @media (max-width: 768px) {
     .hero {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .viewerModal {
+        height: 75vh;
+    }
+
+    .cardActions {
+        flex-direction: column;
     }
 }

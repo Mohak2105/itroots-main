@@ -232,18 +232,7 @@ export default function StudentAttendancePage() {
 
                             return (
                                 <section key={batchName} className={styles.calendarCard}>
-                                    <div className={styles.cardHeader}>
-                                        <div>
-                                            <h3 className={styles.batchTitle}>{batchName}</h3>
-                                            <p className={styles.batchSubtitle}>{safeTotal} total classes recorded</p>
-                                        </div>
-                                        <div className={styles.summaryRow}>
-                                            <span className={`${styles.summaryBadge} ${styles.summaryBlue}`}>Attendance {percentage}%</span>
-                                            <span className={`${styles.summaryBadge} ${styles.summaryGreen}`}>Present {data.present}</span>
-                                            <span className={`${styles.summaryBadge} ${styles.summaryRed}`}>Absent {data.absent}</span>
-                                            <span className={`${styles.summaryBadge} ${styles.summaryAmber}`}>Late {data.late}</span>
-                                        </div>
-                                    </div>
+                                    {/* Batch header removed */}
 
                                     {percentage < 75 ? (
                                         <div className={styles.warningBanner}>

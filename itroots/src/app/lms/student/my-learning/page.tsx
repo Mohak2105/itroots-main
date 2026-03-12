@@ -49,7 +49,7 @@ export default function StudentLearningPage() {
                     <div className={styles.bannerContent}>
                         <div className={styles.bannerTitle}>My Courses</div>
                         <div className={styles.bannerSub}>
-                            {loading ? "Loading..." : `${enrollments.length} batch${enrollments.length !== 1 ? "es" : ""} enrolled`}
+                            Track your progress, access learning materials, and continue where you left off.
                         </div>
                     </div>
                 </div>

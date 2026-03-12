@@ -443,14 +443,16 @@ export default function AdminStudentsPage() {
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
                         </div>
-                        <select 
-                            className={styles.statusSelect}
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="ACTIVE">Active Students ({activeStudents.length})</option>
-                            <option value="INACTIVE">Inactive Students ({inactiveStudents.length})</option>
-                        </select>
+                        <div className={styles.statusSelectWrap}>
+                            <CustomSelect
+                                value={statusFilter}
+                                onChange={(val) => setStatusFilter(val)}
+                                options={[
+                                    { value: "ACTIVE", label: `Active Students (${activeStudents.length})` },
+                                    { value: "INACTIVE", label: `Inactive Students (${inactiveStudents.length})` },
+                                ]}
+                            />
+                        </div>
                         <button className={styles.enrollBtn} onClick={handleCreateClick}>
                             <Plus size={18} weight="bold" />
                             <span>Create Student</span>

@@ -13,6 +13,7 @@ import {
     EnvelopeSimple,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
+import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import styles from "../students/admin-students.module.css";
 import toast from "react-hot-toast";
 import { showDeleteConfirmation, showStatusConfirmation } from "@/utils/toastUtils";
@@ -327,17 +328,19 @@ export default function AdminFacultyPage() {
                 <div className={styles.headerCard}>
                     <div className={styles.headerInfo}>
                         <h1>Manage Faculty</h1>
-                        <p>Create Faculty accounts, optionally assign courses and batches, and manage instructor access.</p>
+                        <p>Create Faculty accounts, optionally assign courses and batches.</p>
                     </div>
                     <div className={styles.headerActions}>
-                        <select 
-                            className={styles.statusSelect}
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                        >
-                            <option value="ACTIVE">Active Faculty ({activeFaculty.length})</option>
-                            <option value="INACTIVE">Inactive Faculty ({inactiveFaculty.length})</option>
-                        </select>
+                        <div className={styles.statusSelectWrap}>
+                            <CustomSelect
+                                value={statusFilter}
+                                onChange={(val) => setStatusFilter(val)}
+                                options={[
+                                    { value: "ACTIVE", label: `Active Faculty (${activeFaculty.length})` },
+                                    { value: "INACTIVE", label: `Inactive Faculty (${inactiveFaculty.length})` },
+                                ]}
+                            />
+                        </div>
                         <button className={styles.enrollBtn} onClick={handleCreateClick}>
                             <Plus size={18} weight="bold" /> Create Faculty
                         </button>
@@ -494,28 +497,28 @@ export default function AdminFacultyPage() {
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Assigned Course (Optional)</label>
-                                <select
+                                <CustomSelect
                                     value={formData.assignedCourseId}
-                                    onChange={(e) => setFormData({ ...formData, assignedCourseId: e.target.value, assignedBatchId: "" })}
-                                >
-                                    <option value="">Assign later</option>
-                                    {courses.map((course) => (
-                                        <option key={course.id} value={course.id}>{course.title}</option>
-                                    ))}
-                                </select>
+                                    onChange={(val) => setFormData({ ...formData, assignedCourseId: val, assignedBatchId: "" })}
+                                    placeholder="Assign later"
+                                    options={[
+                                        { value: "", label: "Assign later" },
+                                        ...courses.map((course) => ({ value: course.id, label: course.title })),
+                                    ]}
+                                />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Assigned Batch (Optional)</label>
-                                <select
+                                <CustomSelect
                                     value={formData.assignedBatchId}
-                                    onChange={(e) => setFormData({ ...formData, assignedBatchId: e.target.value })}
+                                    onChange={(val) => setFormData({ ...formData, assignedBatchId: val })}
+                                    placeholder="Assign later"
                                     disabled={!formData.assignedCourseId}
-                                >
-                                    <option value="">Assign later</option>
-                                    {availableBatches.map((batch) => (
-                                        <option key={batch.id} value={batch.id}>{batch.name}</option>
-                                    ))}
-                                </select>
+                                    options={[
+                                        { value: "", label: "Assign later" },
+                                        ...availableBatches.map((batch) => ({ value: batch.id, label: batch.name })),
+                                    ]}
+                                />
                             </div>
                             <button type="submit" className={styles.submitBtn}>
                                 {selectedFacultyId ? "Save Faculty" : "Create Faculty Account"}

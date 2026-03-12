@@ -99,16 +99,6 @@ export default function ResourcesPage() {
                             </button>
                         ))}
                     </div>
-                    <div className={styles.searchWrapper}>
-                        <MagnifyingGlass size={16} className={styles.searchIcon} />
-                        <input
-                            type="text"
-                            placeholder="Search study materials..."
-                            className={styles.searchInput}
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
-                        />
-                    </div>
                 </div>
 
                 <div className={styles.resultCount}>{filtered.length} study materials found</div>

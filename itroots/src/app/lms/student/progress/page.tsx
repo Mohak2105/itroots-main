@@ -98,34 +98,6 @@ export default function StudentProgressPage() {
                     </div>
                 </div>
 
-                {/* Per-Batch Progress */}
-                {enrollments.length > 0 && (
-                    <div className={styles.section}>
-                        <div className={styles.sectionTitle}>Batch Progress</div>
-                        <div className={styles.batchProgressList}>
-                            {enrollments.map((item: any) => (
-                                <div key={item.id} className={styles.batchProgressItem}>
-                                    <div className={styles.batchProgressHeader}>
-                                        <div className={styles.batchAvatar}>
-                                            <BookOpen size={16} weight="duotone" />
-                                        </div>
-                                        <div className={styles.batchProgressInfo}>
-                                            <div className={styles.batchProgressName}>{item.batch?.name}</div>
-                                            <div className={styles.batchProgressCourse}>{item.batch?.course?.title}</div>
-                                        </div>
-                                        <div className={styles.batchProgressPct}>{item.progressPercent || 0}%</div>
-                                    </div>
-                                    <div className={styles.progressBar}>
-                                        <div
-                                            className={styles.progressFill}
-                                            style={{ width: `${item.progressPercent || 0}%` }}
-                                        />
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
 
             </div>
         </LMSShell>

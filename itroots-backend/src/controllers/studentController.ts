@@ -154,9 +154,12 @@ export const getStudentDashboard = async (req: any, res: Response) => {
             liveClasses: upcomingLiveClasses,
             certificates,
         });
-    } catch (error) {
+    } catch (error: any) {
         console.error('Fetch student dashboard error:', error);
-        res.status(500).json({ message: 'Error fetching dashboard' });
+        res.status(500).json({
+            message: 'Error fetching dashboard',
+            detail: process.env.NODE_ENV !== 'production' ? (error?.message || String(error)) : undefined,
+        });
     }
 };
 

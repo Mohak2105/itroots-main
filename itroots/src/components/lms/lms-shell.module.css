@@ -116,6 +116,15 @@
     background: #f0f7ff;
 }
 
+.adminSidebarNav .navItem {
+    padding: 0.85rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-height: 48px;
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+}
+
 .adminSidebarNav .navItem:hover {
     color: #f59e0b;
     background: #fffbeb;

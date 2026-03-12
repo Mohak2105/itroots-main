@@ -6,13 +6,15 @@ import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./certificates.module.css";
-import { DownloadSimple, Scroll, SealCheck } from "@phosphor-icons/react";
+import { DownloadSimple, Eye, Scroll, SealCheck, X } from "@phosphor-icons/react";
 
 export default function StudentCertificatesPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
     const [certificates, setCertificates] = useState<any[]>([]);
     const [loadingData, setLoadingData] = useState(true);
+    const [viewUrl, setViewUrl] = useState<string | null>(null);
+    const [viewLoading, setViewLoading] = useState(false);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
@@ -31,17 +33,19 @@ export default function StudentCertificatesPage() {
             .finally(() => setLoadingData(false));
     }, [token]);
 
-    const handleDownload = async (certificateId: string) => {
-        if (!token) return;
-        try {
-            const response = await fetch(ENDPOINTS.STUDENT.CERTIFICATE_DOWNLOAD(certificateId), {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!response.ok) {
-                throw new Error("Unable to download certificate");
-            }
+    const fetchCertificateBlob = async (certificateId: string) => {
+        if (!token) return null;
+        const response = await fetch(ENDPOINTS.STUDENT.CERTIFICATE_DOWNLOAD(certificateId), {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) throw new Error("Unable to fetch certificate");
+        return response.blob();
+    };
 
-            const blob = await response.blob();
+    const handleDownload = async (certificateId: string) => {
+        try {
+            const blob = await fetchCertificateBlob(certificateId);
+            if (!blob) return;
             const url = window.URL.createObjectURL(blob);
             const link = document.createElement("a");
             link.href = url;
@@ -51,6 +55,28 @@ export default function StudentCertificatesPage() {
         } catch (error) {
             console.error(error);
             alert(error instanceof Error ? error.message : "Unable to download certificate");
+        }
+    };
+
+    const handleView = async (certificateId: string) => {
+        setViewLoading(true);
+        try {
+            const blob = await fetchCertificateBlob(certificateId);
+            if (!blob) return;
+            const url = window.URL.createObjectURL(blob);
+            setViewUrl(url);
+        } catch (error) {
+            console.error(error);
+            alert(error instanceof Error ? error.message : "Unable to view certificate");
+        } finally {
+            setViewLoading(false);
+        }
+    };
+
+    const closeViewer = () => {
+        if (viewUrl) {
+            window.URL.revokeObjectURL(viewUrl);
+            setViewUrl(null);
         }
     };
 
@@ -88,14 +114,39 @@ export default function StudentCertificatesPage() {
                                 <div className={styles.meta}>Duration: {certificate.duration}</div>
                                 <div className={styles.meta}>Batch: {certificate.batch?.name || "Assigned Batch"}</div>
                                 <div className={styles.meta}>Signed by: {certificate.signatoryName}</div>
-                                <button type="button" className={styles.downloadButton} onClick={() => handleDownload(certificate.id)}>
-                                    <DownloadSimple size={18} /> Download PDF
-                                </button>
+                                <div className={styles.cardActions}>
+                                    <button type="button" className={styles.viewButton} onClick={() => handleView(certificate.id)}>
+                                        <Eye size={18} /> View
+                                    </button>
+                                    <button type="button" className={styles.downloadButton} onClick={() => handleDownload(certificate.id)}>
+                                        <DownloadSimple size={18} /> Download
+                                    </button>
+                                </div>
                             </article>
                         ))}
                     </div>
                 )}
             </div>
+
+            {viewUrl && (
+                <div className={styles.viewerOverlay} onClick={closeViewer}>
+                    <div className={styles.viewerModal} onClick={(e) => e.stopPropagation()}>
+                        <div className={styles.viewerHeader}>
+                            <span className={styles.viewerTitle}>Certificate Preview</span>
+                            <button type="button" className={styles.viewerClose} onClick={closeViewer}>
+                                <X size={20} weight="bold" />
+                            </button>
+                        </div>
+                        <iframe src={`${viewUrl}#toolbar=0&navpanes=0`} className={styles.viewerFrame} title="Certificate Preview" />
+                    </div>
+                </div>
+            )}
+
+            {viewLoading && (
+                <div className={styles.viewerOverlay}>
+                    <div className={styles.viewerLoading}>Loading certificate...</div>
+                </div>
+            )}
         </LMSShell>
     );
 }

@@ -5,7 +5,7 @@
 }
 
 .headerCard {
-    padding: 2.5rem;
+    padding: 2rem 2.5rem;
     background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
     border-radius: 20px;
     display: flex;
@@ -13,7 +13,7 @@
     align-items: center;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     color: #fff;
     gap: 1.5rem;
 }
@@ -27,6 +27,7 @@
     height: 300px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 50%;
+    pointer-events: none;
 }
 
 .headerInfo,
@@ -85,32 +86,54 @@
     color: rgba(255, 255, 255, 0.7);
 }
 
-.statusSelect {
-    appearance: none;
-    -webkit-appearance: none;
-    -moz-appearance: none;
-    background: rgba(255, 255, 255, 0.1) url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='rgba(255, 255, 255, 0.8)'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E") no-repeat right 1rem center;
-    background-size: 1.25em 1.25em;
+/* Custom status filter select wrapper for blue header */
+.statusSelectWrap {
+    min-width: 220px;
+}
+
+.statusSelectWrap button {
+    background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.25);
-    padding: 0.6rem 2.8rem 0.6rem 1.2rem;
     border-radius: 999px;
     color: white;
     font-size: 0.95rem;
     font-weight: 600;
-    cursor: pointer;
-    outline: none;
+    padding: 0.6rem 1.2rem;
     backdrop-filter: blur(8px);
-    transition: all 0.2s ease;
 }
 
-.statusSelect option {
-    background: #0f172a; /* Dark slate background for options so text is visible */
+.statusSelectWrap button:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.statusSelectWrap button:focus,
+.statusSelectWrap button[aria-expanded="true"] {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.statusSelectWrap button span {
     color: white;
 }
 
-.statusSelect:focus {
-    border-color: rgba(255, 255, 255, 0.5);
-    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+.statusSelectWrap button svg {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.statusSelectWrap ul {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.statusSelectWrap li {
+    font-weight: 600;
+    color: #1f2937 !important;
+}
+
+.statusSelectWrap li:hover {
+    background: #f1f5f9 !important;
 }
 
 .enrollBtn {
