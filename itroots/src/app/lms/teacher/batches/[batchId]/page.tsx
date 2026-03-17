@@ -1,9 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
+import ReactDateTimePicker from "@/components/lms/ReactDateTimePicker";
+import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import {
     Video,
     ClipboardText,
@@ -21,6 +24,7 @@ import {
     PencilSimple,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
+import { resolveLiveClassJoinTarget } from "@/utils/liveClasses";
 import styles from "./batch-management.module.css";
 
 const EMPTY_LIVE_CLASS_FORM = {
@@ -29,6 +33,8 @@ const EMPTY_LIVE_CLASS_FORM = {
     courseId: "",
     batchId: "",
     scheduledAt: "",
+    provider: "JITSI",
+    roomName: "",
     meetingLink: "",
     description: "",
 };
@@ -47,6 +53,127 @@ const createEmptyTestQuestion = () => ({
     correctIndex: 0,
 });
 
+const CORRECT_INDEX_BY_LABEL: Record<string, number> = { A: 0, B: 1, C: 2, D: 3 };
+const MAX_BULK_QUESTIONS = 50;
+
+const parseCsvLine = (line: string) => {
+    const values: string[] = [];
+    let current = "";
+    let inQuotes = false;
+
+    for (let i = 0; i < line.length; i += 1) {
+        const char = line[i];
+        if (char === '"') {
+            if (inQuotes && line[i + 1] === '"') {
+                current += '"';
+                i += 1;
+            } else {
+                inQuotes = !inQuotes;
+            }
+            continue;
+        }
+
+        if (char === "," && !inQuotes) {
+            values.push(current.trim());
+            current = "";
+            continue;
+        }
+
+        current += char;
+    }
+
+    values.push(current.trim());
+    return values;
+};
+
+const parseBulkMcqQuestions = (raw: string) => {
+    const input = raw.trim();
+    if (!input) {
+        throw new Error("Bulk input is empty.");
+    }
+
+    const lines = input
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+    if (!lines.length) {
+        throw new Error("Bulk input is empty.");
+    }
+
+    const firstLineLower = lines[0].toLowerCase();
+    const isCsv = firstLineLower.includes("question") && firstLineLower.includes(",") && firstLineLower.includes("correct");
+    const questions: Array<{ id: string; text: string; options: string[]; correctIndex: number }> = [];
+
+    if (isCsv) {
+        const headers = parseCsvLine(lines[0]).map((header) => header.toLowerCase());
+        const requiredHeaders = ["question", "option_a", "option_b", "option_c", "option_d", "correct_option"];
+        const headerIndex = new Map<string, number>();
+        headers.forEach((header, idx) => headerIndex.set(header, idx));
+
+        const missingHeaders = requiredHeaders.filter((header) => !headerIndex.has(header));
+        if (missingHeaders.length) {
+            throw new Error(`Missing CSV header(s): ${missingHeaders.join(", ")}`);
+        }
+
+        for (let row = 1; row < lines.length; row += 1) {
+            const cols = parseCsvLine(lines[row]);
+            const text = String(cols[headerIndex.get("question")!] || "").trim();
+            const options = [
+                String(cols[headerIndex.get("option_a")!] || "").trim(),
+                String(cols[headerIndex.get("option_b")!] || "").trim(),
+                String(cols[headerIndex.get("option_c")!] || "").trim(),
+                String(cols[headerIndex.get("option_d")!] || "").trim(),
+            ];
+            const correctLabel = String(cols[headerIndex.get("correct_option")!] || "").trim().toUpperCase();
+            const correctIndex = CORRECT_INDEX_BY_LABEL[correctLabel];
+
+            if (!text) throw new Error(`CSV row ${row + 1}: question is required`);
+            if (options.some((option) => !option)) throw new Error(`CSV row ${row + 1}: all 4 options are required`);
+            if (!Number.isInteger(correctIndex)) throw new Error(`CSV row ${row + 1}: correct_option must be A/B/C/D`);
+
+            questions.push({
+                id: `q-${row}`,
+                text,
+                options,
+                correctIndex,
+            });
+        }
+    } else {
+        for (let row = 0; row < lines.length; row += 1) {
+            const parts = lines[row].split("|").map((part) => part.trim());
+            if (parts.length !== 6) {
+                throw new Error(`Line ${row + 1}: expected 6 parts (question|A|B|C|D|CorrectOption)`);
+            }
+
+            const [text, optionA, optionB, optionC, optionD, correctLabelRaw] = parts;
+            const correctLabel = correctLabelRaw.toUpperCase();
+            const correctIndex = CORRECT_INDEX_BY_LABEL[correctLabel];
+
+            if (!text) throw new Error(`Line ${row + 1}: question is required`);
+            if (!optionA || !optionB || !optionC || !optionD) throw new Error(`Line ${row + 1}: all 4 options are required`);
+            if (!Number.isInteger(correctIndex)) throw new Error(`Line ${row + 1}: correct option must be A/B/C/D`);
+
+            questions.push({
+                id: `q-${row + 1}`,
+                text,
+                options: [optionA, optionB, optionC, optionD],
+                correctIndex,
+            });
+        }
+    }
+
+    if (!questions.length) {
+        throw new Error("At least 1 question is required.");
+    }
+
+    if (questions.length > MAX_BULK_QUESTIONS) {
+        throw new Error(`Maximum ${MAX_BULK_QUESTIONS} questions are allowed.`);
+    }
+
+    return questions;
+};
+
 export default function BatchManagementPage() {
     const { batchId } = useParams();
     const { user, isLoading, token } = useLMSAuth();
@@ -59,6 +186,9 @@ export default function BatchManagementPage() {
     const [isAnnouncementModal, setIsAnnouncementModal] = useState(false);
     const [isAttendanceModal, setIsAttendanceModal] = useState(false);
     const [isLiveClassModal, setIsLiveClassModal] = useState(false);
+    const [testInputMode, setTestInputMode] = useState<"MANUAL" | "BULK">("MANUAL");
+    const [bulkQuestionText, setBulkQuestionText] = useState("");
+    const [bulkCsvFileName, setBulkCsvFileName] = useState("");
 
     const [contentForm, setContentForm] = useState({ title: "", description: "", type: "VIDEO", contentUrl: "", uploadMode: "URL", fileData: "", fileName: "" });
     const [testForm, setTestForm] = useState({ title: "", description: "", totalMarks: 100, durationMinutes: 60, questions: [createEmptyTestQuestion()] });
@@ -66,6 +196,17 @@ export default function BatchManagementPage() {
     const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split("T")[0]);
     const [attendanceRecords, setAttendanceRecords] = useState<Record<string, string>>({});
     const [liveClassForm, setLiveClassForm] = useState(EMPTY_LIVE_CLASS_FORM);
+    const bulkPreview = useMemo(() => {
+        if (!bulkQuestionText.trim()) {
+            return { count: 0, error: "" };
+        }
+        try {
+            const questions = parseBulkMcqQuestions(bulkQuestionText);
+            return { count: questions.length, error: "" };
+        } catch (error: any) {
+            return { count: 0, error: error?.message || "Invalid bulk format." };
+        }
+    }, [bulkQuestionText]);
 
     const fetchBatchData = useCallback(async () => {
         if (!token || !batchId) return;
@@ -263,19 +404,48 @@ export default function BatchManagementPage() {
     const handleCreateTest = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
+            const questionsPayload = testInputMode === "BULK"
+                ? parseBulkMcqQuestions(bulkQuestionText)
+                : testForm.questions;
+
             const res = await fetch(ENDPOINTS.Faculty.CREATE_TEST, {
                 method: "POST",
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify({ ...testForm, batchId }),
+                body: JSON.stringify({ ...testForm, batchId, questions: questionsPayload }),
             });
+            const payload = await res.json().catch(() => null);
             if (res.ok) {
-                setIsCreateTestModal(false);
+                closeCreateTestModal();
                 setTestForm({ title: "", description: "", totalMarks: 100, durationMinutes: 60, questions: [createEmptyTestQuestion()] });
                 void fetchBatchData();
+                return;
             }
+            const message = Array.isArray(payload?.errors) && payload.errors.length
+                ? payload.errors.slice(0, 3).join("\n")
+                : payload?.message || "Unable to create test";
+            alert(message);
         } catch (err) {
             console.error(err);
+            alert(err instanceof Error ? err.message : "Unable to create test");
         }
+    };
+
+    const handleBulkCsvUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) {
+            setBulkCsvFileName("");
+            return;
+        }
+        const text = await file.text();
+        setBulkQuestionText(text);
+        setBulkCsvFileName(file.name);
+    };
+
+    const closeCreateTestModal = () => {
+        setIsCreateTestModal(false);
+        setTestInputMode("MANUAL");
+        setBulkQuestionText("");
+        setBulkCsvFileName("");
     };
 
     const handleCreateAnnouncement = async (e: React.FormEvent) => {
@@ -327,6 +497,7 @@ export default function BatchManagementPage() {
             courseId: batch?.course?.id || batch?.courseId || "",
             batchId: String(batchId),
             scheduledAt: toInputDateTime(now.toISOString()),
+            provider: "JITSI",
         });
         setIsLiveClassModal(true);
     };
@@ -338,7 +509,9 @@ export default function BatchManagementPage() {
             courseId: liveClass.courseId,
             batchId: liveClass.batchId,
             scheduledAt: toInputDateTime(liveClass.scheduledAt),
-            meetingLink: liveClass.meetingLink,
+            provider: liveClass.provider || (liveClass.roomName ? "JITSI" : "EXTERNAL"),
+            roomName: liveClass.roomName || "",
+            meetingLink: (liveClass.provider || (liveClass.roomName ? "JITSI" : "EXTERNAL")) === "EXTERNAL" ? liveClass.meetingLink : "",
             description: liveClass.description || "",
         });
         setIsLiveClassModal(true);
@@ -356,10 +529,15 @@ export default function BatchManagementPage() {
                 ? `${ENDPOINTS.Faculty.LIVE_CLASSES}/${liveClassForm.id}`
                 : ENDPOINTS.Faculty.LIVE_CLASSES;
             const method = liveClassForm.id ? "PUT" : "POST";
+            const payload = {
+                ...liveClassForm,
+                meetingLink: liveClassForm.provider === "EXTERNAL" ? liveClassForm.meetingLink : "",
+                roomName: liveClassForm.provider === "JITSI" ? liveClassForm.roomName : "",
+            };
             const res = await fetch(url, {
                 method,
                 headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
-                body: JSON.stringify(liveClassForm),
+                body: JSON.stringify(payload),
             });
             const json = await res.json();
             if (!res.ok) {
@@ -429,6 +607,10 @@ export default function BatchManagementPage() {
                             ) : (
                                 liveClasses.map((liveClass) => (
                                     <div key={liveClass.id} className={styles.contentItem}>
+                                        {(() => {
+                                        const joinTarget = resolveLiveClassJoinTarget(liveClass, "TEACHER");
+                                            return (
+                                                <>
                                         <div className={styles.contentIcon} style={{ background: liveClass.status === "CANCELLED" ? "#fef2f2" : "#f5f3ff", color: liveClass.status === "CANCELLED" ? "#dc2626" : "#7c3aed" }}>
                                             <Video size={20} />
                                         </div>
@@ -441,8 +623,12 @@ export default function BatchManagementPage() {
                                             {liveClass.description ? <p>{liveClass.description}</p> : null}
                                         </div>
                                         <div className={styles.liveClassActions}>
-                                            {liveClass.status !== "CANCELLED" ? (
-                                                <a href={liveClass.meetingLink} target="_blank" rel="noreferrer" className={styles.actionBtn}>Join</a>
+                                            {liveClass.status !== "CANCELLED" && joinTarget.href ? (
+                                                joinTarget.external ? (
+                                                    <a href={joinTarget.href} target="_blank" rel="noreferrer" className={styles.actionBtn}>Join</a>
+                                                ) : (
+                                                    <Link href={joinTarget.href} className={styles.actionBtn}>Join</Link>
+                                                )
                                             ) : null}
                                             <button type="button" className={styles.inlineBtn} onClick={() => openEditLiveClass(liveClass)}>
                                                 <PencilSimple size={14} /> Edit
@@ -453,6 +639,9 @@ export default function BatchManagementPage() {
                                                 </button>
                                             ) : null}
                                         </div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 ))
                             )}
@@ -568,14 +757,35 @@ export default function BatchManagementPage() {
                                 <label>Class Title</label>
                                 <input required value={liveClassForm.title} onChange={(e) => setLiveClassForm({ ...liveClassForm, title: e.target.value })} placeholder="e.g. React Hooks Session" />
                             </div>
+                            <ReactDateTimePicker
+                                label="Date and Time"
+                                required
+                                variant="soft"
+                                value={liveClassForm.scheduledAt}
+                                onChange={(value) => setLiveClassForm({ ...liveClassForm, scheduledAt: value })}
+                            />
                             <div className={styles.formGroup}>
-                                <label>Date and Time</label>
-                                <input type="datetime-local" required value={liveClassForm.scheduledAt} onChange={(e) => setLiveClassForm({ ...liveClassForm, scheduledAt: e.target.value })} />
+                                <label>Meeting Provider</label>
+                                <CustomSelect
+                                    value={liveClassForm.provider}
+                                    onChange={(value) => setLiveClassForm({ ...liveClassForm, provider: value })}
+                                    options={[
+                                        { value: "JITSI", label: "Jitsi (Recommended)" },
+                                        { value: "EXTERNAL", label: "External Link" },
+                                    ]}
+                                />
                             </div>
-                            <div className={styles.formGroup}>
-                                <label>Meeting Link</label>
-                                <input required value={liveClassForm.meetingLink} onChange={(e) => setLiveClassForm({ ...liveClassForm, meetingLink: e.target.value })} placeholder="https://meet.google.com/..." />
-                            </div>
+                            {liveClassForm.provider === "JITSI" ? (
+                                <div className={styles.formGroup}>
+                                    <label>Room Label (Optional)</label>
+                                    <input value={liveClassForm.roomName} onChange={(e) => setLiveClassForm({ ...liveClassForm, roomName: e.target.value })} placeholder="Auto-generated if left blank" />
+                                </div>
+                            ) : (
+                                <div className={styles.formGroup}>
+                                    <label>Meeting Link</label>
+                                    <input required value={liveClassForm.meetingLink} onChange={(e) => setLiveClassForm({ ...liveClassForm, meetingLink: e.target.value })} placeholder="https://meet.google.com/..." />
+                                </div>
+                            )}
                             <div className={styles.formGroup}>
                                 <label>Description / Agenda</label>
                                 <textarea value={liveClassForm.description} onChange={(e) => setLiveClassForm({ ...liveClassForm, description: e.target.value })} rows={4} placeholder="Topics to be covered in this session" />
@@ -600,19 +810,27 @@ export default function BatchManagementPage() {
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Type</label>
-                                <select value={contentForm.type} onChange={e => handleContentTypeChange(e.target.value)}>
-                                    <option value="VIDEO">Video Lecture URL</option>
-                                    <option value="ASSIGNMENT">Assignment</option>
-                                    <option value="RESOURCE">Resource (PDF, PPT)</option>
-                                </select>
+                                <CustomSelect
+                                    value={contentForm.type}
+                                    onChange={(value) => handleContentTypeChange(value)}
+                                    options={[
+                                        { value: "VIDEO", label: "Video Lecture URL" },
+                                        { value: "ASSIGNMENT", label: "Assignment" },
+                                        { value: "RESOURCE", label: "Resource (PDF, PPT)" },
+                                    ]}
+                                />
                             </div>
                             {contentForm.type !== "VIDEO" ? (
                                 <div className={styles.formGroup}>
                                     <label>Upload Mode</label>
-                                    <select value={contentForm.uploadMode} onChange={e => setContentForm({ ...contentForm, uploadMode: e.target.value, contentUrl: e.target.value === "URL" ? contentForm.contentUrl : "", fileData: e.target.value === "FILE" ? contentForm.fileData : "", fileName: e.target.value === "FILE" ? contentForm.fileName : "" })}>
-                                        <option value="FILE">Upload File</option>
-                                        <option value="URL">Use File URL</option>
-                                    </select>
+                                    <CustomSelect
+                                        value={contentForm.uploadMode}
+                                        onChange={(value) => setContentForm({ ...contentForm, uploadMode: value, contentUrl: value === "URL" ? contentForm.contentUrl : "", fileData: value === "FILE" ? contentForm.fileData : "", fileName: value === "FILE" ? contentForm.fileName : "" })}
+                                        options={[
+                                            { value: "FILE", label: "Upload File" },
+                                            { value: "URL", label: "Use File URL" },
+                                        ]}
+                                    />
                                 </div>
                             ) : null}
                             {contentForm.type === "VIDEO" || contentForm.uploadMode === "URL" ? (
@@ -642,7 +860,7 @@ export default function BatchManagementPage() {
                     <div className={`${styles.modal} ${styles.testModal}`} style={{ maxWidth: "840px" }}>
                         <div className={styles.modalHeader}>
                             <h3>New MCQ Assessment</h3>
-                            <button onClick={() => setIsCreateTestModal(false)}><X size={24} /></button>
+                            <button onClick={closeCreateTestModal}><X size={24} /></button>
                         </div>
                         <form onSubmit={handleCreateTest} className={styles.form}>
                             <div className={styles.testFormIntro}>
@@ -651,9 +869,11 @@ export default function BatchManagementPage() {
                                     <div className={styles.testFormLead}>Design a timed MCQ test for this batch.</div>
                                     <p className={styles.testFormNote}>Add clear questions, define one correct answer for each option set, and notify students as soon as you publish.</p>
                                 </div>
-                                <div className={styles.testHighlightGrid}>
-                                    <div className={styles.testHighlightCard}>
-                                        <span className={styles.testHighlightValue}>{testForm.questions.length}</span>
+                            <div className={styles.testHighlightGrid}>
+                                <div className={styles.testHighlightCard}>
+                                        <span className={styles.testHighlightValue}>
+                                            {testInputMode === "BULK" ? bulkPreview.count : testForm.questions.length}
+                                        </span>
                                         <span className={styles.testHighlightLabel}>Questions</span>
                                     </div>
                                     <div className={styles.testHighlightCard}>
@@ -691,49 +911,101 @@ export default function BatchManagementPage() {
                                     <div className={styles.testQuestionsTitle}>MCQ Questions</div>
                                     <div className={styles.testQuestionsSub}>Each question needs 4 options and exactly 1 correct answer.</div>
                                 </div>
-                                <button type="button" className={styles.secondaryBtn} onClick={addTestQuestion}>
-                                    <Plus size={16} weight="bold" /> Add Question
-                                </button>
+                                <div className={styles.testModeSwitch}>
+                                    <button
+                                        type="button"
+                                        className={`${styles.testModeBtn} ${testInputMode === "MANUAL" ? styles.testModeBtnActive : ""}`}
+                                        onClick={() => setTestInputMode("MANUAL")}
+                                    >
+                                        Manual
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className={`${styles.testModeBtn} ${testInputMode === "BULK" ? styles.testModeBtnActive : ""}`}
+                                        onClick={() => setTestInputMode("BULK")}
+                                    >
+                                        Bulk Paste/CSV
+                                    </button>
+                                </div>
                             </div>
 
-                            <div className={styles.testQuestionsList}>
-                                {testForm.questions.map((question: any, questionIndex: number) => (
-                                    <div key={question.id} className={styles.testQuestionCard}>
-                                        <div className={styles.testQuestionHeader}>
-                                            <div>
-                                                <div className={styles.testQuestionIndex}>Question {questionIndex + 1}</div>
-                                                <div className={styles.testQuestionHint}>Students must answer this before submission.</div>
-                                            </div>
-                                            <button type="button" className={styles.inlineDangerBtn} onClick={() => removeTestQuestion(question.id)} disabled={testForm.questions.length === 1}>
-                                                Remove
-                                            </button>
-                                        </div>
-
-                                        <div className={styles.formGroup}>
-                                            <label>Question Text</label>
-                                            <textarea required value={question.text} onChange={(e) => updateTestQuestion(question.id, e.target.value)} rows={2} placeholder="Type the question" />
-                                        </div>
-
-                                        <div className={styles.testOptionGrid}>
-                                            {question.options.map((option: string, optionIndex: number) => (
-                                                <div key={optionIndex} className={styles.testOptionCard}>
-                                                    <div className={styles.testOptionTop}>
-                                                        <label>Option {String.fromCharCode(65 + optionIndex)}</label>
-                                                        <label className={styles.correctOptionToggle}>
-                                                            <input type="radio" name={`correct-${question.id}`} checked={question.correctIndex === optionIndex} onChange={() => setCorrectOption(question.id, optionIndex)} />
-                                                            <span>Correct Answer</span>
-                                                        </label>
+                            {testInputMode === "MANUAL" ? (
+                                <>
+                                    <button type="button" className={styles.secondaryBtn} onClick={addTestQuestion}>
+                                        <Plus size={16} weight="bold" /> Add Question
+                                    </button>
+                                    <div className={styles.testQuestionsList}>
+                                        {testForm.questions.map((question: any, questionIndex: number) => (
+                                            <div key={question.id} className={styles.testQuestionCard}>
+                                                <div className={styles.testQuestionHeader}>
+                                                    <div>
+                                                        <div className={styles.testQuestionIndex}>Question {questionIndex + 1}</div>
+                                                        <div className={styles.testQuestionHint}>Students must answer this before submission.</div>
                                                     </div>
-                                                    <input required value={option} onChange={(e) => updateTestOption(question.id, optionIndex, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + optionIndex)}`} />
+                                                    <button type="button" className={styles.inlineDangerBtn} onClick={() => removeTestQuestion(question.id)} disabled={testForm.questions.length === 1}>
+                                                        Remove
+                                                    </button>
                                                 </div>
-                                            ))}
+
+                                                <div className={styles.formGroup}>
+                                                    <label>Question Text</label>
+                                                    <textarea required value={question.text} onChange={(e) => updateTestQuestion(question.id, e.target.value)} rows={2} placeholder="Type the question" />
+                                                </div>
+
+                                                <div className={styles.testOptionGrid}>
+                                                    {question.options.map((option: string, optionIndex: number) => (
+                                                        <div key={optionIndex} className={styles.testOptionCard}>
+                                                            <div className={styles.testOptionTop}>
+                                                                <label>Option {String.fromCharCode(65 + optionIndex)}</label>
+                                                                <label className={styles.correctOptionToggle}>
+                                                                    <input type="radio" name={`correct-${question.id}`} checked={question.correctIndex === optionIndex} onChange={() => setCorrectOption(question.id, optionIndex)} />
+                                                                    <span>Correct Answer</span>
+                                                                </label>
+                                                            </div>
+                                                            <input required value={option} onChange={(e) => updateTestOption(question.id, optionIndex, e.target.value)} placeholder={`Option ${String.fromCharCode(65 + optionIndex)}`} />
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </>
+                            ) : (
+                                <div className={styles.bulkQuestionPanel}>
+                                    <div className={styles.bulkHelpCard}>
+                                        <div className={styles.bulkHelpTitle}>Bulk Input Format</div>
+                                        <p>
+                                            Paste one question per line using: <strong>Question | Option A | Option B | Option C | Option D | Correct Option</strong>
+                                        </p>
+                                        <p>Example: <code>What is Java?|Language|Database|Browser|OS|A</code></p>
+                                        <p>Or upload CSV with headers: <code>question,option_a,option_b,option_c,option_d,correct_option</code></p>
+                                        <p>Maximum 50 questions per test.</p>
+                                    </div>
+                                    <div className={styles.bulkUploadRow}>
+                                        <label className={styles.bulkUploadLabel}>
+                                            Upload CSV
+                                            <input type="file" accept=".csv,text/csv" onChange={handleBulkCsvUpload} />
+                                        </label>
+                                        {bulkCsvFileName ? <span className={styles.bulkFileName}>Loaded: {bulkCsvFileName}</span> : null}
+                                    </div>
+                                    <div className={styles.formGroup}>
+                                        <label>Bulk Questions</label>
+                                        <textarea
+                                            value={bulkQuestionText}
+                                            onChange={(event) => setBulkQuestionText(event.target.value)}
+                                            rows={10}
+                                            placeholder="Paste MCQs here..."
+                                        />
+                                        <div className={styles.bulkPreviewRow}>
+                                            <span className={styles.bulkPreviewCount}>Detected Questions: {bulkPreview.count}</span>
+                                            {bulkPreview.error ? <span className={styles.bulkPreviewError}>{bulkPreview.error}</span> : null}
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                </div>
+                            )}
 
                             <div className={styles.testFormActions}>
-                                <button type="button" className={styles.secondaryBtn} onClick={() => setIsCreateTestModal(false)}>
+                                <button type="button" className={styles.secondaryBtn} onClick={closeCreateTestModal}>
                                     Cancel
                                 </button>
                                 <button type="submit" className={styles.submitBtn}>Create Test and Notify Students</button>
@@ -757,11 +1029,15 @@ export default function BatchManagementPage() {
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Priority</label>
-                                <select value={announcementForm.priority} onChange={e => setAnnouncementForm({ ...announcementForm, priority: e.target.value })}>
-                                    <option value="LOW">Low</option>
-                                    <option value="NORMAL">Normal</option>
-                                    <option value="HIGH">High</option>
-                                </select>
+                                <CustomSelect
+                                    value={announcementForm.priority}
+                                    onChange={(value) => setAnnouncementForm({ ...announcementForm, priority: value })}
+                                    options={[
+                                        { value: "LOW", label: "Low" },
+                                        { value: "NORMAL", label: "Normal" },
+                                        { value: "HIGH", label: "High" },
+                                    ]}
+                                />
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Message</label>
@@ -790,15 +1066,17 @@ export default function BatchManagementPage() {
                                 {actualData.enrollments.map((enrollment: any) => (
                                     <div key={enrollment.student.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.75rem 1rem", borderBottom: "1px solid #f1f5f9" }}>
                                         <div style={{ fontWeight: 600 }}>{enrollment.student.name}</div>
-                                        <select
-                                            value={attendanceRecords[enrollment.student.id] || "PRESENT"}
-                                            onChange={(e) => setAttendanceRecords({ ...attendanceRecords, [enrollment.student.id]: e.target.value })}
-                                            style={{ padding: "0.2rem 0.5rem", borderRadius: "6px", border: "1px solid #cbd5e1" }}
-                                        >
-                                            <option value="PRESENT">Present</option>
-                                            <option value="ABSENT">Absent</option>
-                                            <option value="LATE">Late</option>
-                                        </select>
+                                        <div style={{ width: "150px" }}>
+                                            <CustomSelect
+                                                value={attendanceRecords[enrollment.student.id] || "PRESENT"}
+                                                onChange={(value) => setAttendanceRecords({ ...attendanceRecords, [enrollment.student.id]: value })}
+                                                options={[
+                                                    { value: "PRESENT", label: "Present" },
+                                                    { value: "ABSENT", label: "Absent" },
+                                                    { value: "LATE", label: "Late" },
+                                                ]}
+                                            />
+                                        </div>
                                     </div>
                                 ))}
                                 {actualData.enrollments.length === 0 && <div style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>No students enrolled in this batch.</div>}
@@ -811,4 +1089,3 @@ export default function BatchManagementPage() {
         </LMSShell>
     );
 }
-

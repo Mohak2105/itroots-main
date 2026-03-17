@@ -1,0 +1,11 @@
+node_modules
+.next
+tsconfig.tsbuildinfo
+.env
+.env.*
+build_out*.txt
+compile_errors*.txt
+lint_errors.txt
+lint_src.txt
+ts_errors.txt
+typescript-errors.txt

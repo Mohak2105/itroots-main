@@ -59,7 +59,7 @@ export default function AvailableBatchesPage() {
             });
             if (res.ok) {
                 alert("Enrolled successfully!");
-                router.push("/lms/student/my-learning");
+                router.push("/my-learning");
             } else {
                 const err = await res.json();
                 alert(err.message || "Enrollment failed");
@@ -75,7 +75,7 @@ export default function AvailableBatchesPage() {
     return (
         <LMSShell pageTitle="Available Academic Batches">
             <div className={styles.header}>
-                <Link href="/lms/student/my-learning" className={styles.backBtn}><ArrowLeft /> Back to Courses</Link>
+                <Link href="/my-learning" className={styles.backBtn}><ArrowLeft /> Back to Courses</Link>
                 <div className={styles.titleInfo}>
                     <h1>Select Your Batch</h1>
                     <p>Choose a schedule and cohort that fits your learning pace.</p>
@@ -129,4 +129,3 @@ export default function AvailableBatchesPage() {
         </LMSShell>
     );
 }
-

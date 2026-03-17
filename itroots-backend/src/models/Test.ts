@@ -9,10 +9,11 @@ interface TestAttributes {
     description?: string;
     totalMarks: number;
     durationMinutes: number;
+    dueAt?: Date | null;
     questions: any;
 }
 
-interface TestCreationAttributes extends Optional<TestAttributes, 'id' | 'description'> { }
+interface TestCreationAttributes extends Optional<TestAttributes, 'id' | 'description' | 'dueAt'> { }
 
 class Test extends Model<TestAttributes, TestCreationAttributes> implements TestAttributes {
     public id!: string;
@@ -21,6 +22,7 @@ class Test extends Model<TestAttributes, TestCreationAttributes> implements Test
     public description?: string;
     public totalMarks!: number;
     public durationMinutes!: number;
+    public dueAt?: Date | null;
     public questions!: any;
 
     public readonly createdAt!: Date;
@@ -56,6 +58,10 @@ Test.init(
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 60,
+        },
+        dueAt: {
+            type: DataTypes.DATE,
+            allowNull: true,
         },
         questions: {
             type: DataTypes.JSON,

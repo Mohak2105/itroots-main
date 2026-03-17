@@ -131,8 +131,12 @@ CREATE TABLE IF NOT EXISTS batch_contents (
     batchId CHAR(36) NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT NULL,
-    type ENUM('VIDEO', 'ASSIGNMENT', 'RESOURCE') NOT NULL,
+    type ENUM('VIDEO', 'ASSIGNMENT', 'RESOURCE', 'CODING') NOT NULL,
     contentUrl VARCHAR(255) NOT NULL,
+    maxMarks INT NULL,
+    codingLanguage VARCHAR(100) NULL,
+    starterCode TEXT NULL,
+    codingInstructions TEXT NULL,
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
@@ -163,10 +167,17 @@ CREATE TABLE IF NOT EXISTS test_results (
     testId CHAR(36) NOT NULL,
     score INT NOT NULL,
     completionTime INT NOT NULL,
+    correctAnswers INT NOT NULL DEFAULT 0,
+    wrongAnswers INT NOT NULL DEFAULT 0,
+    unansweredQuestions INT NOT NULL DEFAULT 0,
+    percentage INT NOT NULL DEFAULT 0,
+    autoSubmitted TINYINT(1) NOT NULL DEFAULT 0,
+    violationReason VARCHAR(100) NULL,
     submittedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
+    UNIQUE KEY uq_test_results_student_test (studentId, testId),
     KEY idx_test_results_studentId (studentId),
     KEY idx_test_results_testId (testId),
     CONSTRAINT fk_test_results_student FOREIGN KEY (studentId) REFERENCES users(id)
@@ -373,5 +384,3 @@ MODIFY COLUMN type ENUM('ANNOUNCEMENT', 'NOTIFICATION', 'REMINDER', 'ALERT', 'PL
 
 ALTER TABLE notifications
 MODIFY COLUMN audienceType ENUM('ALL_STUDENTS', 'SELECTED_STUDENTS', 'ALL_Faculty', 'SELECTED_Faculty', 'ALL_USERS', 'SELECTED_BATCH', 'SELECTED_BATCH_STUDENTS', 'SELECTED_BATCH_Faculty', 'SELECTED_COURSE', 'SELECTED_COURSE_STUDENTS', 'SELECTED_COURSE_Faculty') NOT NULL;
-
-

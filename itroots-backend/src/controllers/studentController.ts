@@ -5,9 +5,9 @@ import { Op } from 'sequelize';
 import Batch from '../models/Batch';
 import User from '../models/User';
 import Enrollment from '../models/Enrollment';
-import BatchContent from '../models/BatchContent';
+import BatchContent, { getBatchContentReadableAttributes } from '../models/BatchContent';
 import Test from '../models/Test';
-import TestResult from '../models/TestResult';
+import TestResult, { TEST_RESULT_BASE_ATTRIBUTES } from '../models/TestResult';
 import Attendance from '../models/Attendance';
 import Announcement from '../models/Announcement';
 import Course from '../models/Course';
@@ -16,11 +16,15 @@ import NotificationRecipient from '../models/NotificationRecipient';
 import Notification from '../models/Notification';
 import LiveClass from '../models/LiveClass';
 import Certificate from '../models/Certificate';
-import AssignmentSubmission from '../models/AssignmentSubmission';
+import AssignmentSubmission, { getAssignmentSubmissionReadableAttributes } from '../models/AssignmentSubmission';
+import Placement from '../models/Placement';
 import { isLiveClassTableReady } from '../utils/liveClassSchema';
 import { streamCertificatePdf } from '../utils/certificatePdf';
+import { getStudyMaterialType } from '../utils/studyMaterial';
 
 const DEFAULT_PROGRESS_PERCENT = 0;
+const ALLOWED_FORCE_SUBMIT_REASONS = new Set(['TIME_EXPIRED', 'TAB_SWITCH', 'WINDOW_BLUR']);
+const asTrimmedViolationReason = (value: any) => String(value ?? '').trim().toUpperCase();
 
 const certificateInclude = [
     { model: Course, as: 'course', attributes: ['id', 'title', 'duration', 'category'] },
@@ -29,10 +33,69 @@ const certificateInclude = [
     { model: User, as: 'student', attributes: ['id', 'name', 'email'] },
 ];
 
-function mapEnrollment(enrollment: any) {
+const calculatePercentage = (score: number, totalMarks: number) => {
+    if (!Number.isFinite(totalMarks) || totalMarks <= 0) return 0;
+    return Math.round((Number(score || 0) / totalMarks) * 100);
+};
+
+const resolveAssignmentMaxMarks = (value: any, fallback = 100) => {
+    const parsed = Number(value);
+    if (Number.isInteger(parsed) && parsed > 0) {
+        return parsed;
+    }
+    return fallback;
+};
+
+const buildBatchProgressMap = async (studentId: string, batchIds: string[]) => {
+    const progressByBatchId = new Map<string, number>();
+    if (!batchIds.length) return progressByBatchId;
+
+    const tests = await Test.findAll({
+        where: { batchId: { [Op.in]: batchIds } },
+        attributes: ['id', 'batchId', 'totalMarks'],
+    });
+
+    if (!tests.length) return progressByBatchId;
+
+    const testById = new Map<string, any>();
+    tests.forEach((test: any) => testById.set(test.id, test));
+
+    const testResults = await TestResult.findAll({
+        where: {
+            studentId,
+            testId: { [Op.in]: tests.map((test: any) => test.id) },
+        },
+        attributes: TEST_RESULT_BASE_ATTRIBUTES as unknown as string[],
+        order: [['submittedAt', 'DESC']],
+    });
+
+    const percentageBuckets = new Map<string, number[]>();
+    testResults.forEach((result: any) => {
+        const test = testById.get(result.testId);
+        if (!test) return;
+        const percent = Number.isFinite(Number(result.percentage))
+            ? Number(result.percentage)
+            : calculatePercentage(Number(result.score || 0), Number(test.totalMarks || 0));
+        const list = percentageBuckets.get(test.batchId) || [];
+        list.push(percent);
+        percentageBuckets.set(test.batchId, list);
+    });
+
+    batchIds.forEach((batchId) => {
+        const list = percentageBuckets.get(batchId) || [];
+        const avg = list.length
+            ? Math.round(list.reduce((sum, value) => sum + value, 0) / list.length)
+            : DEFAULT_PROGRESS_PERCENT;
+        progressByBatchId.set(batchId, avg);
+    });
+
+    return progressByBatchId;
+};
+
+function mapEnrollment(enrollment: any, progressByBatchId: Map<string, number>) {
     return {
         ...enrollment.toJSON(),
-        progressPercent: DEFAULT_PROGRESS_PERCENT,
+        progressPercent: progressByBatchId.get(enrollment.batchId) ?? DEFAULT_PROGRESS_PERCENT,
     };
 }
 
@@ -70,11 +133,11 @@ export const getStudentDashboard = async (req: any, res: Response) => {
             order: [['createdAt', 'DESC']],
         });
 
-        const mappedEnrollments = enrollments.map(mapEnrollment);
         const batchIds = enrollments.map((enrollment: any) => enrollment.batchId);
 
         const liveClassReady = await isLiveClassTableReady();
-        const [attendanceRecords, announcements, testResults, notifications, paymentSummary, upcomingLiveClasses, upcomingLiveClassCount, certificates, certificateCount] = await Promise.all([
+        const [progressByBatchId, attendanceRecords, announcements, testResults, notifications, paymentSummary, upcomingLiveClasses, upcomingLiveClassCount, certificates, certificateCount] = await Promise.all([
+            buildBatchProgressMap(studentId, batchIds),
             Attendance.findAll({ where: { studentId } }),
             Announcement.findAll({
                 where: { [Op.or]: [{ batchId: null }, ...(batchIds.length ? [{ batchId: batchIds }] : [])] },
@@ -87,6 +150,7 @@ export const getStudentDashboard = async (req: any, res: Response) => {
             }),
             TestResult.findAll({
                 where: { studentId },
+                attributes: TEST_RESULT_BASE_ATTRIBUTES as unknown as string[],
                 include: [{ model: Test, as: 'test', attributes: ['totalMarks'] }],
             }),
             NotificationRecipient.findAll({
@@ -125,6 +189,7 @@ export const getStudentDashboard = async (req: any, res: Response) => {
             }),
             Certificate.count({ where: { studentId } }),
         ]);
+        const mappedEnrollments = enrollments.map((enrollment: any) => mapEnrollment(enrollment, progressByBatchId));
 
         const attendancePercentage = attendanceRecords.length
             ? Math.round((attendanceRecords.filter((record: any) => record.status === 'PRESENT').length / attendanceRecords.length) * 100)
@@ -132,8 +197,11 @@ export const getStudentDashboard = async (req: any, res: Response) => {
 
         const averageTestScore = testResults.length
             ? Math.round(testResults.reduce((sum: number, result: any) => {
-                const totalMarks = result.test?.totalMarks || 100;
-                return sum + (result.score / totalMarks) * 100;
+                if (Number.isFinite(Number(result.percentage))) {
+                    return sum + Number(result.percentage);
+                }
+                const totalMarks = Number(result.test?.totalMarks || 0);
+                return sum + calculatePercentage(Number(result.score || 0), totalMarks);
             }, 0) / testResults.length)
             : 0;
 
@@ -160,6 +228,19 @@ export const getStudentDashboard = async (req: any, res: Response) => {
             message: 'Error fetching dashboard',
             detail: process.env.NODE_ENV !== 'production' ? (error?.message || String(error)) : undefined,
         });
+    }
+};
+
+export const getStudentPlacements = async (req: any, res: Response) => {
+    try {
+        const placements = await Placement.findAll({
+            order: [['createdAt', 'DESC']],
+        });
+
+        res.json(placements);
+    } catch (error) {
+        console.error('Fetch student placements error:', error);
+        res.status(500).json({ message: 'Error fetching placements' });
     }
 };
 
@@ -212,7 +293,10 @@ export const getMyLearning = async (req: any, res: Response) => {
             order: [['createdAt', 'DESC']],
         });
 
-        res.json(enrollments.map(mapEnrollment));
+        const batchIds = enrollments.map((enrollment: any) => enrollment.batchId);
+        const progressByBatchId = await buildBatchProgressMap(studentId, batchIds);
+
+        res.json(enrollments.map((enrollment: any) => mapEnrollment(enrollment, progressByBatchId)));
     } catch (error) {
         console.error('Fetch my learning error:', error);
         res.status(500).json({ message: 'Error fetching learning modules' });
@@ -224,6 +308,7 @@ export const getBatchResources = async (req: any, res: Response) => {
         const studentId = req.user.id;
         const { batchId } = req.params;
         const requestedType = typeof req.query.type === 'string' ? req.query.type.toUpperCase() : null;
+        const batchContentAttributes = await getBatchContentReadableAttributes();
 
         if (batchId) {
             const enrollment = await Enrollment.findOne({ where: { studentId, batchId } });
@@ -233,22 +318,49 @@ export const getBatchResources = async (req: any, res: Response) => {
             if (requestedType) contentsWhere.type = requestedType;
 
             const [contents, tests] = await Promise.all([
-                BatchContent.findAll({ where: contentsWhere, order: [['createdAt', 'DESC']] }),
+                BatchContent.findAll({
+                    where: contentsWhere,
+                    attributes: batchContentAttributes as unknown as string[],
+                    include: [{
+                        model: Batch,
+                        as: 'batch',
+                        attributes: ['id', 'name'],
+                        include: [{ model: Course, as: 'course', attributes: ['id', 'title'] }],
+                    }],
+                    order: [['createdAt', 'DESC']],
+                }),
                 Test.findAll({ where: { batchId }, order: [['createdAt', 'DESC']] }),
             ]);
 
-            return res.json({ contents, tests });
+            const normalizedContents = contents.map((content: any) => {
+                const payload = typeof content.toJSON === 'function' ? content.toJSON() : content;
+                return {
+                    ...payload,
+                    subject: payload.batch?.course?.title || payload.batch?.name || 'Course',
+                    fileType: payload.type === 'RESOURCE' ? getStudyMaterialType(payload.contentUrl) || 'RESOURCE' : payload.type,
+                    fileUrl: payload.contentUrl,
+                    uploadedAt: payload.createdAt,
+                };
+            });
+
+            return res.json({
+                success: true,
+                data: normalizedContents,
+                contents: normalizedContents,
+                tests,
+            });
         }
 
         const enrollments = await Enrollment.findAll({ where: { studentId }, attributes: ['batchId'] });
         const batchIds = enrollments.map((enrollment: any) => enrollment.batchId);
         if (!batchIds.length) return res.json({ success: true, data: [] });
 
-        const contentWhere: any = { batchId: batchIds };
+        const contentWhere: any = { batchId: { [Op.in]: batchIds } };
         if (requestedType) contentWhere.type = requestedType;
 
         const resources = await BatchContent.findAll({
             where: contentWhere,
+            attributes: batchContentAttributes as unknown as string[],
             include: [{ model: Batch, as: 'batch', attributes: ['id', 'name'], include: [{ model: Course, as: 'course', attributes: ['title'] }] }],
             order: [['createdAt', 'DESC']],
         });
@@ -258,10 +370,13 @@ export const getBatchResources = async (req: any, res: Response) => {
             data: resources.map((resource: any) => ({
                 id: resource.id,
                 title: resource.title,
+                description: resource.description,
                 subject: resource.batch?.course?.title || resource.batch?.name,
-                fileType: resource.type,
+                fileType: resource.type === 'RESOURCE' ? getStudyMaterialType(resource.contentUrl) || 'RESOURCE' : resource.type,
                 fileUrl: resource.contentUrl,
+                contentUrl: resource.contentUrl,
                 uploadedAt: resource.createdAt,
+                createdAt: resource.createdAt,
                 batchId: resource.batchId,
             })),
         });
@@ -304,6 +419,8 @@ const saveAssignmentSubmissionFile = ({ fileName, fileData }: { fileName: string
 export const getStudentAssignments = async (req: any, res: Response) => {
     try {
         const studentId = req.user.id;
+        const batchContentAttributes = await getBatchContentReadableAttributes();
+        const assignmentSubmissionAttributes = await getAssignmentSubmissionReadableAttributes();
         const enrollments = await Enrollment.findAll({ where: { studentId }, attributes: ['batchId'] });
         const batchIds = enrollments.map((enrollment: any) => enrollment.batchId);
 
@@ -316,6 +433,7 @@ export const getStudentAssignments = async (req: any, res: Response) => {
                 batchId: { [Op.in]: batchIds },
                 type: 'ASSIGNMENT',
             },
+            attributes: batchContentAttributes as unknown as string[],
             include: [{
                 model: Batch,
                 as: 'batch',
@@ -332,6 +450,7 @@ export const getStudentAssignments = async (req: any, res: Response) => {
                     studentId,
                     assignmentId: { [Op.in]: assignmentIds },
                 },
+                attributes: assignmentSubmissionAttributes as unknown as string[],
                 order: [['submittedAt', 'DESC']],
             })
             : [];
@@ -352,6 +471,7 @@ export const getStudentAssignments = async (req: any, res: Response) => {
                 batchId: assignment.batchId,
                 batchName: assignment.batch?.name || 'Batch',
                 courseName: assignment.batch?.course?.title || assignment.batch?.name || 'Course',
+                maxMarks: resolveAssignmentMaxMarks(assignment.maxMarks),
                 assignmentFileUrl: assignment.contentUrl,
                 uploadedAt: assignment.createdAt,
                 submission: submission ? {
@@ -377,6 +497,8 @@ export const submitAssignment = async (req: any, res: Response) => {
         const studentId = req.user.id;
         const { assignmentId } = req.params;
         const { fileData, fileName, notes } = req.body;
+        const batchContentAttributes = await getBatchContentReadableAttributes();
+        const assignmentSubmissionAttributes = await getAssignmentSubmissionReadableAttributes();
 
         if (!fileData || !fileName) {
             return res.status(400).json({ message: 'Assignment file is required' });
@@ -384,6 +506,7 @@ export const submitAssignment = async (req: any, res: Response) => {
 
         const assignment = await BatchContent.findOne({
             where: { id: assignmentId, type: 'ASSIGNMENT' },
+            attributes: batchContentAttributes as unknown as string[],
             include: [{ model: Batch, as: 'batch', attributes: ['id', 'name', 'FacultyId'], include: [{ model: Course, as: 'course', attributes: ['id', 'title'] }] }],
         });
 
@@ -396,7 +519,10 @@ export const submitAssignment = async (req: any, res: Response) => {
             return res.status(403).json({ message: 'You are not enrolled in this batch' });
         }
 
-        const existingSubmission = await AssignmentSubmission.findOne({ where: { studentId, assignmentId } });
+        const existingSubmission = await AssignmentSubmission.findOne({
+            where: { studentId, assignmentId },
+            attributes: assignmentSubmissionAttributes as unknown as string[],
+        });
         if (existingSubmission) {
             return res.status(409).json({ message: 'Assignment already submitted' });
         }
@@ -478,6 +604,7 @@ export const getMyTests = async (req: any, res: Response) => {
 
         const attempts = await TestResult.findAll({
             where: { studentId, testId: { [Op.in]: tests.map((test: any) => test.id) } },
+            attributes: TEST_RESULT_BASE_ATTRIBUTES as unknown as string[],
             order: [['submittedAt', 'DESC']],
         });
 
@@ -494,6 +621,7 @@ export const getMyTests = async (req: any, res: Response) => {
             description: test.description,
             totalMarks: test.totalMarks,
             durationMinutes: test.durationMinutes,
+            dueAt: test.dueAt || null,
             questions: Array.isArray(test.questions) ? test.questions : [],
             batchId: test.batchId,
             batchName: test.batch?.name || 'Batch',
@@ -503,6 +631,20 @@ export const getMyTests = async (req: any, res: Response) => {
                 ? {
                     id: latestAttemptByTestId.get(test.id).id,
                     score: latestAttemptByTestId.get(test.id).score,
+                    percentage: Number.isFinite(Number(latestAttemptByTestId.get(test.id).percentage))
+                        ? Number(latestAttemptByTestId.get(test.id).percentage)
+                        : calculatePercentage(Number(latestAttemptByTestId.get(test.id).score || 0), Number(test.totalMarks || 0)),
+                    correctAnswers: Number.isFinite(Number(latestAttemptByTestId.get(test.id).correctAnswers))
+                        ? Number(latestAttemptByTestId.get(test.id).correctAnswers)
+                        : null,
+                    wrongAnswers: Number.isFinite(Number(latestAttemptByTestId.get(test.id).wrongAnswers))
+                        ? Number(latestAttemptByTestId.get(test.id).wrongAnswers)
+                        : null,
+                    unansweredQuestions: Number.isFinite(Number(latestAttemptByTestId.get(test.id).unansweredQuestions))
+                        ? Number(latestAttemptByTestId.get(test.id).unansweredQuestions)
+                        : null,
+                    autoSubmitted: Boolean(latestAttemptByTestId.get(test.id).autoSubmitted),
+                    violationReason: latestAttemptByTestId.get(test.id).violationReason || null,
                     completionTime: latestAttemptByTestId.get(test.id).completionTime,
                     submittedAt: latestAttemptByTestId.get(test.id).submittedAt,
                 }
@@ -518,9 +660,17 @@ export const submitExamResult = async (req: any, res: Response) => {
     try {
         const studentId = req.user.id;
         const { testId, answers, completionTime, forceSubmit, violationReason } = req.body;
+        const isForceSubmit = Boolean(forceSubmit);
+        const normalizedViolationReason = asTrimmedViolationReason(violationReason);
 
         if (!testId) {
             return res.status(400).json({ message: 'testId is required' });
+        }
+
+        if (isForceSubmit && !ALLOWED_FORCE_SUBMIT_REASONS.has(normalizedViolationReason)) {
+            return res.status(400).json({
+                message: 'force submit reason must be TIME_EXPIRED, TAB_SWITCH, or WINDOW_BLUR',
+            });
         }
 
         const test = await Test.findByPk(testId, {
@@ -536,7 +686,10 @@ export const submitExamResult = async (req: any, res: Response) => {
             return res.status(403).json({ message: 'You are not enrolled in this batch' });
         }
 
-        const existingResult = await TestResult.findOne({ where: { studentId, testId } });
+        const existingResult = await TestResult.findOne({
+            where: { studentId, testId },
+            attributes: ['id'],
+        });
         if (existingResult) {
             return res.status(409).json({ message: 'This test has already been submitted' });
         }
@@ -546,10 +699,18 @@ export const submitExamResult = async (req: any, res: Response) => {
             return res.status(400).json({ message: 'This test has no questions configured' });
         }
 
+        const dueAtValue = (test as any).dueAt ? new Date((test as any).dueAt) : null;
+        const isDueDateValid = dueAtValue instanceof Date && !Number.isNaN(dueAtValue.getTime());
+        const dueDateExpired = isDueDateValid && dueAtValue.getTime() <= Date.now();
+
+        if (dueDateExpired && !(isForceSubmit && normalizedViolationReason === 'TIME_EXPIRED')) {
+            return res.status(410).json({ message: 'The due time for this test has passed' });
+        }
+
         const normalizedAnswers = answers && typeof answers === 'object' ? answers : {};
         const answeredCount = questions.filter((question: any) => Object.prototype.hasOwnProperty.call(normalizedAnswers, question.id)).length;
 
-        if (!forceSubmit && answeredCount !== questions.length) {
+        if (!isForceSubmit && answeredCount !== questions.length) {
             return res.status(400).json({ message: 'All questions are required before submission' });
         }
 
@@ -560,11 +721,20 @@ export const submitExamResult = async (req: any, res: Response) => {
         const totalQuestions = questions.length;
         const totalMarks = Number((test as any).totalMarks || totalQuestions || 0);
         const score = totalQuestions ? Math.round((correctAnswers / totalQuestions) * totalMarks) : 0;
+        const unansweredQuestions = Math.max(totalQuestions - answeredCount, 0);
+        const wrongAnswers = Math.max(answeredCount - correctAnswers, 0);
+        const percentage = calculatePercentage(score, totalMarks);
         const normalizedCompletionTime = Number(completionTime || 0);
         const result = await TestResult.create({
             studentId,
             testId,
             score,
+            correctAnswers,
+            wrongAnswers,
+            unansweredQuestions,
+            percentage,
+            autoSubmitted: isForceSubmit,
+            violationReason: isForceSubmit ? normalizedViolationReason : null,
             completionTime: Number.isFinite(normalizedCompletionTime) ? normalizedCompletionTime : 0,
             submittedAt: new Date(),
         });
@@ -576,14 +746,17 @@ export const submitExamResult = async (req: any, res: Response) => {
                 totalMarks,
                 correctAnswers,
                 totalQuestions,
-                wrongAnswers: totalQuestions - correctAnswers,
-                unansweredQuestions: totalQuestions - answeredCount,
-                percentage: totalMarks ? Math.round((score / totalMarks) * 100) : 0,
-                autoSubmitted: Boolean(forceSubmit),
-                violationReason: forceSubmit ? (violationReason || 'AUTO_SUBMIT') : null,
+                wrongAnswers,
+                unansweredQuestions,
+                percentage,
+                autoSubmitted: isForceSubmit,
+                violationReason: isForceSubmit ? normalizedViolationReason : null,
             },
         });
     } catch (error: any) {
+        if (error?.name === 'SequelizeUniqueConstraintError') {
+            return res.status(409).json({ message: 'This test has already been submitted' });
+        }
         console.error('Submit exam error:', error);
         res.status(500).json({ message: error.message || 'Error submitting test' });
     }
@@ -622,4 +795,3 @@ export const downloadMyCertificate = async (req: any, res: Response) => {
         res.status(500).json({ message: error.message || 'Error downloading certificate' });
     }
 };
-

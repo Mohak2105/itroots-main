@@ -95,6 +95,7 @@
     font-size: 0.9rem;
     color: #334155;
     border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
 }
 
 .studentCell {
@@ -121,6 +122,56 @@
     font-size: 0.75rem;
     font-weight: 900;
     text-transform: uppercase;
+}
+
+.statusDone,
+.statusPending {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.statusDone {
+    background: rgba(16, 185, 129, 0.14);
+    color: #059669;
+}
+
+.statusPending {
+    background: rgba(148, 163, 184, 0.16);
+    color: #475569;
+}
+
+.progressWrap {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 160px;
+}
+
+.progressTrack {
+    width: 110px;
+    height: 8px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #0c4a7f 0%, #1d8ef0 100%);
+}
+
+.progressValue {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #0f172a;
+    min-width: 36px;
 }
 
 .empty {

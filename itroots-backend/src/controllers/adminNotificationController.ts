@@ -7,8 +7,10 @@ import Course from '../models/Course';
 import Enrollment from '../models/Enrollment';
 import Notification, { NotificationAudience, NotificationType } from '../models/Notification';
 import NotificationRecipient from '../models/NotificationRecipient';
+import Placement from '../models/Placement';
 import sequelize from '../config/database';
 import { sendNotificationEmail } from '../services/mailer';
+import { getNotificationWriteErrorMessage } from '../utils/notificationErrors';
 
 const ACTIVE_USER_FILTER = { isActive: true };
 
@@ -292,7 +294,7 @@ export const createTargetedNotification = async (req: any, res: Response) => {
         });
     } catch (error: any) {
         await transaction.rollback();
-        res.status(500).json({ message: error.message || 'Server error sending notification' });
+        res.status(500).json({ message: getNotificationWriteErrorMessage(error, 'Server error sending notification') });
     }
 };
 
@@ -313,6 +315,76 @@ export const getNotifications = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error fetching notifications' });
     }
 };
+
+export const sendPlacementNotification = async (req: any, res: Response) => {
+    const transaction = await sequelize.transaction();
+
+    try {
+        const placementId = String(req.params.placementId || '').trim();
+        if (!placementId) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'Placement id is required' });
+        }
+
+        const placement = await Placement.findByPk(placementId);
+        if (!placement) {
+            await transaction.rollback();
+            return res.status(404).json({ message: 'Placement not found' });
+        }
+
+        const recipients = await User.findAll({
+            where: {
+                role: 'STUDENT',
+                ...ACTIVE_USER_FILTER,
+            },
+            attributes: ['id', 'name', 'email'],
+            order: [['name', 'ASC']],
+        });
+
+        if (!recipients.length) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'No active students available to receive this placement' });
+        }
+
+        const placementPath = `/placements?placementId=${encodeURIComponent(placement.id)}`;
+        const notification = await Notification.create({
+            title: `Placement Opportunity: ${placement.companyName}`,
+            message: [
+                `A new placement opportunity is available.`,
+                `Company: ${placement.companyName}`,
+                `Role: ${placement.designation}`,
+                `Salary: ${placement.salaryRange}`,
+                `Eligible Passout Years: ${placement.passoutYears}`,
+                `View in LMS: ${placementPath}`,
+            ].join('\n'),
+            type: 'PLACEMENT',
+            audienceType: 'ALL_STUDENTS',
+            sendEmail: false,
+            createdBy: req.user.id,
+        }, { transaction });
+
+        await NotificationRecipient.bulkCreate(
+            recipients.map((recipient: any) => ({
+                notificationId: notification.id,
+                userId: recipient.id,
+                emailSent: false,
+            })),
+            { transaction }
+        );
+
+        await transaction.commit();
+
+        res.status(201).json({
+            message: 'Placement sent successfully',
+            recipientCount: recipients.length,
+            notificationId: notification.id,
+        });
+    } catch (error: any) {
+        await transaction.rollback();
+        res.status(500).json({ message: error.message || 'Server error sending placement notification' });
+    }
+};
+
 export const deleteNotification = async (req: Request, res: Response) => {
     const transaction = await sequelize.transaction();
 

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +9,7 @@ import {
     Users,
     Chalkboard,
     Calendar,
+    CaretDown,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./admin-dashboard.module.css";
@@ -128,14 +129,8 @@ export default function AdminDashboard() {
                 </div>
 
                 <section className={styles.statsGrid}>
-                    <div className={styles.statCard}>
-                        <span className={styles.statLabel}>Issued Certificates</span>
-                        <span className={styles.statValue}>{dashboard.certificates}</span>
-                    </div>
-                    <div className={styles.statCard}>
-                        <span className={styles.statLabel}>Active Students</span>
-                        <span className={styles.statValue}>{dashboard.students}</span>
-                    </div>
+                    
+                    
                     <div className={styles.statCard}>
                         <span className={styles.statLabel}>Active Faculty</span>
                         <span className={styles.statValue}>{dashboard.Faculty}</span>
@@ -183,8 +178,6 @@ export default function AdminDashboard() {
                                         <th>Batch</th>
                                         <th>Course</th>
                                         <th>Faculty</th>
-                                        <th>Schedule</th>
-                                        <th>Duration</th>
                                         <th>Students</th>
                                     </tr>
                                 </thead>
@@ -201,13 +194,7 @@ export default function AdminDashboard() {
                                                 </td>
                                                 <td>{batch.course?.title || "Unassigned"}</td>
                                                 <td>{batch.Faculty?.name || "Unassigned"}</td>
-                                                <td>{batch.schedule || "Not set"}</td>
-                                                <td>
-                                                    <div className={styles.tableCellStack}>
-                                                        <span>{formatDate(batch.startDate)}</span>
-                                                        <span className={styles.tableSubtle}>to {formatDate(batch.endDate)}</span>
-                                                    </div>
-                                                </td>
+                                                
                                                 <td>{batch.studentCount}</td>
                                             </tr>
                                         ))

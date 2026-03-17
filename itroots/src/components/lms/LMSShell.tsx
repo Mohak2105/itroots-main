@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
@@ -34,6 +34,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
     "Analytics & Reporting": ChartBar,
     "Students Overview": ChartBar,
     "Students Test": Exam,
+    "Tests": Exam,
     "Event Calendar": CalendarDots,
     "Grades": Trophy,
     "Students Engagement": ChartBar,
@@ -67,6 +68,7 @@ const ICON_COLOR_MAP: Record<string, string> = {
     "Analytics & Reporting": "#ef4444",
     "Students Overview": "#ef4444",
     "Students Test": "#f97316",
+    "Tests": "#f97316",
     "Event Calendar": "#14b8a6",
     "Grades": "#f59e0b",
     "Students Engagement": "#ec4899",
@@ -100,13 +102,15 @@ const STUDENT_NAV = [
         items: [
             { href: "/dashboard", label: "Dashboard" },
             { href: "/my-learning", label: "My Courses" },
-            { href: "/assignments", label: "Assignments" },
+            // { href: "/assignments", label: "Assignments" },
             { href: "/attendance", label: "Attendance" },
             { href: "/calendar", label: "Live Classes" },
-            { href: "/resources", label: "Study Materials" },
+            { href: "/resources", label: "Study Material" },
             { href: "/tests", label: "Online Test" },
+            { href: "/placements", label: "Placements" },
             { href: "/announcements", label: "Notifications" },
-            { href: "/certificates", label: "Certificates" },
+            { href: "/certificates", label: " My Certificates" },
+            { href: "/settings", label: "Profile Settings" },
         ],
     },
 ];
@@ -116,12 +120,15 @@ const Faculty_NAV = [
         section: "",
         items: [
             { href: "/dashboard", label: "Dashboard" },
+            { href: "/content?type=VIDEO", label: "Video Lectures" },
+            { href: "/content?type=RESOURCE", label: "Study Material" },
+            // { href: "/assignments", label: "Assignments" },
+            { href: "/tests", label: "Tests" },
+            { href: "/attendance", label: "Attendance" },
             { href: "/calendar", label: "Live Classes" },
-            { href: "/content", label: "Video Lectures" },
             { href: "/analytics", label: "Students Overview" },
-            { href: "/grades", label: "Grades" },
-            { href: "/assignments", label: "Students Test" },
             { href: "/announcements", label: "Send Notifications" },
+            { href: "/settings", label: "Profile Settings" },
         ],
     },
 ];
@@ -148,6 +155,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
     const router = useRouter();
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
+    const [currentSearch, setCurrentSearch] = useState("");
     const profileDropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -159,6 +167,12 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            setCurrentSearch(window.location.search);
+        }
+    }, [pathname]);
 
     if (isLoading) return null;
 
@@ -220,6 +234,25 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
         return pathname;
     })();
 
+    const isNavItemActive = (href: string) => {
+        const [itemPath, queryString] = href.split("?");
+        const currentSearchParams = new URLSearchParams(currentSearch);
+        const pathMatches =
+            normalizedPathname === itemPath
+            || normalizedPathname.startsWith(`${itemPath}/`);
+
+        if (!pathMatches) {
+            return false;
+        }
+
+        if (!queryString) {
+            return true;
+        }
+
+        const expectedQuery = new URLSearchParams(queryString);
+        return Array.from(expectedQuery.entries()).every(([key, value]) => currentSearchParams.get(key) === value);
+    };
+
     return (
         <div className={styles.shell}>
             {sidebarOpen && (
@@ -243,7 +276,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                         <div key={group.section || "default"}>
                             {group.section && <div className={styles.navSectionLabel}>{group.section}</div>}
                             {group.items.map((item) => {
-                                const isActive = normalizedPathname === item.href || normalizedPathname.startsWith(item.href + "/");
+                                const isActive = isNavItemActive(item.href);
                                 const IconComponent = ICON_MAP[item.label] || SquaresFour;
                                 const iconColor = isActive ? "#ffffff" : (ICON_COLOR_MAP[item.label] || "#0881ec");
                                 return (
@@ -305,6 +338,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                         )}
                         <div className={styles.profileDropdownContainer} ref={profileDropdownRef}>
                             <button
+                                type="button"
                                 className={styles.profileTrigger}
                                 onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
                                 aria-expanded={profileDropdownOpen}

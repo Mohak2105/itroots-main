@@ -15,6 +15,7 @@ export default function StudentCertificatesPage() {
     const [loadingData, setLoadingData] = useState(true);
     const [viewUrl, setViewUrl] = useState<string | null>(null);
     const [viewLoading, setViewLoading] = useState(false);
+    const [selectedCertificateId, setSelectedCertificateId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
@@ -32,6 +33,45 @@ export default function StudentCertificatesPage() {
             .catch((error) => console.error("Certificate fetch failed:", error))
             .finally(() => setLoadingData(false));
     }, [token]);
+
+    useEffect(() => {
+        if (!token || certificates.length === 0) return;
+
+        const initialCertificate = certificates[0];
+        if (!initialCertificate?.id) return;
+        if (selectedCertificateId === initialCertificate.id && viewUrl) return;
+
+        let isCancelled = false;
+
+        const loadInitialPreview = async () => {
+            setViewLoading(true);
+            try {
+                const blob = await fetchCertificateBlob(initialCertificate.id);
+                if (!blob || isCancelled) return;
+
+                const url = window.URL.createObjectURL(blob);
+                setSelectedCertificateId(initialCertificate.id);
+                setViewUrl((previousUrl) => {
+                    if (previousUrl) {
+                        window.URL.revokeObjectURL(previousUrl);
+                    }
+                    return url;
+                });
+            } catch (error) {
+                console.error("Initial certificate preview failed:", error);
+            } finally {
+                if (!isCancelled) {
+                    setViewLoading(false);
+                }
+            }
+        };
+
+        loadInitialPreview();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [certificates, token, selectedCertificateId, viewUrl]);
 
     const fetchCertificateBlob = async (certificateId: string) => {
         if (!token) return null;
@@ -64,7 +104,13 @@ export default function StudentCertificatesPage() {
             const blob = await fetchCertificateBlob(certificateId);
             if (!blob) return;
             const url = window.URL.createObjectURL(blob);
-            setViewUrl(url);
+            setSelectedCertificateId(certificateId);
+            setViewUrl((previousUrl) => {
+                if (previousUrl) {
+                    window.URL.revokeObjectURL(previousUrl);
+                }
+                return url;
+            });
         } catch (error) {
             console.error(error);
             alert(error instanceof Error ? error.message : "Unable to view certificate");
@@ -78,9 +124,15 @@ export default function StudentCertificatesPage() {
             window.URL.revokeObjectURL(viewUrl);
             setViewUrl(null);
         }
+        setSelectedCertificateId(null);
     };
 
+    const buildInlinePreviewUrl = (url: string) =>
+        `${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=page-fit`;
+
     if (isLoading || !user) return null;
+
+    const selectedCertificate = certificates.find((certificate) => certificate.id === selectedCertificateId) ?? certificates[0] ?? null;
 
     return (
         <LMSShell pageTitle="Certificates">
@@ -102,51 +154,55 @@ export default function StudentCertificatesPage() {
                         <p>Your issued certificates will appear here once the admin publishes them.</p>
                     </div>
                 ) : (
-                    <div className={styles.grid}>
-                        {certificates.map((certificate) => (
-                            <article key={certificate.id} className={styles.card}>
-                                <div className={styles.cardTop}>
-                                    <div className={styles.badge}>{new Date(certificate.issueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</div>
-                                    <Scroll size={22} color="#0f4c81" />
+                    <>
+                        {selectedCertificate ? (
+                            <section className={styles.previewCard}>
+                                <div className={styles.previewHeader}>
+                                    <div>
+                                        <div className={styles.previewLabel}>Certificate Preview</div>
+                                        <h2>{selectedCertificate.course?.title || "Course Certificate"}</h2>
+                                        <p>Preview the issued certificate first, then download the PDF for your records.</p>
+                                    </div>
+                                    <div className={styles.previewActions}>
+                                        
+                                        <button type="button" className={styles.downloadButton} onClick={() => handleDownload(selectedCertificate.id)}>
+                                            <DownloadSimple size={18} /> Download
+                                        </button>
+                                    </div>
                                 </div>
-                                <h3>{certificate.course?.title || "Course Certificate"}</h3>
-                                <p className={styles.number}>{certificate.certificateNumber}</p>
-                                <div className={styles.meta}>Duration: {certificate.duration}</div>
-                                <div className={styles.meta}>Batch: {certificate.batch?.name || "Assigned Batch"}</div>
-                                <div className={styles.meta}>Signed by: {certificate.signatoryName}</div>
-                                <div className={styles.cardActions}>
-                                    <button type="button" className={styles.viewButton} onClick={() => handleView(certificate.id)}>
-                                        <Eye size={18} /> View
-                                    </button>
-                                    <button type="button" className={styles.downloadButton} onClick={() => handleDownload(certificate.id)}>
-                                        <DownloadSimple size={18} /> Download
-                                    </button>
+                                <div className={styles.previewBody}>
+                                    <div className={styles.previewMeta}>
+                                        <span className={styles.badge}>{new Date(selectedCertificate.issueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                                        <div className={styles.metaLine}>Certificate No: {selectedCertificate.certificateNumber}</div>
+                                        <div className={styles.metaLine}>Duration: {selectedCertificate.duration}</div>
+                                        
+                                    </div>
+                                    <div className={styles.previewCanvas}>
+                                        {viewUrl && selectedCertificateId === selectedCertificate.id ? (
+                                            <iframe
+                                                src={buildInlinePreviewUrl(viewUrl)}
+                                                className={styles.inlinePreviewFrame}
+                                                title="Certificate Preview"
+                                                scrolling="no"
+                                            />
+                                        ) : (
+                                            <div className={styles.previewPlaceholder}>
+                                                <Scroll size={52} color="#94a3b8" weight="duotone" />
+                                                <div className={styles.previewPlaceholderTitle}>{selectedCertificate.course?.title || "Certificate"}</div>
+                                                <p>{viewLoading ? "Loading certificate preview..." : "Preview will appear here automatically."}</p>
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
-                            </article>
-                        ))}
-                    </div>
+                            </section>
+                        ) : null}
+
+                        
+                    </>
                 )}
             </div>
 
-            {viewUrl && (
-                <div className={styles.viewerOverlay} onClick={closeViewer}>
-                    <div className={styles.viewerModal} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.viewerHeader}>
-                            <span className={styles.viewerTitle}>Certificate Preview</span>
-                            <button type="button" className={styles.viewerClose} onClick={closeViewer}>
-                                <X size={20} weight="bold" />
-                            </button>
-                        </div>
-                        <iframe src={`${viewUrl}#toolbar=0&navpanes=0`} className={styles.viewerFrame} title="Certificate Preview" />
-                    </div>
-                </div>
-            )}
-
-            {viewLoading && (
-                <div className={styles.viewerOverlay}>
-                    <div className={styles.viewerLoading}>Loading certificate...</div>
-                </div>
-            )}
+            
         </LMSShell>
     );
 }

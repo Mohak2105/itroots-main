@@ -596,6 +596,31 @@
     gap: 1rem;
 }
 
+.testModeSwitch {
+    display: inline-flex;
+    gap: 0.5rem;
+    background: #e2e8f0;
+    border-radius: 12px;
+    padding: 0.3rem;
+}
+
+.testModeBtn {
+    border: none;
+    background: transparent;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 800;
+    padding: 0.45rem 0.85rem;
+    border-radius: 9px;
+    cursor: pointer;
+}
+
+.testModeBtnActive {
+    background: #ffffff;
+    color: #0f172a;
+    box-shadow: 0 4px 10px rgba(15, 23, 42, 0.12);
+}
+
 .testQuestionsTitle {
     font-size: 1rem;
     font-weight: 900;
@@ -607,6 +632,88 @@
     font-size: 0.82rem;
     color: #64748b;
     margin-top: 0.2rem;
+}
+
+.bulkQuestionPanel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.bulkHelpCard {
+    border: 1px solid #dbeafe;
+    border-radius: 16px;
+    padding: 0.95rem 1rem;
+    background: #f8fbff;
+    color: #1e293b;
+    font-size: 0.82rem;
+    line-height: 1.55;
+}
+
+.bulkHelpCard p {
+    margin: 0.2rem 0;
+}
+
+.bulkHelpCard code {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    background: #e2e8f0;
+    border-radius: 6px;
+    padding: 0.15rem 0.35rem;
+}
+
+.bulkHelpTitle {
+    font-size: 0.9rem;
+    font-weight: 900;
+    color: #0f172a;
+    margin-bottom: 0.35rem;
+}
+
+.bulkUploadRow {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.bulkUploadLabel {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    font-size: 0.76rem;
+    font-weight: 800;
+    color: #334155;
+}
+
+.bulkUploadLabel input[type="file"] {
+    font-size: 0.75rem;
+    color: #0f172a;
+}
+
+.bulkFileName {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: #0f5ea8;
+}
+
+.bulkPreviewRow {
+    margin-top: 0.45rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    align-items: center;
+}
+
+.bulkPreviewCount {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #0f5ea8;
+}
+
+.bulkPreviewError {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #dc2626;
 }
 
 .testQuestionsList {
@@ -719,6 +826,14 @@
     .testFormActions {
         flex-direction: column;
         align-items: stretch;
+    }
+
+    .testModeSwitch {
+        width: 100%;
+    }
+
+    .testModeBtn {
+        flex: 1;
     }
 
     .testHighlightGrid {

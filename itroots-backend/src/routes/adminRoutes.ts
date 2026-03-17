@@ -41,6 +41,7 @@ import {
     createTargetedNotification,
     getNotifications,
     deleteNotification,
+    sendPlacementNotification,
 } from '../controllers/adminNotificationController';
 import {
     getCertificates,
@@ -98,6 +99,7 @@ router.post('/announcements', createAdminAnnouncement);
 router.get('/notifications', getNotifications);
 router.post('/notifications', createTargetedNotification);
 router.delete('/notifications/:id', deleteNotification);
+router.post('/placements/:placementId/send', sendPlacementNotification);
 
 export default router;
 

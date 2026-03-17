@@ -11,6 +11,8 @@ import {
     Plus,
     X,
     Trash,
+    PaperPlaneRight,
+    Spinner,
 } from "@phosphor-icons/react";
 import { API_ORIGIN, ENDPOINTS } from "@/config/api";
 import styles from "../students/admin-students.module.css";
@@ -64,6 +66,7 @@ export default function AdminPlacementsPage() {
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState(EMPTY_FORM);
     const [logoPreview, setLogoPreview] = useState("");
+    const [sendingPlacementId, setSendingPlacementId] = useState<string | null>(null);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "SUPER_ADMIN")) {
@@ -173,6 +176,32 @@ export default function AdminPlacementsPage() {
         });
     };
 
+    const handleSendPlacement = async (placementId: string) => {
+        if (!token || sendingPlacementId) return;
+
+        setSendingPlacementId(placementId);
+        try {
+            const response = await fetch(ENDPOINTS.ADMIN.SEND_PLACEMENT(placementId), {
+                method: "POST",
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            const data = await response.json().catch(() => null);
+            if (!response.ok) {
+                throw new Error(data?.message || "Unable to send placement");
+            }
+
+            toast.success(`Placement sent to ${data?.recipientCount || 0} students.`);
+        } catch (error) {
+            console.error("Send placement failed:", error);
+            toast.error(error instanceof Error ? error.message : "Unable to send placement");
+        } finally {
+            setSendingPlacementId(null);
+        }
+    };
+
     if (isLoading || !user) return null;
 
     return (
@@ -247,6 +276,19 @@ export default function AdminPlacementsPage() {
                                             <td><a href={placement.applyLink} target="_blank" rel="noreferrer" style={{ color: "#0881ec", fontWeight: "bold", textDecoration: "underline" }}>Apply</a></td>
                                             <td>
                                                 <div className={styles.actions}>
+                                                    <button
+                                                        onClick={() => { void handleSendPlacement(placement.id); }}
+                                                        className={styles.mailBtn}
+                                                        title="Send to students"
+                                                        disabled={sendingPlacementId === placement.id}
+                                                        style={sendingPlacementId === placement.id ? { opacity: 0.7, cursor: "wait", transform: "none" } : undefined}
+                                                    >
+                                                        {sendingPlacementId === placement.id ? (
+                                                            <Spinner size={18} weight="bold" />
+                                                        ) : (
+                                                            <PaperPlaneRight size={18} weight="bold" />
+                                                        )}
+                                                    </button>
                                                     <button onClick={() => handleDelete(placement.id)} className={styles.deleteBtn} title="Delete">
                                                         <Trash size={18} weight="bold" />
                                                     </button>

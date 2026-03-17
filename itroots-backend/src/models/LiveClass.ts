@@ -5,6 +5,7 @@ import Batch from './Batch';
 import User from './User';
 
 export type LiveClassStatus = 'SCHEDULED' | 'CANCELLED' | 'COMPLETED';
+export type LiveClassProvider = 'JITSI' | 'EXTERNAL';
 
 interface LiveClassAttributes {
     id: string;
@@ -14,11 +15,15 @@ interface LiveClassAttributes {
     FacultyId: string;
     scheduledAt: Date;
     meetingLink: string;
+    provider: LiveClassProvider;
+    roomName?: string | null;
+    jitsiDomain?: string | null;
+    joinPath?: string | null;
     description?: string;
     status: LiveClassStatus;
 }
 
-interface LiveClassCreationAttributes extends Optional<LiveClassAttributes, 'id' | 'description' | 'status'> { }
+interface LiveClassCreationAttributes extends Optional<LiveClassAttributes, 'id' | 'description' | 'status' | 'provider' | 'roomName' | 'jitsiDomain' | 'joinPath'> { }
 
 class LiveClass extends Model<LiveClassAttributes, LiveClassCreationAttributes> implements LiveClassAttributes {
     public id!: string;
@@ -28,6 +33,10 @@ class LiveClass extends Model<LiveClassAttributes, LiveClassCreationAttributes> 
     public FacultyId!: string;
     public scheduledAt!: Date;
     public meetingLink!: string;
+    public provider!: LiveClassProvider;
+    public roomName?: string | null;
+    public jitsiDomain?: string | null;
+    public joinPath?: string | null;
     public description?: string;
     public status!: LiveClassStatus;
 
@@ -69,6 +78,23 @@ LiveClass.init(
         meetingLink: {
             type: DataTypes.STRING,
             allowNull: false,
+        },
+        provider: {
+            type: DataTypes.ENUM('JITSI', 'EXTERNAL'),
+            allowNull: false,
+            defaultValue: 'EXTERNAL',
+        },
+        roomName: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        jitsiDomain: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        joinPath: {
+            type: DataTypes.STRING,
+            allowNull: true,
         },
         description: {
             type: DataTypes.TEXT,

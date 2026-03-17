@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { UsersThree, ChatTeardropText, ChartBar, MagnifyingGlass } from "@phosphor-icons/react";
+import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
+import { UsersThree, ChartBar, MagnifyingGlass } from "@phosphor-icons/react";
 import { BATCHES, COURSES, ENROLLMENTS, USERS } from "@/data/lms-data";
 import styles from "./students.module.css";
 
@@ -120,17 +121,22 @@ export default function FacultytudentsPage() {
                 <div className={styles.controls}>
                     <div className={styles.selectWrapper}>
                         <label className={styles.selectLabel}>Select Batch</label>
-                        <select
-                            className={styles.batchSelect}
-                            value={selectedBatchId}
-                            onChange={e => setSelectedBatchId(e.target.value)}
-                            disabled={loadingBatches || batches.length === 0}
-                        >
-                            {batches.length === 0 && <option>No assigned batches</option>}
-                            {batches.map(b => (
-                                <option key={b.id} value={b.id}>{b.name} - {b.course?.title}</option>
-                            ))}
-                        </select>
+                        <div className={styles.customSelectWrap}>
+                            <CustomSelect
+                                value={selectedBatchId}
+                                onChange={(value) => setSelectedBatchId(value)}
+                                placeholder="Select batch"
+                                disabled={loadingBatches || batches.length === 0}
+                                options={
+                                    batches.length === 0
+                                        ? [{ value: "", label: "No assigned batches" }]
+                                        : batches.map((batch) => ({
+                                            value: batch.id,
+                                            label: `${batch.name} - ${batch.course?.title || ""}`.trim(),
+                                        }))
+                                }
+                            />
+                        </div>
                     </div>
                     <div className={styles.searchWrapper}>
                         <MagnifyingGlass size={16} color="#9ca3af" />
@@ -164,8 +170,6 @@ export default function FacultytudentsPage() {
                                     <th>Student</th>
                                     <th>Attendance</th>
                                     <th>Progress</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -204,19 +208,6 @@ export default function FacultytudentsPage() {
                                                 <span className={styles.progressPct}>{student.progress}%</span>
                                             </div>
                                         </td>
-                                        <td>
-                                            <span className={`${styles.statusBadge} ${student.status === "Active" ? styles.statusActive : styles.statusInactive}`}>
-                                                {student.status}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <button
-                                                className={styles.actionBtn}
-                                                onClick={() => alert(`Viewing profile of ${student.name}`)}
-                                            >
-                                                <ChatTeardropText size={15} /> View
-                                            </button>
-                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -227,4 +218,3 @@ export default function FacultytudentsPage() {
         </LMSShell>
     );
 }
-

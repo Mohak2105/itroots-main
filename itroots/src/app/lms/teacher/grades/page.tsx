@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
+import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import { Trophy, UsersThree, ChartBar, ArrowLineDown } from "@phosphor-icons/react";
 import { BATCHES, COURSES, ENROLLMENTS, USERS } from "@/data/lms-data";
 import styles from "./grades.module.css";
@@ -127,17 +128,22 @@ export default function FacultyGradesPage() {
                 <div className={styles.controls}>
                     <div className={styles.selectWrapper}>
                         <label className={styles.selectLabel}>Select Batch</label>
-                        <select
-                            className={styles.batchSelect}
-                            value={selectedBatchId}
-                            onChange={e => setSelectedBatchId(e.target.value)}
-                            disabled={loadingBatches || batches.length === 0}
-                        >
-                            {batches.length === 0 && <option>No assigned batches</option>}
-                            {batches.map(b => (
-                                <option key={b.id} value={b.id}>{b.name} - {b.course?.title}</option>
-                            ))}
-                        </select>
+                        <div className={styles.customSelectWrap}>
+                            <CustomSelect
+                                value={selectedBatchId}
+                                onChange={(value) => setSelectedBatchId(value)}
+                                placeholder="Select batch"
+                                disabled={loadingBatches || batches.length === 0}
+                                options={
+                                    batches.length === 0
+                                        ? [{ value: "", label: "No assigned batches" }]
+                                        : batches.map((batch) => ({
+                                            value: batch.id,
+                                            label: `${batch.name} - ${batch.course?.title || ""}`.trim(),
+                                        }))
+                                }
+                            />
+                        </div>
                     </div>
                     <button className={styles.exportBtn}>
                         <ArrowLineDown size={16} /> Export Grades
@@ -213,4 +219,3 @@ export default function FacultyGradesPage() {
         </LMSShell>
     );
 }
-

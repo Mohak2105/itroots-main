@@ -1,0 +1,143 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.backBtn,
+.openBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    font-size: 0.88rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.backBtn {
+    border: 1px solid #cbd5e1;
+    background: #ffffff;
+    color: #0f172a;
+}
+
+.openBtn {
+    border: none;
+    background: linear-gradient(135deg, #0c2d4c, #0881ec);
+    color: #ffffff;
+}
+
+.viewerCard {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, 0.06);
+}
+
+.viewerHeader {
+    padding: 1.2rem 1.35rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.title {
+    margin: 0;
+    font-family: "Outfit", "Inter", sans-serif;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.viewerBody {
+    padding: 1.2rem;
+}
+
+.player {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: none;
+    border-radius: 16px;
+    background: #020617;
+}
+
+.pdfViewerWrap {
+    position: relative;
+    width: 100%;
+    min-height: 520px;
+    height: min(78vh, 980px);
+    overflow: hidden;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
+    background: #ffffff;
+}
+
+.pdfViewerWrap::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 10px;
+    background: #ffffff;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.pdfViewerFrame {
+    display: block;
+    width: 100%;
+    height: calc(100% + 56px);
+    margin-top: -56px;
+    border: none;
+    background: #ffffff;
+}
+
+.emptyState {
+    min-height: 320px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: #64748b;
+    text-align: center;
+}
+
+.emptyState p {
+    margin: 0;
+    font-size: 0.92rem;
+    font-weight: 600;
+}
+
+@media (max-width: 640px) {
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .backBtn,
+    .openBtn {
+        width: 100%;
+    }
+
+    .viewerBody {
+        padding: 0.9rem;
+    }
+
+    .pdfViewerWrap {
+        min-height: 420px;
+    }
+}

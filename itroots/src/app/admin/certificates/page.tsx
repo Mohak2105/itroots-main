@@ -1,13 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
+import Calendar from "react-calendar";
 import styles from "./certificates.module.css";
 import {
+    CalendarBlank,
+    CaretDown,
     Certificate,
     DownloadSimple,
     Eye,
@@ -92,9 +95,22 @@ const formatShortDate = (value?: string) => {
     });
 };
 
+const parseLocalDate = (value: string) => {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, (month || 1) - 1, day || 1);
+};
+
+const toDateValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
 export default function AdminCertificatesPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
+    const datePickerRef = useRef<HTMLDivElement>(null);
     const [students, setStudents] = useState<Student[]>([]);
     const [courses, setCourses] = useState<Course[]>([]);
     const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
@@ -102,6 +118,7 @@ export default function AdminCertificatesPage() {
     const [submitting, setSubmitting] = useState(false);
     const [activeCertificate, setActiveCertificate] = useState<CertificateRecord | null>(null);
     const [showModal, setShowModal] = useState(false);
+    const [showDatePicker, setShowDatePicker] = useState(false);
     const [form, setForm] = useState<CertificateForm>({
         studentId: "",
         courseId: "",
@@ -122,6 +139,22 @@ export default function AdminCertificatesPage() {
             setForm((current) => ({ ...current, signatoryName: user.name }));
         }
     }, [user?.name, form.signatoryName]);
+
+    useEffect(() => {
+        const handlePointerDown = (event: PointerEvent) => {
+            if (!datePickerRef.current?.contains(event.target as Node)) {
+                setShowDatePicker(false);
+            }
+        };
+
+        if (showDatePicker) {
+            document.addEventListener("pointerdown", handlePointerDown);
+        }
+
+        return () => {
+            document.removeEventListener("pointerdown", handlePointerDown);
+        };
+    }, [showDatePicker]);
 
     const fetchData = async () => {
         if (!token) return;
@@ -254,6 +287,7 @@ export default function AdminCertificatesPage() {
             setActiveCertificate(data.certificate || null);
             await fetchData();
             setShowModal(false);
+            setShowDatePicker(false);
             toast.success("Certificate generated successfully!");
         } catch (error) {
             console.error("Certificate generation failed:", error);
@@ -312,52 +346,74 @@ export default function AdminCertificatesPage() {
                 <title>Certificate Sample</title>
                 <style>
                     body { margin: 0; padding: 24px; background: #edf2f7; font-family: Arial, sans-serif; }
-                    .sheet { width: 1120px; margin: 0 auto; background: linear-gradient(135deg, #fffdf7, #f7f0d8); border: 6px solid #12395b; border-radius: 24px; padding: 34px; box-sizing: border-box; }
-                    .inner { border: 2px solid #c89d2c; border-radius: 18px; padding: 44px 56px; min-height: 620px; position: relative; }
-                    .brand { text-align: center; color: #12395b; font-weight: 700; letter-spacing: 4px; }
-                    .sub { text-align: center; color: #6b7280; margin-top: 10px; }
-                    .title { text-align: center; margin-top: 44px; color: #b68a25; font-size: 42px; font-weight: 800; letter-spacing: 5px; }
-                    .line { width: 280px; height: 1px; background: #c89d2c; margin: 16px auto 0; }
-                    .lead { text-align: center; margin-top: 42px; color: #475569; font-size: 22px; }
-                    .name { text-align: center; margin-top: 20px; color: #0f172a; font-size: 54px; font-weight: 800; font-family: Georgia, serif; }
-                    .body { text-align: center; margin-top: 28px; color: #334155; font-size: 24px; line-height: 1.6; }
-                    .course { color: #12395b; font-weight: 800; font-size: 34px; display: block; margin-top: 14px; }
-                    .meta { text-align: center; margin-top: 18px; color: #475569; font-size: 20px; }
-                    .footer { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 86px; }
-                    .block { width: 240px; text-align: center; }
-                    .rule { border-top: 1px solid #12395b; margin-bottom: 8px; }
-                    .label { color: #64748b; font-size: 14px; }
-                    .number { text-align: center; margin-top: 48px; color: #475569; font-size: 18px; }
+                    .sheet { width: 1120px; margin: 0 auto; background: #f7fbff; border: 1px solid #b7cbe0; border-radius: 24px; padding: 28px; box-sizing: border-box; }
+                    .inner { border: 1.5px solid #b7cbe0; border-radius: 18px; padding: 34px 54px 28px; min-height: 620px; position: relative; overflow: hidden; background: #f8fbff; }
+                    .inner::before, .inner::after, .curve-top, .curve-bottom { content: ""; position: absolute; border-radius: 50%; pointer-events: none; }
+                    .inner::before { width: 380px; height: 280px; top: -182px; left: -188px; background: #0d3f74; }
+                    .inner::after { width: 320px; height: 230px; top: -150px; left: -150px; background: #0f5ca8; }
+                    .curve-top { width: 270px; height: 196px; top: -122px; left: -112px; background: #2a86dc; }
+                    .curve-bottom { width: 340px; height: 240px; right: -160px; bottom: -146px; background: #0d3f74; }
+                    .curve-bottom::before { content: ""; position: absolute; inset: 26px; border-radius: 50%; background: #0f5ca8; }
+                    .curve-bottom::after { content: ""; position: absolute; inset: 56px; border-radius: 50%; background: #2a86dc; }
+                    .frame { position: absolute; inset: 18px; border: 1px solid #d9e4ef; pointer-events: none; }
+                    .logo-wrap { text-align: center; position: relative; z-index: 2; }
+                    .logo-wrap img { width: 212px; max-width: 100%; }
+                    .title-main { text-align: center; margin-top: 24px; color: #111827; font-size: 64px; line-height: 1; font-family: "Times New Roman", Georgia, serif; font-weight: 700; letter-spacing: 0.03em; position: relative; z-index: 2; }
+                    .title-sub { text-align: center; margin-top: 8px; color: #111827; font-size: 26px; font-family: "Times New Roman", Georgia, serif; font-weight: 700; letter-spacing: 0.38em; position: relative; z-index: 2; }
+                    .ornament { margin: 20px auto 0; width: 140px; display: flex; align-items: center; gap: 10px; position: relative; z-index: 2; }
+                    .ornament span { flex: 1; height: 1px; background: #1f2937; }
+                    .ornament i { width: 6px; height: 6px; border-radius: 999px; background: #1f2937; display: block; }
+                    .lead { text-align: center; margin-top: 30px; color: #3f4a59; font-size: 19px; font-family: "Times New Roman", Georgia, serif; letter-spacing: 0.12em; position: relative; z-index: 2; }
+                    .name { text-align: center; margin-top: 26px; color: #111827; font-size: 58px; line-height: 1.08; font-family: "Times New Roman", Georgia, serif; font-style: italic; position: relative; z-index: 2; }
+                    .name-line { width: 470px; height: 1px; background: #c7d5e4; margin: 10px auto 0; position: relative; z-index: 2; }
+                    .body { text-align: center; margin-top: 18px; color: #475569; font-size: 21px; line-height: 1.6; position: relative; z-index: 2; }
+                    .course { color: #12395b; font-weight: 800; font-size: 34px; display: block; margin-top: 12px; }
+                    .meta { text-align: center; margin-top: 12px; color: #526173; font-size: 20px; position: relative; z-index: 2; }
+                    .footer { display: grid; grid-template-columns: 1fr 130px 1fr; align-items: end; gap: 24px; margin-top: 74px; position: relative; z-index: 2; }
+                    .block { text-align: center; }
+                    .script { font-size: 34px; font-family: "Brush Script MT", "Times New Roman", serif; color: #111827; line-height: 1; margin-bottom: 14px; }
+                    .rule { border-top: 1px solid #12395b; margin-bottom: 10px; }
+                    .label { color: #64748b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
+                    .seal { width: 110px; height: 110px; margin: 0 auto; border-radius: 999px; border: 1px solid #b9cce0; box-shadow: inset 0 0 0 6px #f4f8fc, inset 0 0 0 7px #d8e3ef; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.96); }
+                    .seal img { width: 54px; height: 54px; object-fit: contain; }
+                    .meta-row { display: flex; justify-content: space-between; align-items: center; margin-top: 34px; color: #526173; font-size: 17px; position: relative; z-index: 2; }
                 </style>
             </head>
             <body>
                 <div class="sheet">
                     <div class="inner">
-                        <div class="brand">ITROOTS LMS</div>
-                        <div class="sub">Empowering Minds Through Industry-Ready Learning</div>
-                        <div class="title">CERTIFICATE OF COMPLETION</div>
-                        <div class="line"></div>
-                        <div class="lead">This certificate is proudly presented to</div>
+                        <div class="frame"></div>
+                        <div class="curve-top"></div>
+                        <div class="curve-bottom"></div>
+                        <div class="logo-wrap"><img src="/images/lms_logo.png" alt="ITROOTS logo" /></div>
+                        <div class="title-main">CERTIFICATE</div>
+                        <div class="title-sub">OF ACHIEVEMENT</div>
+                        <div class="ornament"><span></span><i></i><span></span></div>
+                        <div class="lead">THIS CERTIFICATE IS PROUDLY PRESENTED TO</div>
                         <div class="name">${previewCertificate.student?.name || "Student Name"}</div>
+                        <div class="name-line"></div>
                         <div class="body">
-                            for successfully completing the course
+                            for successfully completing the professional course conducted by ITROOTS LMS
                             <span class="course">${previewCertificate.course?.title || "Course Title"}</span>
                         </div>
-                        <div class="meta">Duration: ${previewCertificate.duration || "Not specified"}</div>
-                        <div class="meta">Issued on ${formatDate(previewCertificate.issueDate)}</div>
                         <div class="meta">Batch: ${previewCertificate.batch?.name || "Assigned Batch"}</div>
-                        <div class="number">Certificate No: ${previewCertificate.certificateNumber}</div>
+                        <div class="meta">Duration: ${previewCertificate.duration || "Not specified"}</div>
                         <div class="footer">
                             <div class="block">
+                                <div class="script">${previewCertificate.signatoryName || "Authorized Signatory"}</div>
                                 <div class="rule"></div>
-                                <div>${previewCertificate.signatoryName || "Authorized Signatory"}</div>
                                 <div class="label">${previewCertificate.signatoryTitle || "Authorized Signatory"}</div>
                             </div>
+                            <div class="seal"><img src="/images/logo.png" alt="ITROOTS seal" /></div>
                             <div class="block">
+                                <div class="script">ITROOTS LMS</div>
                                 <div class="rule"></div>
-                                <div>ITROOTS Learning Platform</div>
                                 <div class="label">Official Academic Certificate</div>
                             </div>
+                        </div>
+                        <div class="meta-row">
+                            <div>Certificate No: ${previewCertificate.certificateNumber}</div>
+                            <div>Issued On: ${formatDate(previewCertificate.issueDate)}</div>
                         </div>
                     </div>
                 </div>
@@ -403,31 +459,48 @@ export default function AdminCertificatesPage() {
                         {previewCertificate ? (
                             <div className={styles.certificateCanvas}>
                                 <div className={styles.certificateInner}>
-                                    <div className={styles.brand}>ITROOTS LMS</div>
-                                    <div className={styles.brandSub}>Empowering Minds Through Industry-Ready Learning</div>
-                                    <div className={styles.certificateTitle}>Certificate of Completion</div>
-                                    <div className={styles.certificateDivider} />
-                                    <div className={styles.presented}>This certificate is proudly presented to</div>
+                                    <div className={styles.certificateFrame} />
+                                    <div className={styles.cornerTop} />
+                                    <div className={styles.cornerTopSecondary} />
+                                    <div className={styles.cornerTopTertiary} />
+                                    <div className={styles.cornerBottom} />
+                                    <div className={styles.logoWrap}>
+                                        <img src="/images/lms_logo.png" alt="ITROOTS logo" className={styles.logoImage} />
+                                    </div>
+                                    <div className={styles.certificateTitleMain}>CERTIFICATE</div>
+                                    <div className={styles.certificateTitleSecondary}>OF ACHIEVEMENT</div>
+                                    <div className={styles.certificateOrnament}>
+                                        <span />
+                                        <i />
+                                        <span />
+                                    </div>
+                                    <div className={styles.presented}>THIS CERTIFICATE IS PROUDLY PRESENTED TO</div>
                                     <div className={styles.recipient}>{previewCertificate.student?.name || "Student Name"}</div>
+                                    <div className={styles.recipientLine} />
                                     <div className={styles.statement}>
-                                        for successfully completing the professional course
+                                        for successfully completing the professional course conducted by ITROOTS
                                     </div>
                                     <div className={styles.courseName}>{previewCertificate.course?.title || "Course Title"}</div>
-                                    <div className={styles.metaLine}>Duration: {previewCertificate.duration || "Not specified"}</div>
-                                    <div className={styles.metaLine}>Issue Date: {formatDate(previewCertificate.issueDate)}</div>
                                     <div className={styles.metaLine}>Batch: {previewCertificate.batch?.name || "Assigned Batch"}</div>
-                                    <div className={styles.certificateNumber}>Certificate No: {previewCertificate.certificateNumber}</div>
-                                    <div className={styles.signatureRow}>
+                                    <div className={styles.metaLine}>Duration: {previewCertificate.duration || "Not specified"}</div>
+                                    <div className={styles.certificateFooter}>
                                         <div className={styles.signatureBlock}>
+                                            <div className={styles.signatureScript}>{previewCertificate.signatoryName || "Authorized Signatory"}</div>
                                             <div className={styles.signatureLine} />
-                                            <div className={styles.signatureName}>{previewCertificate.signatoryName || "Authorized Signatory"}</div>
                                             <div className={styles.signatureRole}>{previewCertificate.signatoryTitle || "Authorized Signatory"}</div>
                                         </div>
+                                        <div className={styles.sealBlock}>
+                                            <img src="/images/logo.png" alt="ITROOTS seal" className={styles.sealLogo} />
+                                        </div>
                                         <div className={styles.signatureBlock}>
+                                            <div className={styles.signatureScript}>ITROOTS LMS</div>
                                             <div className={styles.signatureLine} />
-                                            <div className={styles.signatureName}>ITROOTS Learning Platform</div>
                                             <div className={styles.signatureRole}>Official Academic Certificate</div>
                                         </div>
+                                    </div>
+                                    <div className={styles.certificateMetaFooter}>
+                                        <div>Certificate No: {previewCertificate.certificateNumber}</div>
+                                        <div>Issued On: {formatDate(previewCertificate.issueDate)}</div>
                                     </div>
                                 </div>
                             </div>
@@ -518,7 +591,14 @@ export default function AdminCertificatesPage() {
                     <div className={styles.modal}>
                         <div className={styles.modalHeader}>
                             <h3>Create Certificate</h3>
-                            <button onClick={() => setShowModal(false)}><X size={20} /></button>
+                            <button
+                                onClick={() => {
+                                    setShowDatePicker(false);
+                                    setShowModal(false);
+                                }}
+                            >
+                                <X size={20} />
+                            </button>
                         </div>
                         <div className={styles.modalBody}>
                             <form className={styles.form} onSubmit={handleGenerate} style={{ padding: 0 }}>
@@ -557,15 +637,41 @@ export default function AdminCertificatesPage() {
                                         />
                                     </div>
 
-                                    <label className={styles.field}>
+                                    <div className={styles.field}>
                                         <span>Issue Date</span>
-                                        <input
-                                            type="date"
-                                            value={form.issueDate}
-                                            onChange={(e) => { setActiveCertificate(null); setForm((current) => ({ ...current, issueDate: e.target.value })); }}
-                                            required
-                                        />
-                                    </label>
+                                        <div className={styles.datePickerWrap} ref={datePickerRef}>
+                                            <button
+                                                type="button"
+                                                className={styles.dateFieldButton}
+                                                onClick={() => setShowDatePicker((current) => !current)}
+                                                aria-expanded={showDatePicker}
+                                            >
+                                                <CalendarBlank size={18} weight="duotone" />
+                                                <span className={styles.dateFieldValue}>{formatDate(form.issueDate)}</span>
+                                                <CaretDown size={16} weight="bold" className={styles.dateFieldCaret} />
+                                            </button>
+                                            {showDatePicker ? (
+                                                <div className={styles.datePopover}>
+                                                    <Calendar
+                                                        onChange={(value) => {
+                                                            const nextDate = Array.isArray(value) ? value[0] : value;
+                                                            if (nextDate instanceof Date && !Number.isNaN(nextDate.getTime())) {
+                                                                setActiveCertificate(null);
+                                                                setForm((current) => ({
+                                                                    ...current,
+                                                                    issueDate: toDateValue(nextDate),
+                                                                }));
+                                                                setShowDatePicker(false);
+                                                            }
+                                                        }}
+                                                        value={parseLocalDate(form.issueDate)}
+                                                        maxDetail="month"
+                                                        className={styles.reactCalendar}
+                                                    />
+                                                </div>
+                                            ) : null}
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className={styles.inlineFields}>
@@ -611,7 +717,3 @@ export default function AdminCertificatesPage() {
         </LMSShell>
     );
 }
-
-
-
-

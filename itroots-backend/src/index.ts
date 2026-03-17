@@ -12,6 +12,9 @@ import adminRoutes from './routes/adminRoutes';
 import teacherRoutes from './routes/teacherRoutes';
 import studentRoutes from './routes/studentRoutes';
 import publicRoutes from './routes/publicRoutes';
+import { verifyMailerConnection } from './services/mailer';
+import { ensureTestDueAtColumn, ensureTestResultAnalyticsColumns } from './utils/testSchema';
+import { ensureLiveClassJitsiColumns } from './utils/liveClassSchema';
 
 import './models/User';
 import './models/Course';
@@ -67,6 +70,10 @@ const startServer = async () => {
     try {
         await connectDB();
         console.log('Database connection ready');
+        await ensureTestDueAtColumn();
+        await ensureTestResultAnalyticsColumns();
+        await ensureLiveClassJitsiColumns();
+        await verifyMailerConnection();
 
         app.listen(PORT, () => {
             console.log(`Server running on http://localhost:${PORT}`);

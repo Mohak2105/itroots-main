@@ -38,17 +38,34 @@ export const getBatchAttendance = async (req: Request, res: Response) => {
     try {
         const { batchId } = req.params;
         const { date } = req.query; // optional filter by date
+        const FacultyId = (req as any).user.id;
+
+        const batch = await Batch.findOne({
+            where: { id: batchId, FacultyId },
+            attributes: ['id', 'name', 'courseId', 'FacultyId'],
+        });
+
+        if (!batch && (req as any).user.role !== 'SUPER_ADMIN') {
+            return res.status(403).json({ success: false, message: 'Not authorized for this batch' });
+        }
 
         const whereClause: any = { batchId };
         if (date) whereClause.date = date;
 
-        const attendance = await Attendance.findAll({
-            where: whereClause,
-            include: [{ model: User, as: 'student', attributes: ['id', 'name', 'email'] }],
-            order: [['date', 'DESC'], [{ model: User, as: 'student' }, 'name', 'ASC']]
-        });
+        const [attendance, enrollments] = await Promise.all([
+            Attendance.findAll({
+                where: whereClause,
+                include: [{ model: User, as: 'student', attributes: ['id', 'name', 'email', 'username'] }],
+                order: [['date', 'DESC'], [{ model: User, as: 'student' }, 'name', 'ASC']]
+            }),
+            Enrollment.findAll({
+                where: { batchId, status: 'ACTIVE' },
+                include: [{ model: User, as: 'student', attributes: ['id', 'name', 'email', 'username'] }],
+                order: [[{ model: User, as: 'student' }, 'name', 'ASC']],
+            }),
+        ]);
 
-        res.json({ success: true, data: attendance });
+        res.json({ success: true, data: attendance, enrollments });
     } catch (error: any) {
         res.status(500).json({ success: false, message: error.message });
     }

@@ -8,12 +8,15 @@
 
 /* ── Banner ── */
 .banner {
-    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
-    border-radius: 20px;
-    padding: 2.5rem 2rem;
+    background: linear-gradient(90deg, #0f3f6f 0%, #1571c1 60%, #2088e6 100%);
+    border-radius: 28px;
+    padding: 2rem 2.5rem;
+    min-height: 160px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1.5rem;
     color: #fff;
     overflow: hidden;
     position: relative;
@@ -23,11 +26,11 @@
 .banner::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.05);
+    right: -48px;
+    top: -36px;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 50%;
 }
 
@@ -42,7 +45,8 @@
 
 .bannerSub {
     font-size: 0.95rem;
-    color: rgba(255,255,255,0.75);
+    color: rgba(255,255,255,0.82);
+    max-width: 620px;
     position: relative;
     z-index: 1;
 }

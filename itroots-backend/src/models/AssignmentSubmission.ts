@@ -22,6 +22,51 @@ interface AssignmentSubmissionAttributes {
 
 interface AssignmentSubmissionCreationAttributes extends Optional<AssignmentSubmissionAttributes, 'id' | 'notes' | 'grade' | 'feedback' | 'status' | 'submittedAt' | 'fileUrl' | 'fileName' | 'submittedCode' | 'codingLanguage'> {}
 
+export const ASSIGNMENT_SUBMISSION_BASE_ATTRIBUTES = [
+    'id',
+    'studentId',
+    'assignmentId',
+    'batchId',
+    'fileUrl',
+    'fileName',
+    'notes',
+    'status',
+    'grade',
+    'feedback',
+    'submittedAt',
+    'createdAt',
+    'updatedAt',
+] as const;
+
+const ASSIGNMENT_SUBMISSION_OPTIONAL_ATTRIBUTES = [
+    'submittedCode',
+    'codingLanguage',
+] as const;
+
+type AssignmentSubmissionColumnSet = Set<string>;
+
+let assignmentSubmissionColumnsPromise: Promise<AssignmentSubmissionColumnSet> | null = null;
+
+const describeAssignmentSubmissionColumns = async () => {
+    if (!assignmentSubmissionColumnsPromise) {
+        assignmentSubmissionColumnsPromise = sequelize
+            .getQueryInterface()
+            .describeTable('assignment_submissions')
+            .then((tableDefinition) => new Set(Object.keys(tableDefinition)))
+            .catch(() => new Set(ASSIGNMENT_SUBMISSION_BASE_ATTRIBUTES));
+    }
+
+    return assignmentSubmissionColumnsPromise;
+};
+
+export const getAssignmentSubmissionReadableAttributes = async () => {
+    const availableColumns = await describeAssignmentSubmissionColumns();
+    return [
+        ...ASSIGNMENT_SUBMISSION_BASE_ATTRIBUTES.filter((attribute) => availableColumns.has(attribute)),
+        ...ASSIGNMENT_SUBMISSION_OPTIONAL_ATTRIBUTES.filter((attribute) => availableColumns.has(attribute)),
+    ];
+};
+
 class AssignmentSubmission extends Model<AssignmentSubmissionAttributes, AssignmentSubmissionCreationAttributes> implements AssignmentSubmissionAttributes {
     public id!: string;
     public studentId!: string;

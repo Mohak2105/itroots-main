@@ -493,11 +493,11 @@ export default function AdminBatchesPage() {
                                         </div>
                                     </div>
 
-                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingTop: "1.25rem", borderTop: "1px solid #f1f5f9" }}>
-                                        <button onClick={() => openEditModal(batch)} style={{ background: "linear-gradient(135deg, #3b82f6, #2563eb)", border: "none", color: "#ffffff", fontWeight: 600, fontSize: "0.75rem", padding: "0.4rem 0.8rem", borderRadius: "6px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", boxShadow: "0 4px 10px rgba(59, 130, 246, 0.2)" }}>
+                                    <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.75rem", paddingTop: "1.25rem", borderTop: "1px solid #f1f5f9" }}>
+                                        <button onClick={() => openEditModal(batch)} style={{ background: "transparent", border: "1px solid #bfdbfe", color: "#2563eb", fontWeight: 600, fontSize: "0.75rem", padding: "0.4rem 0.8rem", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
                                             <PencilSimple size={14} /> Edit
                                         </button>
-                                        <button onClick={() => handleDelete(batch.id)} style={{ background: "linear-gradient(135deg, #ef4444, #dc2626)", border: "none", color: "#ffffff", fontWeight: 600, fontSize: "0.75rem", padding: "0.4rem 0.8rem", borderRadius: "6px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px", boxShadow: "0 4px 10px rgba(239, 68, 68, 0.2)" }}>
+                                        <button onClick={() => handleDelete(batch.id)} style={{ background: "transparent", border: "1px solid #fecaca", color: "#ef4444", fontWeight: 600, fontSize: "0.75rem", padding: "0.4rem 0.8rem", borderRadius: "8px", cursor: "pointer", display: "flex", alignItems: "center", gap: "4px" }}>
                                             <Trash size={14} /> Delete
                                         </button>
                                     </div>

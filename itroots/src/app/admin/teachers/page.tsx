@@ -336,8 +336,8 @@ export default function AdminFacultyPage() {
                                 value={statusFilter}
                                 onChange={(val) => setStatusFilter(val)}
                                 options={[
-                                    { value: "ACTIVE", label: `Active Faculty (${activeFaculty.length})` },
-                                    { value: "INACTIVE", label: `Inactive Faculty (${inactiveFaculty.length})` },
+                                    { value: "ACTIVE", label: "Active Faculty", badgeCount: activeFaculty.length },
+                                    { value: "INACTIVE", label: "Inactive Faculty", badgeCount: inactiveFaculty.length },
                                 ]}
                             />
                         </div>
@@ -394,14 +394,13 @@ export default function AdminFacultyPage() {
                                     )}
                                 </td>
                                 <td style={{ whiteSpace: "nowrap" }}>
-                                    <span className={styles.tableSecondary}>{formatDate(faculty.createdAt)}</span>
+                                    <span className={styles.dateBadge}>{formatDate(faculty.createdAt)}</span>
                                 </td>
                                 <td style={{ whiteSpace: "nowrap" }}>
                                     <button
                                         onClick={() => handleToggleStatus(faculty.id, faculty.isActive)}
                                         className={styles.toggleSwitch}
                                         title={faculty.isActive ? "Click to deactivate" : "Click to activate"}
-                                        style={{ transform: "scale(0.8)", transformOrigin: "left center" }}
                                     >
                                         <div className={`${styles.toggleTrack} ${faculty.isActive ? styles.on : styles.off}`}>
                                             <div className={styles.toggleThumb} />

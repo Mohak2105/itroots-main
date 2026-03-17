@@ -9,9 +9,7 @@ import { ENDPOINTS } from "@/config/api";
 import { buildStudentContentViewerHref } from "@/utils/studentContentViewer";
 import {
     CheckCircle,
-    Warning,
     ClipboardText,
-    Calendar,
     Trophy,
     ChatCircleDots,
     Paperclip,
@@ -27,6 +25,7 @@ type AssignmentItem = {
     batchId: string;
     batchName: string;
     courseName: string;
+    maxMarks: number;
     assignmentFileUrl: string;
     uploadedAt: string;
     submission?: {
@@ -80,6 +79,8 @@ export default function StudentAssignmentsPage() {
     const pendingList = useMemo(() => assignments.filter((item) => !item.submission), [assignments]);
     const submittedList = useMemo(() => assignments.filter((item) => item.submission), [assignments]);
     const displayed = activeTab === "pending" ? pendingList : submittedList;
+    const formatDate = (value?: string) =>
+        value ? new Date(value).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "-";
 
     const handleFileChange = async (assignmentId: string, file?: File) => {
         if (!file) {
@@ -157,9 +158,9 @@ export default function StudentAssignmentsPage() {
             <div className={styles.page}>
                 <div className={styles.banner}>
                     <div>
-                        <div className={styles.bannerTitle}>My Assignments</div>
+                        <div className={styles.bannerTitle}> My Assignments</div>
                         <div className={styles.bannerSub}>
-                            {pendingList.length} pending | {submittedList.length} submitted
+                            View and submit your assignments for your enrolled courses.
                         </div>
                     </div>
                     <ClipboardText size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
@@ -196,119 +197,162 @@ export default function StudentAssignmentsPage() {
                             <p>{activeTab === "pending" ? "Great job. You are all caught up." : "Submit an assignment to see it here."}</p>
                         </div>
                     ) : (
-                        displayed.map((assignment) => {
-                            const submitted = Boolean(assignment.submission);
-                            const reviewComplete = assignment.submission?.status === "REVIEWED";
-                            const selectedFile = selectedFiles[assignment.id];
-                            const isUploading = uploadingId === assignment.id;
-                            const uploadedAt = new Date(assignment.uploadedAt);
-
-                            return (
-                                <div
-                                    key={assignment.id}
-                                    className={`${styles.assignmentCard} ${submitted ? styles.cardSubmitted : ""}`}
-                                >
-                                    <div className={styles.cardLeft}>
-                                        <div className={styles.cardIcon}>
-                                            {reviewComplete ? (
-                                                <CheckCircle size={28} color="#10b981" weight="fill" />
-                                            ) : submitted ? (
-                                                <HourglassMedium size={28} color="#f59e0b" weight="fill" />
-                                            ) : (
-                                                <ClipboardText size={28} color="#0881ec" weight="fill" />
-                                            )}
-                                        </div>
-                                    </div>
-                                    <div className={styles.cardBody}>
-                                        <div className={styles.cardTop}>
-                                            <div>
-                                                <span className={styles.coursePill}>{assignment.courseName}</span>
-                                                <h3 className={styles.assignmentTitle}>{assignment.title}</h3>
-                                            </div>
-                                            <div className={`${styles.statusChip} ${reviewComplete ? styles.chipGreen : submitted ? styles.chipOrange : styles.chipBlue}`}>
-                                                {reviewComplete ? "Reviewed" : submitted ? "Submitted" : "Pending"}
-                                            </div>
-                                        </div>
-
-                                        <p className={styles.assignmentDesc}>{assignment.description || "No assignment description provided."}</p>
-
-                                        <div className={styles.cardMeta}>
-                                            <span>
-                                                <Calendar size={15} /> Posted: <strong>{uploadedAt.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</strong>
-                                            </span>
-                                            <span>
-                                                <ClipboardText size={15} /> Batch: <strong>{assignment.batchName}</strong>
-                                            </span>
-                                            {assignment.submission?.grade !== null && assignment.submission?.grade !== undefined ? (
-                                                <span className={styles.gradeChip}>
-                                                    <Trophy size={15} /> Score: {assignment.submission.grade}
-                                                </span>
-                                            ) : null}
-                                        </div>
-
-                                        <div className={styles.linkRow}>
-                                            <Link href={buildStudentContentViewerHref(assignment.assignmentFileUrl, assignment.title)} className={styles.openBtn}>
-                                                Open Assignment <LinkIcon size={14} />
-                                            </Link>
-                                            {assignment.submission?.fileUrl ? (
-                                                <Link href={buildStudentContentViewerHref(assignment.submission.fileUrl, `${assignment.title} Submission`)} className={styles.secondaryLink}>
-                                                    View My Submission <LinkIcon size={14} />
-                                                </Link>
-                                            ) : null}
-                                        </div>
-
-                                        {assignment.submission?.feedback ? (
-                                            <div className={styles.feedbackBox}>
-                                                <ChatCircleDots size={16} style={{ verticalAlign: "middle", marginRight: "0.4rem" }} />
-                                                <strong>Faculty Feedback:</strong> {assignment.submission.feedback}
-                                            </div>
-                                        ) : null}
-
-                                        {!submitted ? (
-                                            <div className={styles.submitPanel}>
-                                                <div className={styles.submitArea}>
-                                                    <label className={styles.fileLabel} htmlFor={`file-${assignment.id}`}>
-                                                        <Paperclip size={16} /> Choose File
-                                                        <input
-                                                            type="file"
-                                                            id={`file-${assignment.id}`}
-                                                            className={styles.fileInput}
-                                                            accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.txt,.py,.java,.js,.ts,.tsx,.jsx,.png,.jpg,.jpeg"
-                                                            onChange={(event) => void handleFileChange(assignment.id, event.target.files?.[0])}
-                                                        />
-                                                    </label>
-                                                    {selectedFile ? <span className={styles.fileName}>{selectedFile.fileName}</span> : null}
-                                                </div>
-                                                <textarea
-                                                    className={styles.notesInput}
-                                                    rows={3}
-                                                    placeholder="Add notes for your Faculty (optional)"
-                                                    value={notesByAssignment[assignment.id] || ""}
-                                                    onChange={(event) => setNotesByAssignment((current) => ({ ...current, [assignment.id]: event.target.value }))}
-                                                />
-                                                <button
-                                                    className={styles.submitBtn}
-                                                    onClick={() => void handleSubmit(assignment.id)}
-                                                    disabled={isUploading}
-                                                    type="button"
-                                                >
-                                                    {isUploading ? (
-                                                        <><HourglassMedium size={16} /> Submitting...</>
-                                                    ) : (
-                                                        "Submit Assignment"
-                                                    )}
-                                                </button>
-                                            </div>
+                        <div className={styles.tableCard}>
+                            <div className={styles.tableWrap}>
+                                <table className={styles.table}>
+                                    <thead>
+                                        {activeTab === "pending" ? (
+                                            <tr>
+                                                <th>Assignment</th>
+                                                <th>Course / Batch</th>
+                                                <th>Posted</th>
+                                                <th>Status</th>
+                                                <th>Submission</th>
+                                                <th>Action</th>
+                                            </tr>
                                         ) : (
-                                            <div className={styles.submissionInfo}>
-                                                <span><CheckCircle size={15} weight="fill" /> Submitted on {new Date(assignment.submission?.submittedAt || "").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                                                <span>{assignment.submission?.status === "REVIEWED" ? "Faculty has reviewed this assignment." : "Waiting for Faculty review."}</span>
-                                            </div>
+                                            <tr>
+                                                <th>Assignment</th>
+                                                <th>Course / Batch</th>
+                                                <th>Submitted On</th>
+                                                <th>Status</th>
+                                                <th>Score</th>
+                                                <th>Action</th>
+                                            </tr>
                                         )}
-                                    </div>
-                                </div>
-                            );
-                        })
+                                    </thead>
+                                    <tbody>
+                                        {displayed.map((assignment) => {
+                                            const submitted = Boolean(assignment.submission);
+                                            const reviewComplete = assignment.submission?.status === "REVIEWED";
+                                            const selectedFile = selectedFiles[assignment.id];
+                                            const isUploading = uploadingId === assignment.id;
+
+                                            if (!submitted) {
+                                                return (
+                                                    <tr key={assignment.id}>
+                                                        <td>
+                                                            <div className={styles.assignmentCell}>
+                                                                <div className={styles.assignmentTitleRow}>
+                                                                    <ClipboardText size={18} color="#0881ec" weight="fill" />
+                                                                    <span className={styles.assignmentName}>{assignment.title}</span>
+                                                                </div>
+                                                                <div className={styles.assignmentText}>
+                                                                    {assignment.description || "No assignment description provided."}
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div className={styles.batchCell}>
+                                                                <strong>{assignment.courseName}</strong>
+                                                                <span>{assignment.batchName}</span>
+                                                            </div>
+                                                        </td>
+                                                        <td>{formatDate(assignment.uploadedAt)}</td>
+                                                        <td>
+                                                            <span className={`${styles.statusChip} ${styles.chipBlue}`}>Pending</span>
+                                                        </td>
+                                                        <td>
+                                                            <div className={styles.submissionCell}>
+                                                                <label className={styles.fileLabel} htmlFor={`file-${assignment.id}`}>
+                                                                    <Paperclip size={16} /> Choose File
+                                                                    <input
+                                                                        type="file"
+                                                                        id={`file-${assignment.id}`}
+                                                                        className={styles.fileInput}
+                                                                        accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.txt,.py,.java,.js,.ts,.tsx,.jsx,.png,.jpg,.jpeg"
+                                                                        onChange={(event) => void handleFileChange(assignment.id, event.target.files?.[0])}
+                                                                    />
+                                                                </label>
+                                                                {selectedFile ? <span className={styles.fileName}>{selectedFile.fileName}</span> : null}
+                                                                <textarea
+                                                                    className={styles.notesInput}
+                                                                    rows={2}
+                                                                    placeholder="Notes for faculty (optional)"
+                                                                    value={notesByAssignment[assignment.id] || ""}
+                                                                    onChange={(event) => setNotesByAssignment((current) => ({ ...current, [assignment.id]: event.target.value }))}
+                                                                />
+                                                            </div>
+                                                        </td>
+                                                        <td>
+                                                            <div className={styles.actionCell}>
+                                                                <Link href={buildStudentContentViewerHref(assignment.assignmentFileUrl, assignment.title)} className={styles.openBtn}>
+                                                                    Open Assignment <LinkIcon size={14} />
+                                                                </Link>
+                                                                <button
+                                                                    className={styles.submitBtn}
+                                                                    onClick={() => void handleSubmit(assignment.id)}
+                                                                    disabled={isUploading}
+                                                                    type="button"
+                                                                >
+                                                                    {isUploading ? (
+                                                                        <><HourglassMedium size={16} /> Submitting...</>
+                                                                    ) : (
+                                                                        "Submit"
+                                                                    )}
+                                                                </button>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            }
+
+                                            return (
+                                                <tr key={assignment.id}>
+                                                    <td>
+                                                        <div className={styles.assignmentCell}>
+                                                            <div className={styles.assignmentTitleRow}>
+                                                                {reviewComplete ? (
+                                                                    <CheckCircle size={18} color="#10b981" weight="fill" />
+                                                                ) : (
+                                                                    <HourglassMedium size={18} color="#f59e0b" weight="fill" />
+                                                                )}
+                                                                <span className={styles.assignmentName}>{assignment.title}</span>
+                                                            </div>
+                                                            
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div className={styles.batchCell}>
+                                                            
+                                                            <span>{assignment.batchName}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td>{formatDate(assignment.submission?.submittedAt)}</td>
+                                                    <td>
+                                                        <span className={`${styles.statusChip} ${reviewComplete ? styles.chipGreen : styles.chipOrange}`}>
+                                                            {reviewComplete ? "Reviewed" : "Submitted"}
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        {assignment.submission?.grade !== null && assignment.submission?.grade !== undefined ? (
+                                                            <span className={styles.gradeChip}>
+                                                                 {assignment.submission.grade} / {assignment.maxMarks}
+                                                            </span>
+                                                        ) : (
+                                                            <span className={styles.mutedText}>Pending</span>
+                                                        )}
+                                                    </td>
+                                                    
+                                                    <td>
+                                                        <div className={styles.actionCell}>
+                                                            <Link href={buildStudentContentViewerHref(assignment.assignmentFileUrl, assignment.title)} className={styles.openBtn}>
+                                                                Open Assignment <LinkIcon size={14} />
+                                                            </Link>
+                                                            {assignment.submission?.fileUrl ? (
+                                                                <Link href={buildStudentContentViewerHref(assignment.submission.fileUrl, `${assignment.title} Submission`)} className={styles.secondaryLink}>
+                                                                    View Submission <LinkIcon size={14} />
+                                                                </Link>
+                                                            ) : null}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>

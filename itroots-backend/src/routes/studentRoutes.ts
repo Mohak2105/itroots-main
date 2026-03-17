@@ -11,8 +11,9 @@ import {
     submitExamResult,
     getMyCertificates,
     downloadMyCertificate,
+    getStudentPlacements,
 } from '../controllers/studentController';
-import { getStudentLiveClasses } from '../controllers/liveClassController';
+import { getStudentLiveClasses, getStudentLiveClassById } from '../controllers/liveClassController';
 import { getStudentAttendance } from '../controllers/attendanceController';
 import { getStudentAnnouncements } from '../controllers/announcementController';
 import { getMyNotifications, markNotificationAsRead } from '../controllers/userNotificationController';
@@ -37,8 +38,10 @@ router.post('/submit-exam', submitExamResult);
 router.get('/attendance', getStudentAttendance);
 router.get('/announcements', getStudentAnnouncements);
 router.get('/live-classes', getStudentLiveClasses);
+router.get('/live-classes/:liveClassId', getStudentLiveClassById);
 router.get('/notifications', getMyNotifications);
 router.patch('/notifications/:notificationId/read', markNotificationAsRead);
+router.get('/placements', getStudentPlacements);
 router.get('/certificates', getMyCertificates);
 router.get('/certificates/:id/download', downloadMyCertificate);
 

@@ -3,6 +3,7 @@
 import { FormEvent, useState } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import CustomSelect from '@/components/ui/CustomSelect/CustomSelect';
 import {
     GraduationCap,
     Target,
@@ -14,7 +15,6 @@ import {
     Award,
     Zap,
     MessageSquarePlus,
-    ChevronDown,
     Check,
     Clock3,
     UserCheck
@@ -56,6 +56,19 @@ const hiringProcess = [
     { step: 2, title: 'Get Matched Profiles', description: 'We share pre-screened candidates matching your criteria' },
     { step: 3, title: 'Interview & Select', description: 'Conduct interviews and select the best fit candidates' },
     { step: 4, title: 'Onboard', description: 'Seamless onboarding support for selected candidates' }
+];
+
+const hiringVolumeOptions = [
+    { value: '1-5 positions', label: '1-5 positions' },
+    { value: '6-20 positions', label: '6-20 positions' },
+    { value: '21-50 positions', label: '21-50 positions' },
+    { value: '50+ positions', label: '50+ positions' }
+];
+
+const experienceLevelOptions = [
+    { value: 'Entry level (0-2 years)', label: 'Entry level (0-2 years)' },
+    { value: 'Mid level (2-5 years)', label: 'Mid level (2-5 years)' },
+    { value: 'Mixed levels', label: 'Mixed levels' }
 ];
 
 const roleTracks = [
@@ -144,6 +157,8 @@ const slideInItem = {
 export default function HireFromUsPage() {
     const [openFaq, setOpenFaq] = useState(-1);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [hiringVolume, setHiringVolume] = useState('');
+    const [experienceLevel, setExperienceLevel] = useState('');
 
     const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -170,6 +185,8 @@ export default function HireFromUsPage() {
 
             if (res.ok) {
                 form.reset();
+                setHiringVolume('');
+                setExperienceLevel('');
                 setIsSubmitted(true);
             } else {
                 alert("Failed to submit inquiry. Please try again later.");
@@ -417,23 +434,26 @@ export default function HireFromUsPage() {
                             </div>
                             <div className={styles.formRow}>
                                 <div className={styles.formGroup}>
-                                    <label htmlFor="hiringVolume">Hiring Volume *</label>
-                                    <select id="hiringVolume" name="hiringVolume" required defaultValue="">
-                                        <option value="" disabled>Select hiring volume</option>
-                                        <option value="1-5 positions">1-5 positions</option>
-                                        <option value="6-20 positions">6-20 positions</option>
-                                        <option value="21-50 positions">21-50 positions</option>
-                                        <option value="50+ positions">50+ positions</option>
-                                    </select>
+                                    <label>Hiring Volume *</label>
+                                    <CustomSelect
+                                        name="hiringVolume"
+                                        required
+                                        placeholder="Select hiring volume"
+                                        options={hiringVolumeOptions}
+                                        value={hiringVolume}
+                                        onChange={setHiringVolume}
+                                    />
                                 </div>
                                 <div className={styles.formGroup}>
-                                    <label htmlFor="experienceLevel">Experience Level *</label>
-                                    <select id="experienceLevel" name="experienceLevel" required defaultValue="">
-                                        <option value="" disabled>Select level</option>
-                                        <option value="Entry level (0-2 years)">Entry level (0-2 years)</option>
-                                        <option value="Mid level (2-5 years)">Mid level (2-5 years)</option>
-                                        <option value="Mixed levels">Mixed levels</option>
-                                    </select>
+                                    <label>Experience Level *</label>
+                                    <CustomSelect
+                                        name="experienceLevel"
+                                        required
+                                        placeholder="Select level"
+                                        options={experienceLevelOptions}
+                                        value={experienceLevel}
+                                        onChange={setExperienceLevel}
+                                    />
                                 </div>
                             </div>
                             <div className={styles.formGroup}>

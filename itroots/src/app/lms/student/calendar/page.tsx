@@ -1,19 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { CaretLeft, CaretRight, CalendarDots, Clock, BookOpen, Link as LinkIcon } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
-import styles from "../../teacher/calendar/calendar.module.css";
-
-const MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-];
-const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const EVENT_COLORS = ["#0881ec", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
+import { BookOpen, CalendarDots, Clock, Link as LinkIcon, VideoCamera } from "@phosphor-icons/react";
+import { resolveLiveClassJoinTarget } from "@/utils/liveClasses";
+import styles from "./calendar.module.css";
 
 type LiveClassItem = {
     id: string;
@@ -21,25 +16,20 @@ type LiveClassItem = {
     scheduledAt: string;
     status: string;
     title: string;
-    meetingLink: string;
+    meetingLink?: string;
+    provider?: string;
+    joinPath?: string | null;
+    roomName?: string | null;
     description?: string;
     course?: { title?: string };
     batch?: { name?: string };
 };
 
-const sameDate = (date: Date, value: string) => {
-    const eventDate = new Date(value);
-    return eventDate.getFullYear() === date.getFullYear()
-        && eventDate.getMonth() === date.getMonth()
-        && eventDate.getDate() === date.getDate();
-};
-
 export default function StudentCalendarPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState(new Date());
     const [liveClasses, setLiveClasses] = useState<LiveClassItem[]>([]);
+    const [error, setError] = useState("");
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
@@ -49,142 +39,152 @@ export default function StudentCalendarPage() {
 
     useEffect(() => {
         if (!token) return;
-        fetch(ENDPOINTS.STUDENT.LIVE_CLASSES, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((res) => res.json())
-            .then((data) => {
-                if (Array.isArray(data)) setLiveClasses(data);
-            })
-            .catch(console.error);
+
+        const fetchLiveClasses = async () => {
+            try {
+                setError("");
+                const response = await fetch(ENDPOINTS.STUDENT.LIVE_CLASSES, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+
+                const data = await response.json().catch(() => []);
+                if (!response.ok) {
+                    throw new Error((data as { message?: string } | null)?.message || "Unable to load live classes");
+                }
+
+                if (Array.isArray(data)) {
+                    setLiveClasses(data);
+                    return;
+                }
+
+                if (Array.isArray((data as { data?: LiveClassItem[] } | null)?.data)) {
+                    setLiveClasses((data as { data: LiveClassItem[] }).data);
+                    return;
+                }
+
+                setLiveClasses([]);
+            } catch (err) {
+                setError(err instanceof Error ? err.message : "Unable to load live classes");
+                setLiveClasses([]);
+            }
+        };
+
+        void fetchLiveClasses();
+
+        const intervalId = window.setInterval(() => {
+            void fetchLiveClasses();
+        }, 15000);
+
+        return () => window.clearInterval(intervalId);
     }, [token]);
 
-    const colorByBatch = useMemo(() => {
-        const map = new Map<string, string>();
-        liveClasses.forEach((item, index) => {
-            if (!map.has(item.batchId)) {
-                map.set(item.batchId, EVENT_COLORS[index % EVENT_COLORS.length]);
-            }
-        });
-        return map;
-    }, [liveClasses]);
+    const visibleClasses = useMemo(
+        () => liveClasses.filter((item) => item.status !== "COMPLETED"),
+        [liveClasses],
+    );
+
+    const sortedClasses = useMemo(
+        () => [...visibleClasses].sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()),
+        [visibleClasses],
+    );
+
+    const upcomingClasses = sortedClasses.filter((item) => item.status === "SCHEDULED");
 
     if (isLoading || !user) return null;
-
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDay = new Date(year, month, 1).getDay();
-    const today = new Date();
-
-    const prev = () => setCurrentDate(new Date(year, month - 1, 1));
-    const next = () => setCurrentDate(new Date(year, month + 1, 1));
-    const goToday = () => {
-        const now = new Date();
-        setCurrentDate(now);
-        setSelectedDate(now);
-    };
-
-    const isToday = (day: number) =>
-        day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-
-    const isSelected = (day: number) =>
-        day === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear();
-
-    const getEventsForDate = (date: Date) => liveClasses
-        .filter((item) => sameDate(date, item.scheduledAt))
-        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
-        .map((item) => ({
-            ...item,
-            time: new Date(item.scheduledAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }),
-            color: colorByBatch.get(item.batchId) || EVENT_COLORS[0],
-        }));
-
-    const selectedEvents = getEventsForDate(selectedDate);
 
     return (
         <LMSShell pageTitle="Live Classes">
             <div className={styles.page}>
                 <div className={styles.banner}>
                     <div>
-                        <div className={styles.bannerTitle}>Live Classes Schedule</div>
-                        <div className={styles.bannerSub}>View upcoming live classes for your assigned batches.</div>
+                        <div className={styles.bannerTitle}>Live Classes</div>
+                        <div className={styles.bannerSub}>See your scheduled classes and use the join link directly from the LMS.</div>
                     </div>
-                    <CalendarDots size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
+                    <VideoCamera size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
 
-                <div className={styles.calLayout}>
-                    <div className={styles.calendarCard}>
-                        <div className={styles.calHeader}>
-                            <button className={styles.navBtn} onClick={prev}><CaretLeft size={18} weight="bold" /></button>
-                            <div className={styles.calMonthGroup}>
-                                <span className={styles.calMonth}>{MONTH_NAMES[month]} {year}</span>
-                                <button className={styles.todayBtn} onClick={goToday}>Today</button>
-                            </div>
-                            <button className={styles.navBtn} onClick={next}><CaretRight size={18} weight="bold" /></button>
-                        </div>
+                <div className={styles.summaryGrid}>
+                    <div className={styles.summaryCard}>
+                        <div className={styles.summaryValue}>{upcomingClasses.length}</div>
+                        <div className={styles.summaryLabel}>Available To Join</div>
+                    </div>
+                    <div className={styles.summaryCard}>
+                        <div className={styles.summaryValue}>{sortedClasses.length}</div>
+                        <div className={styles.summaryLabel}>Total Live Classes</div>
+                    </div>
+                </div>
 
-                        <div className={styles.weekRow}>
-                            {WEEK_DAYS.map((day) => <div key={day} className={styles.weekLabel}>{day}</div>)}
-                        </div>
+                {error ? <div className={styles.errorBanner}>{error}</div> : null}
 
-                        <div className={styles.daysGrid}>
-                            {Array.from({ length: firstDay }).map((_, index) => <div key={`empty-${index}`} className={styles.dayCell} />)}
-                            {Array.from({ length: daysInMonth }).map((_, index) => {
-                                const day = index + 1;
-                                const date = new Date(year, month, day);
-                                const events = getEventsForDate(date);
+                <div className={styles.sectionCard}>
+                    <div className={styles.sectionHeader}>
+                        <div>
+                            <h2>Join Live Classes</h2>
+                            <p>Join scheduled classes inside LMS when Jitsi is enabled, with external-link fallback for older classes.</p>
+                        </div>
+                    </div>
+
+                    {sortedClasses.length === 0 ? (
+                        <div className={styles.emptyState}>
+                            <CalendarDots size={44} color="#cbd5e1" weight="duotone" />
+                            <p>No live classes are scheduled right now.</p>
+                        </div>
+                    ) : (
+                        <div className={styles.liveClassList}>
+                            {sortedClasses.map((event) => {
+                                const scheduledDate = new Date(event.scheduledAt);
+                                const isCancelled = event.status === "CANCELLED";
+                                const joinTarget = resolveLiveClassJoinTarget(event, "STUDENT");
                                 return (
-                                    <div key={day} className={`${styles.dayCell} ${styles.dayCellClickable} ${isToday(day) ? styles.todayCell : ""} ${isSelected(day) && !isToday(day) ? styles.selectedCell : ""}`} onClick={() => setSelectedDate(new Date(year, month, day))}>
-                                        <span className={styles.dayNum}>{day}</span>
-                                        {events.length ? (
-                                            <div className={styles.eventDots}>
-                                                {events.slice(0, 3).map((event, dotIndex) => (
-                                                    <span key={`${event.id}-${dotIndex}`} className={styles.dot} style={{ background: event.status === "CANCELLED" ? "#ef4444" : event.color }} />
-                                                ))}
+                                    <article key={event.id} className={styles.liveClassCard}>
+                                        <div className={styles.liveClassTop}>
+                                            <div className={styles.liveClassIcon}>
+                                                <VideoCamera size={22} weight="duotone" />
                                             </div>
-                                        ) : null}
-                                    </div>
+                                            <div className={styles.liveClassInfo}>
+                                                <div className={styles.liveClassTitleRow}>
+                                                    <h3 className={styles.liveClassTitle}>{event.title}</h3>
+                                                    <span className={`${styles.statusPill} ${isCancelled ? styles.statusCancelled : styles.statusActive}`}>
+                                                        {event.status}
+                                                    </span>
+                                                </div>
+                                                <div className={styles.metaRow}>
+                                                    <span className={styles.metaItem}><BookOpen size={14} />{event.course?.title || "Course"}</span>
+                                                    <span className={styles.metaItem}><CalendarDots size={14} />{event.batch?.name || "Batch"}</span>
+                                                    <span className={styles.metaItem}><Clock size={14} />{scheduledDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} · {scheduledDate.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}</span>
+                                                </div>
+                                                {event.provider === "JITSI" && event.roomName ? <p className={styles.liveClassDesc}>Jitsi room: {event.roomName}</p> : null}
+                                                {event.description ? <p className={styles.liveClassDesc}>{event.description}</p> : null}
+                                            </div>
+                                        </div>
+                                        <div className={styles.liveClassActions}>
+                                            {isCancelled || !joinTarget.href ? (
+                                                <span className={`${styles.joinButton} ${styles.joinButtonDisabled}`}>
+                                                    <LinkIcon size={16} />
+                                                    {isCancelled ? "Class Cancelled" : "Join Unavailable"}
+                                                </span>
+                                            ) : joinTarget.external ? (
+                                                <a
+                                                    className={styles.joinButton}
+                                                    href={joinTarget.href}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    <LinkIcon size={16} />
+                                                    Open Link
+                                                </a>
+                                            ) : (
+                                                <Link className={styles.joinButton} href={joinTarget.href}>
+                                                    <LinkIcon size={16} />
+                                                    Join in LMS
+                                                </Link>
+                                            )}
+                                        </div>
+                                    </article>
                                 );
                             })}
                         </div>
-                    </div>
-
-                    <div className={styles.eventsPanel}>
-                        <div className={styles.eventsPanelHeader}>
-                            <div>
-                                <div className={styles.eventsPanelDay}>{selectedDate.toLocaleDateString("en-IN", { weekday: "long" })}</div>
-                                <div className={styles.eventsPanelDate}>{selectedDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
-                            </div>
-                        </div>
-
-                        <div className={styles.eventsBody}>
-                            {selectedEvents.length === 0 ? (
-                                <div className={styles.noEvents}>
-                                    <CalendarDots size={44} color="#cbd5e1" weight="duotone" />
-                                    <p>No live classes on this day</p>
-                                </div>
-                            ) : (
-                                <div className={styles.eventsList}>
-                                    {selectedEvents.map((event) => (
-                                        <div key={event.id} className={styles.eventItem}>
-                                            <div className={styles.eventAccent} style={{ background: event.status === "CANCELLED" ? "#ef4444" : event.color }} />
-                                            <div className={styles.eventInfo} style={{ width: "100%" }}>
-                                                <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "flex-start" }}>
-                                                    <div className={styles.eventTitle}>{event.title}</div>
-                                                    <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "0.25rem 0.5rem", borderRadius: "999px", background: event.status === "CANCELLED" ? "#fee2e2" : "#dcfce7", color: event.status === "CANCELLED" ? "#b91c1c" : "#166534" }}>{event.status}</span>
-                                                </div>
-                                                <div className={styles.eventMeta}><BookOpen size={12} /><span>{event.course?.title} / {event.batch?.name}</span></div>
-                                                <div className={styles.eventMeta}><Clock size={12} /><span>{event.time}</span></div>
-                                                <div className={styles.eventMeta}><LinkIcon size={12} /><a href={event.meetingLink} target="_blank" rel="noreferrer" style={{ color: "inherit" }}>Join link</a></div>
-                                                {event.description ? <div className={styles.eventMeta}><span>{event.description}</span></div> : null}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                    )}
                 </div>
             </div>
         </LMSShell>

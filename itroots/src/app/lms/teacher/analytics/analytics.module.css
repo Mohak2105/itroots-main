@@ -3,12 +3,15 @@
 .page { display: flex; flex-direction: column; gap: 1.5rem; }
 
 .banner {
-    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
-    border-radius: 20px;
-    padding: 2.5rem 2rem;
+    background: linear-gradient(90deg, #0f3f6f 0%, #1571c1 60%, #2088e6 100%);
+    border-radius: 28px;
+    padding: 2rem 2.5rem;
+    min-height: 160px;
+    box-sizing: border-box;
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 1.5rem;
     color: #fff;
     overflow: hidden;
     position: relative;
@@ -18,11 +21,11 @@
 .banner::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.05);
+    right: -48px;
+    top: -36px;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 50%;
 }
 
@@ -35,7 +38,7 @@
     z-index: 1;
 }
 
-.bannerSub { font-size: 0.95rem; color: rgba(255,255,255,0.75); max-width: 560px; position: relative; z-index: 1; }
+.bannerSub { font-size: 0.95rem; color: rgba(255,255,255,0.82); max-width: 620px; position: relative; z-index: 1; }
 
 /* Controls */
 .controls {
@@ -52,21 +55,17 @@
 }
 
 .selectWrapper { display: flex; flex-direction: column; gap: 0.35rem; }
-.selectLabel { font-size: 0.78rem; font-weight: 600; color: #6b7280; }
-
-.batchSelect {
-    padding: 0.6rem 1rem;
-    border: 1px solid #e5e7eb;
+.customSelectWrap { min-width: 280px; }
+.customSelectWrap > div { width: 100%; }
+.customSelectWrap :is(button, select) {
+    min-height: 44px;
     border-radius: 8px;
-    font-size: 0.875rem;
-    color: #111827;
+    border-color: #e5e7eb;
     background: #f8fafc;
-    min-width: 280px;
-    outline: none;
-    font-family: inherit;
-    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
 }
-.batchSelect:focus { border-color: #0881ec; }
+.selectLabel { font-size: 0.78rem; font-weight: 600; color: #6b7280; }
 
 .exportBtn {
     display: flex;
@@ -250,7 +249,7 @@
 
 @media (max-width: 768px) {
     .banner { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-    .batchSelect { min-width: 100%; }
+    .customSelectWrap { min-width: 100%; }
     .table { font-size: 0.8rem; }
     .table th, .table td { padding: 0.75rem; }
 }

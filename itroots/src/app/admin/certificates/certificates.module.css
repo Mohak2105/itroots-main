@@ -10,9 +10,11 @@
     align-items: center;
     gap: 1.5rem;
     padding: 2rem 2.5rem;
-    border-radius: 20px;
+    min-height: 160px;
+    box-sizing: border-box;
+    border-radius: 28px;
     color: #fff;
-    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
+    background: linear-gradient(90deg, #0f3f6f 0%, #1571c1 60%, #2088e6 100%);
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
     position: relative;
     overflow: hidden;
@@ -21,11 +23,11 @@
 .hero::before {
     content: '';
     position: absolute;
-    top: -50%;
-    right: -20%;
-    width: 300px;
-    height: 300px;
-    background: rgba(255, 255, 255, 0.05);
+    right: -48px;
+    top: -36px;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.08);
     border-radius: 50%;
     pointer-events: none;
 }
@@ -124,6 +126,7 @@
 .heroText {
     margin: 0.9rem 0 0;
     max-width: 720px;
+    font-size: 0.95rem;
     color: rgba(255, 255, 255, 0.78);
     line-height: 1.7;
 }
@@ -242,6 +245,122 @@
     box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.1);
 }
 
+.datePickerWrap {
+    position: relative;
+}
+
+.dateFieldButton {
+    width: 100%;
+    min-height: 52px;
+    border-radius: 14px;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #64748b;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.88rem 0.95rem;
+    text-align: left;
+    cursor: pointer;
+    box-sizing: border-box;
+}
+
+.dateFieldButton:focus {
+    outline: none;
+    border-color: #0f4c81;
+    box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.1);
+}
+
+.dateFieldValue {
+    flex: 1;
+    color: #0f172a;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.dateFieldCaret {
+    color: #64748b;
+}
+
+.datePopover {
+    position: absolute;
+    top: calc(100% + 0.65rem);
+    left: 0;
+    z-index: 40;
+    background: #fff;
+    border: 1px solid #dbe3ef;
+    border-radius: 22px;
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.14);
+    padding: 0.85rem;
+}
+
+.reactCalendar {
+    border: none !important;
+    width: 320px;
+    background: transparent !important;
+    font-family: inherit;
+}
+
+.reactCalendar :global(.react-calendar__navigation) {
+    margin-bottom: 0.8rem;
+}
+
+.reactCalendar :global(.react-calendar__navigation button) {
+    border: none;
+    background: transparent;
+    color: #0f172a;
+    font-size: 1rem;
+    font-weight: 800;
+    min-width: 40px;
+    border-radius: 12px;
+}
+
+.reactCalendar :global(.react-calendar__navigation button:enabled:hover),
+.reactCalendar :global(.react-calendar__navigation button:enabled:focus) {
+    background: #eff6ff;
+}
+
+.reactCalendar :global(.react-calendar__month-view__weekdays__weekday) {
+    padding: 0.55rem 0;
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    text-decoration: none;
+}
+
+.reactCalendar :global(.react-calendar__month-view__weekdays__weekday abbr) {
+    text-decoration: none;
+}
+
+.reactCalendar :global(.react-calendar__tile) {
+    border: none;
+    background: transparent;
+    border-radius: 14px;
+    min-height: 42px;
+    font-size: 0.95rem;
+    color: #0f172a;
+}
+
+.reactCalendar :global(.react-calendar__tile:enabled:hover),
+.reactCalendar :global(.react-calendar__tile:enabled:focus) {
+    background: #eff6ff;
+}
+
+.reactCalendar :global(.react-calendar__tile--now) {
+    background: #dbeafe;
+    color: #0f3f6f;
+}
+
+.reactCalendar :global(.react-calendar__tile--active) {
+    background: linear-gradient(135deg, #0f3f6f 0%, #2088e6 100%);
+    color: #fff;
+}
+
+.reactCalendar :global(.react-calendar__month-view__days__day--neighboringMonth) {
+    color: #cbd5e1;
+}
+
 .inlineFields {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -319,141 +438,267 @@
 
 .certificateInner {
     width: min(100%, 980px);
-    min-height: 540px;
+    min-height: 560px;
     border-radius: 18px;
-    border: 5px solid #12395b;
-    background: linear-gradient(135deg, #fffdf7, #f7f0d8);
-    box-shadow: inset 0 0 0 2px #d1a23f, 0 14px 28px rgba(18, 57, 91, 0.1);
-    padding: 2rem 2.35rem;
+    border: 1.5px solid #b7cbe0;
+    background: #f8fbff;
+    box-shadow: 0 14px 28px rgba(18, 57, 91, 0.08);
+    padding: 2rem 2.75rem 1.75rem;
     position: relative;
     overflow: hidden;
 }
 
-.certificateInner::before,
-.certificateInner::after {
+.certificateFrame {
+    position: absolute;
+    inset: 18px;
+    border: 1px solid #d9e4ef;
+    pointer-events: none;
+}
+
+.cornerTop,
+.cornerTopSecondary,
+.cornerTopTertiary,
+.cornerBottom {
+    position: absolute;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+.cornerTop {
+    width: 360px;
+    height: 250px;
+    top: -178px;
+    left: -186px;
+    background: #0d3f74;
+}
+
+.cornerTopSecondary {
+    width: 310px;
+    height: 220px;
+    top: -146px;
+    left: -152px;
+    background: #0f5ca8;
+}
+
+.cornerTopTertiary {
+    width: 255px;
+    height: 184px;
+    top: -116px;
+    left: -114px;
+    background: #2a86dc;
+}
+
+.cornerBottom {
+    width: 320px;
+    height: 220px;
+    right: -154px;
+    bottom: -136px;
+    background: #0d3f74;
+}
+
+.cornerBottom::before,
+.cornerBottom::after {
     content: "";
     position: absolute;
-    width: 180px;
-    height: 180px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(209, 162, 63, 0.14), transparent 66%);
+    inset: 0;
+    border-radius: inherit;
 }
 
-.certificateInner::before {
-    top: -60px;
-    right: -40px;
+.cornerBottom::before {
+    inset: 26px;
+    background: #0f5ca8;
 }
 
-.certificateInner::after {
-    bottom: -80px;
-    left: -60px;
+.cornerBottom::after {
+    inset: 54px;
+    background: #2a86dc;
 }
-.brand {
+
+.logoWrap {
     text-align: center;
-    color: #12395b;
-    letter-spacing: 0.28em;
-    font-weight: 800;
-    font-size: 0.88rem;
+    position: relative;
+    z-index: 2;
 }
 
-.brandSub {
-    margin-top: 0.55rem;
+.logoImage {
+    width: 210px;
+    max-width: 100%;
+}
+
+.certificateTitleMain {
+    margin-top: 1.45rem;
     text-align: center;
-    color: #64748b;
-    font-size: 0.82rem;
+    color: #111827;
+    font-size: 3.65rem;
+    line-height: 1;
+    font-weight: 700;
+    font-family: "Times New Roman", Georgia, serif;
+    letter-spacing: 0.03em;
+    position: relative;
+    z-index: 2;
 }
 
-.certificateTitle {
-    margin-top: 1.8rem;
+.certificateTitleSecondary {
+    margin-top: 0.5rem;
     text-align: center;
-    color: #b68a25;
-    font-size: 1.8rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.14em;
+    color: #111827;
+    font-size: 1.42rem;
+    font-weight: 700;
+    font-family: "Times New Roman", Georgia, serif;
+    letter-spacing: 0.36em;
+    position: relative;
+    z-index: 2;
 }
 
-.certificateDivider {
-    width: 190px;
-    height: 1px;
+.certificateOrnament {
+    width: 140px;
     margin: 1rem auto 0;
-    background: #d1a23f;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    position: relative;
+    z-index: 2;
+}
+
+.certificateOrnament span {
+    flex: 1;
+    height: 1px;
+    background: #1f2937;
+}
+
+.certificateOrnament i {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #1f2937;
+    display: block;
 }
 
 .presented {
-    margin-top: 1.55rem;
+    margin-top: 1.45rem;
     text-align: center;
-    color: #475569;
-    font-size: 0.96rem;
+    color: #3f4a59;
+    font-size: 0.98rem;
+    font-family: "Times New Roman", Georgia, serif;
+    letter-spacing: 0.12em;
+    position: relative;
+    z-index: 2;
 }
 
 .recipient {
-    margin-top: 0.85rem;
+    margin-top: 1.1rem;
     text-align: center;
-    color: #0f172a;
-    font-size: 2.35rem;
-    font-weight: 800;
-    font-family: Georgia, serif;
-    line-height: 1.2;
+    color: #111827;
+    font-size: 3.2rem;
+    font-weight: 500;
+    font-family: "Times New Roman", Georgia, serif;
+    font-style: italic;
+    line-height: 1.1;
+    position: relative;
+    z-index: 2;
 }
 
-.statement,
-.metaLine,
-.certificateNumber {
-    text-align: center;
-    color: #334155;
+.recipientLine {
+    width: 470px;
+    max-width: calc(100% - 8rem);
+    height: 1px;
+    margin: 0.65rem auto 0;
+    background: #c7d5e4;
+    position: relative;
+    z-index: 2;
 }
 
 .statement {
-    margin-top: 1.2rem;
+    margin-top: 1rem;
+    text-align: center;
+    color: #475569;
     font-size: 1rem;
+    line-height: 1.7;
+    position: relative;
+    z-index: 2;
 }
 
 .courseName {
-    margin-top: 0.6rem;
+    margin-top: 0.65rem;
     text-align: center;
     color: #12395b;
-    font-size: 1.55rem;
+    font-size: 1.6rem;
     font-weight: 800;
+    position: relative;
+    z-index: 2;
 }
 
 .metaLine {
     margin-top: 0.55rem;
-    font-size: 0.92rem;
+    text-align: center;
+    color: #526173;
+    font-size: 0.94rem;
+    position: relative;
+    z-index: 2;
 }
 
-.certificateNumber {
-    margin-top: 1.5rem;
-    font-size: 0.86rem;
-    color: #64748b;
-}
-
-.signatureRow {
+.certificateFooter {
     margin-top: 2.8rem;
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 110px 1fr;
+    align-items: end;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 2;
 }
 
 .signatureBlock {
-    width: 210px;
     text-align: center;
+}
+
+.signatureScript {
+    margin-bottom: 0.8rem;
+    color: #111827;
+    font-size: 2rem;
+    line-height: 1;
+    font-family: "Brush Script MT", "Times New Roman", serif;
+}
+
+.sealBlock {
+    width: 110px;
+    height: 110px;
+    margin: 0 auto;
+    border-radius: 999px;
+    border: 1px solid #b9cce0;
+    box-shadow: inset 0 0 0 6px #f4f8fc, inset 0 0 0 7px #d8e3ef;
+    background: rgba(255, 255, 255, 0.96);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sealLogo {
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
 }
 
 .signatureLine {
     border-top: 1px solid #12395b;
-    margin-bottom: 0.45rem;
-}
-
-.signatureName {
-    font-weight: 700;
-    color: #0f172a;
+    margin-bottom: 0.55rem;
 }
 
 .signatureRole {
-    margin-top: 0.25rem;
     color: #64748b;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.certificateMetaFooter {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    color: #526173;
+    font-size: 0.86rem;
+    position: relative;
+    z-index: 2;
 }
 
 .emptyPreview,
@@ -560,8 +805,7 @@
     }
 
     .hero {
-        padding-top: 1.5rem;
-        padding-bottom: 1.5rem;
+        padding: 2rem 1.5rem;
     }
 
     .certificateInner {
@@ -569,9 +813,13 @@
         min-height: 0;
     }
 
-    .certificateTitle {
-        font-size: 1.5rem;
-        letter-spacing: 0.1em;
+    .certificateTitleMain {
+        font-size: 2.45rem;
+    }
+
+    .certificateTitleSecondary {
+        font-size: 1rem;
+        letter-spacing: 0.24em;
     }
 
     .recipient {
@@ -582,14 +830,20 @@
         font-size: 1.45rem;
     }
 
-    .signatureRow {
-        flex-direction: column;
-        align-items: center;
+    .certificateFooter {
+        grid-template-columns: 1fr;
+        justify-items: center;
     }
 
     .signatureBlock {
         width: 100%;
         max-width: 240px;
+    }
+
+    .certificateMetaFooter {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
     }
 }
 
@@ -660,35 +914,38 @@
 }
 
 .iconButton {
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    border: none;
+    background: transparent;
+    border: 1px solid #ddd6fe;
     cursor: pointer;
-    color: #ffffff;
+    color: #7c3aed;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0.6rem;
     border-radius: 8px;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2);
+    box-shadow: none;
 }
 
 .iconButton:hover {
-    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    background: #f5f3ff;
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(139, 92, 246, 0.3);
+    border-color: #c4b5fd;
+    box-shadow: 0 6px 15px rgba(139, 92, 246, 0.15);
 }
 
 .iconButtonView {
-    background: linear-gradient(135deg, #3b82f6, #2563eb);
-    color: #ffffff;
-    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+    background: transparent;
+    border: 1px solid #bfdbfe;
+    color: #2563eb;
+    box-shadow: none;
 }
 
 .iconButtonView:hover {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: #ffffff;
-    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #93c5fd;
+    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.15);
 }
 
 @media (max-width: 640px) {

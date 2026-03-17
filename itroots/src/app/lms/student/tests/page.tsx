@@ -30,6 +30,12 @@ type TestQuestion = {
 type TestAttempt = {
     id: string;
     score: number;
+    percentage?: number;
+    correctAnswers?: number;
+    wrongAnswers?: number;
+    unansweredQuestions?: number;
+    autoSubmitted?: boolean;
+    violationReason?: string | null;
     completionTime: number;
     submittedAt: string;
 };
@@ -40,6 +46,7 @@ type StudentTest = {
     description?: string;
     totalMarks: number;
     durationMinutes: number;
+    dueAt?: string | null;
     questions: TestQuestion[];
     batchId: string;
     batchName: string;
@@ -67,6 +74,26 @@ const formatDuration = (seconds: number) => {
     return `${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
 };
 
+const formatDateTime = (value?: string | null) => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+    return date.toLocaleString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "numeric",
+        minute: "2-digit",
+    });
+};
+
+const getSecondsUntilDue = (value?: string | null) => {
+    if (!value) return Number.POSITIVE_INFINITY;
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return Number.POSITIVE_INFINITY;
+    return Math.floor((date.getTime() - Date.now()) / 1000);
+};
+
 export default function StudentTestsPage() {
     const { user, isLoading, token, logout } = useLMSAuth();
     const router = useRouter();
@@ -77,6 +104,7 @@ export default function StudentTestsPage() {
     const [answers, setAnswers] = useState<Record<string, number>>({});
     const [submission, setSubmission] = useState<SubmissionSummary | null>(null);
     const [remainingSeconds, setRemainingSeconds] = useState(0);
+    const [allocatedSeconds, setAllocatedSeconds] = useState(0);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
@@ -117,10 +145,20 @@ export default function StudentTestsPage() {
     }, [fetchTests]);
 
     const startTest = (test: StudentTest) => {
+        const secondsUntilDue = getSecondsUntilDue(test.dueAt);
+        const timeLimitSeconds = test.durationMinutes * 60;
+        const nextRemainingSeconds = Math.min(timeLimitSeconds, secondsUntilDue);
+
+        if (nextRemainingSeconds <= 0) {
+            alert("This test due time has passed.");
+            return;
+        }
+
         setActiveTest(test);
         setAnswers({});
         setSubmission(null);
-        setRemainingSeconds(test.durationMinutes * 60);
+        setAllocatedSeconds(nextRemainingSeconds);
+        setRemainingSeconds(nextRemainingSeconds);
         submitInFlightRef.current = false;
     };
 
@@ -129,6 +167,7 @@ export default function StudentTestsPage() {
         setAnswers({});
         setSubmission(null);
         setRemainingSeconds(0);
+        setAllocatedSeconds(0);
         setIsSubmitting(false);
         submitInFlightRef.current = false;
     };
@@ -143,13 +182,19 @@ export default function StudentTestsPage() {
 
         const totalQuestions = activeTest.questions.length;
         const answered = Object.keys(answers).length;
-        if (!forceSubmit && answered < totalQuestions) return;
+        const deadlinePassed = getSecondsUntilDue(activeTest.dueAt) <= 0;
+        const shouldForceSubmit = forceSubmit || deadlinePassed;
+        const normalizedViolationReason = shouldForceSubmit
+            ? (violationReason || (deadlinePassed ? "TIME_EXPIRED" : undefined))
+            : undefined;
+
+        if (!shouldForceSubmit && answered < totalQuestions) return;
 
         submitInFlightRef.current = true;
         setIsSubmitting(true);
 
         try {
-            const completionTime = Math.max((activeTest.durationMinutes * 60) - remainingSeconds, 0);
+            const completionTime = Math.max(allocatedSeconds - remainingSeconds, 0);
             const res = await fetch(ENDPOINTS.STUDENT.SUBMIT_EXAM, {
                 method: "POST",
                 headers: {
@@ -160,8 +205,8 @@ export default function StudentTestsPage() {
                     testId: activeTest.id,
                     answers,
                     completionTime,
-                    forceSubmit,
-                    violationReason,
+                    forceSubmit: shouldForceSubmit,
+                    violationReason: normalizedViolationReason,
                 }),
             });
             const json = await res.json().catch(() => null);
@@ -181,6 +226,12 @@ export default function StudentTestsPage() {
                         attempt: {
                             id: json.result.id,
                             score: json.result.score,
+                            percentage: json.summary?.percentage,
+                            correctAnswers: json.summary?.correctAnswers,
+                            wrongAnswers: json.summary?.wrongAnswers,
+                            unansweredQuestions: json.summary?.unansweredQuestions,
+                            autoSubmitted: json.summary?.autoSubmitted,
+                            violationReason: json.summary?.violationReason,
                             completionTime: json.result.completionTime,
                             submittedAt: json.result.submittedAt,
                         },
@@ -194,7 +245,7 @@ export default function StudentTestsPage() {
         } finally {
             setIsSubmitting(false);
         }
-    }, [activeTest, answers, remainingSeconds, token, handleSessionExpired]);
+    }, [activeTest, answers, remainingSeconds, allocatedSeconds, token, handleSessionExpired]);
 
     useEffect(() => {
         if (!activeTest || submission) return;
@@ -248,6 +299,7 @@ export default function StudentTestsPage() {
                             <p className={styles.quizMeta}>
                                 {activeTest.questions.length} Questions | {activeTest.durationMinutes} min | {activeTest.totalMarks} marks
                             </p>
+                            {activeTest.dueAt ? <p className={styles.quizDeadline}>Due by {formatDateTime(activeTest.dueAt)}</p> : null}
                             {activeTest.description ? <p className={styles.quizDescription}>{activeTest.description}</p> : null}
                         </div>
                         <div className={styles.quizHeaderSide}>
@@ -371,7 +423,7 @@ export default function StudentTestsPage() {
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Online Test</div>
-                        <div className={styles.bannerSub}>{tests.length} test{tests.length !== 1 ? "s" : ""} available across your enrolled batches.</div>
+                        <div className={styles.bannerSub}>{tests.length} Test{tests.length !== 1 ? "s" : ""} Available across your enrolled batches.</div>
                     </div>
                     <Exam size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
@@ -386,8 +438,9 @@ export default function StudentTestsPage() {
                     ) : (
                         tests.map((test) => {
                             const done = Boolean(test.attempt);
+                            const isClosed = !done && getSecondsUntilDue(test.dueAt) <= 0;
                             return (
-                                <div key={test.id} className={`${styles.testCard} ${done ? styles.testCardDone : ""}`}>
+                                <div key={test.id} className={`${styles.testCard} ${done ? styles.testCardDone : ""} ${isClosed ? styles.testCardClosed : ""}`}>
                                     <div className={styles.testCardIcon}>
                                         {done ? <CheckCircle size={28} color="#10b981" weight="fill" /> : <FileText size={28} color="#0881ec" weight="fill" />}
                                     </div>
@@ -399,18 +452,22 @@ export default function StudentTestsPage() {
                                             <span><Question size={14} /> {test.questions.length} questions</span>
                                             <span><Trophy size={14} /> {test.totalMarks} marks</span>
                                             <span>{test.batchName}</span>
+                                            {test.dueAt ? <span className={styles.dueChip}>Due: {formatDateTime(test.dueAt)}</span> : null}
                                             {test.attempt ? (
-                                                <span className={styles.scoreChip}>Score: {test.attempt.score}/{test.totalMarks}</span>
+                                                <span className={styles.scoreChip}>
+                                                    Score: {test.attempt.score}/{test.totalMarks}
+                                                    {typeof test.attempt.percentage === "number" ? ` (${test.attempt.percentage}%)` : ""}
+                                                </span>
                                             ) : null}
                                         </div>
                                     </div>
                                     <button
-                                        className={`${styles.startBtn} ${done ? styles.startBtnDone : ""}`}
-                                        onClick={() => !done && startTest(test)}
-                                        disabled={done}
+                                        className={`${styles.startBtn} ${done ? styles.startBtnDone : ""} ${isClosed ? styles.startBtnClosed : ""}`}
+                                        onClick={() => !done && !isClosed && startTest(test)}
+                                        disabled={done || isClosed}
                                         type="button"
                                     >
-                                        {done ? "Completed" : "Start Quiz"}
+                                        {done ? "Completed" : isClosed ? "Closed" : "Start Quiz"}
                                     </button>
                                 </div>
                             );

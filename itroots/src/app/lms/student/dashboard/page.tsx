@@ -6,19 +6,21 @@ import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
-import { buildStudentContentViewerHref, shouldOpenExternally } from "@/utils/studentContentViewer";
+import {
+    buildStudentActionHref,
+    buildStudentContentViewerHref,
+    extractStudentActionUrl,
+    shouldOpenExternally,
+} from "@/utils/studentContentViewer";
+import { fetchStudentUploadedVideos, type StudentVideoRecord } from "@/utils/studentVideos";
 import styles from "./dashboard.module.css";
 import {
     GraduationCap,
     CalendarCheck,
     ArrowRight,
-    BookOpen,
     Megaphone,
-    Link as LinkIcon,
-    Scroll,
-    Eye,
-    DownloadSimple,
-    X,
+    PlayCircle,
+    VideoCamera,
 } from "@phosphor-icons/react";
 
 type DashboardData = {
@@ -35,18 +37,6 @@ type DashboardData = {
     liveClasses: any[];
 };
 
-type AttendanceBatch = {
-    total: number;
-    present: number;
-    absent: number;
-    late: number;
-    records: Array<{
-        id: string;
-        date?: string;
-        status?: string;
-    }>;
-};
-
 type FeedItem = {
     id: string;
     title: string;
@@ -57,9 +47,10 @@ type FeedItem = {
     actionUrl?: string;
     actionLabel?: string;
     opensInNewTab?: boolean;
+    notificationType?: string;
 };
 
-const extractUrl = (value?: string) => value?.match(/https?:\/\/\S+|\/uploads\/\S+/)?.[0];
+type UploadedVideoItem = StudentVideoRecord;
 
 const formatDate = (value?: string) => {
     if (!value) return "-";
@@ -72,23 +63,62 @@ const formatDate = (value?: string) => {
     });
 };
 
-const buildNotificationAction = (title: string, rawActionUrl?: string) => {
+const getYouTubeVideoId = (rawUrl: string) => {
+    try {
+        const url = new URL(rawUrl);
+        const host = url.hostname.replace(/^www\./, "").toLowerCase();
+
+        if (host === "youtu.be") {
+            return url.pathname.split("/").filter(Boolean)[0] || "";
+        }
+
+        if (host === "youtube.com" || host === "m.youtube.com") {
+            if (url.pathname === "/watch") {
+                return url.searchParams.get("v") || "";
+            }
+            if (url.pathname.startsWith("/embed/")) {
+                return url.pathname.split("/")[2] || "";
+            }
+            if (url.pathname.startsWith("/shorts/")) {
+                return url.pathname.split("/")[2] || "";
+            }
+        }
+    } catch {
+        return "";
+    }
+
+    return "";
+};
+
+const getVideoThumbnail = (video: UploadedVideoItem) => {
+    const videoUrl = video.contentUrl || video.fileUrl || "";
+    const youtubeId = getYouTubeVideoId(videoUrl);
+    if (youtubeId) {
+        return `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
+    }
+    return "";
+};
+
+const buildNotificationAction = (notificationType: string | undefined, title: string, rawActionUrl?: string) => {
     if (!rawActionUrl) {
         return { actionUrl: undefined, actionLabel: undefined, opensInNewTab: false };
     }
 
+    const upperType = String(notificationType || "").toUpperCase();
     const upperTitle = title.toUpperCase();
-    const actionLabel = upperTitle.includes("LIVE CLASS")
-        ? "Join"
-        : upperTitle.includes("VIDEO")
-            ? "Watch"
-            : upperTitle.includes("ASSIGNMENT")
-                ? "View"
-                : "Open";
-    const opensInNewTab = shouldOpenExternally(title, actionLabel);
+    const actionLabel = upperType === "PLACEMENT"
+        ? "View Placement"
+        : upperTitle.includes("LIVE CLASS")
+            ? "Join"
+            : upperTitle.includes("VIDEO")
+                ? "Watch"
+                : upperTitle.includes("ASSIGNMENT")
+                    ? "View"
+                    : "Open";
+    const opensInNewTab = shouldOpenExternally(title, actionLabel, rawActionUrl);
 
     return {
-        actionUrl: opensInNewTab ? rawActionUrl : buildStudentContentViewerHref(rawActionUrl, title),
+        actionUrl: opensInNewTab ? rawActionUrl : buildStudentActionHref(rawActionUrl, title),
         actionLabel,
         opensInNewTab,
     };
@@ -108,8 +138,9 @@ const toFeedItems = (announcements: any[], notifications: any[]): FeedItem[] => 
         const notification = item.notification || {};
         const title = notification.title || "Notification";
         const { actionUrl, actionLabel, opensInNewTab } = buildNotificationAction(
+            notification.type,
             title,
-            extractUrl(notification.message)
+            extractStudentActionUrl(notification.message)
         );
 
         return {
@@ -122,12 +153,13 @@ const toFeedItems = (announcements: any[], notifications: any[]): FeedItem[] => 
             actionUrl,
             actionLabel,
             opensInNewTab,
+            notificationType: notification.type,
         };
     });
 
     return [...notificationItems, ...announcementItems]
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-        .slice(0, 5);
+        .slice(0, 3);
 };
 
 export default function StudentDashboard() {
@@ -147,11 +179,9 @@ export default function StudentDashboard() {
         notifications: [],
         liveClasses: [],
     });
-    const [attendanceData, setAttendanceData] = useState<Record<string, AttendanceBatch>>({});
-    const [certificates, setCertificates] = useState<any[]>([]);
-    const [certViewUrl, setCertViewUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
+    const [uploadedVideos, setUploadedVideos] = useState<UploadedVideoItem[]>([]);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
@@ -166,90 +196,39 @@ export default function StudentDashboard() {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then((r) => r.json())
-            .then((data) => {
-                if (data?.summary) {
-                    setDashboard(data);
+            .then(async (dashboardData) => {
+                if (dashboardData?.summary) {
+                    setDashboard(dashboardData);
                     setFetchError(null);
                 } else {
-                    const msg = data?.message || "Failed to load dashboard data.";
-                    const detail = data?.detail ? ` (${data.detail})` : "";
+                    const msg = dashboardData?.message || "Failed to load dashboard data.";
+                    const detail = dashboardData?.detail ? ` (${dashboardData.detail})` : "";
                     setFetchError(msg + detail);
                 }
+
+                const enrollmentList = Array.isArray(dashboardData?.enrollments) ? dashboardData.enrollments : [];
+                const videos = await fetchStudentUploadedVideos(token, enrollmentList);
+                setUploadedVideos(videos);
             })
             .catch(() => setFetchError("Could not reach the server. Please check your connection."))
             .finally(() => setLoading(false));
     }, [token]);
 
-    useEffect(() => {
-        if (!token) return;
-
-        fetch(ENDPOINTS.STUDENT.ATTENDANCE, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((response) => response.json())
-            .then((data) => {
-                if (data?.success && data?.data) {
-                    setAttendanceData(data.data);
-                }
-            })
-            .catch(console.error);
-    }, [token]);
-
-    useEffect(() => {
-        if (!token) return;
-        fetch(ENDPOINTS.STUDENT.CERTIFICATES, {
-            headers: { Authorization: `Bearer ${token}` },
-        })
-            .then((r) => r.json())
-            .then((data) => setCertificates(Array.isArray(data) ? data : []))
-            .catch(console.error);
-    }, [token]);
-
-    const handleViewCertificate = async (certificateId: string) => {
-        if (!token) return;
-        try {
-            const response = await fetch(ENDPOINTS.STUDENT.CERTIFICATE_DOWNLOAD(certificateId), {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!response.ok) throw new Error("Unable to fetch certificate");
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            setCertViewUrl(url);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
-    const closeCertViewer = () => {
-        if (certViewUrl) {
-            window.URL.revokeObjectURL(certViewUrl);
-            setCertViewUrl(null);
-        }
-    };
-
-    const handleDownloadCertificate = async (certificateId: string) => {
-        if (!token) return;
-        try {
-            const response = await fetch(ENDPOINTS.STUDENT.CERTIFICATE_DOWNLOAD(certificateId), {
-                headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!response.ok) throw new Error("Unable to download certificate");
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = "certificate.pdf";
-            link.click();
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error(error);
-        }
-    };
-
     const feedItems = useMemo(
         () => toFeedItems(dashboard.announcements || [], dashboard.notifications || []),
         [dashboard.announcements, dashboard.notifications]
     );
+    const batchNameById = useMemo(
+        () =>
+            Object.fromEntries(
+                (dashboard.enrollments || []).map((enrollment: any) => [
+                    enrollment.batchId,
+                    enrollment.batch?.name || "Batch",
+                ])
+            ),
+        [dashboard.enrollments]
+    );
+    const recentVideos = useMemo(() => uploadedVideos.slice(0, 3), [uploadedVideos]);
 
     if (isLoading || !user) return null;
 
@@ -291,15 +270,6 @@ export default function StudentDashboard() {
                     </div>
                     
                     <div className={styles.statCard}>
-                        <div className={`${styles.statIcon} ${styles.statIconBlue}`}>
-                            <BookOpen size={22} weight="duotone" />
-                        </div>
-                        <div className={styles.statInfo}>
-                            <div className={styles.statValue}>{loading ? "-" : dashboard.enrollments.length}</div>
-                            <div className={styles.statLabel}>Continue Learning</div>
-                        </div>
-                    </div>
-                    <div className={styles.statCard}>
                         <div className={`${styles.statIcon} ${styles.statIconOrange}`}>
                             <Megaphone size={22} weight="duotone" />
                         </div>
@@ -309,45 +279,77 @@ export default function StudentDashboard() {
                         </div>
                     </div>
                 </div>
-                <div className={styles.twoCol}>
+                <div className={styles.singleCol}>
                     <div className={styles.section}>
                         <div className={styles.sectionHeader}>
-                            <span className={styles.sectionTitle}>Continue Learning</span>
-                            <Link href="/my-learning" className={styles.viewAll}>View All <ArrowRight size={14} /></Link>
+                            <div>
+                                <span className={styles.sectionTitle}>Uploaded Videos</span>
+                                <div className={styles.sectionSub}>
+                                    Showing {recentVideos.length} of {uploadedVideos.length} videos in this view
+                                </div>
+                            </div>
+                            <Link href="/my-learning" className={styles.viewAll}>View More <ArrowRight size={14} /></Link>
                         </div>
 
                         {loading ? (
-                            <div className={styles.skeletonList}>
-                                {[1, 2].map((i) => <div key={i} className={styles.skeleton} />)}
+                            <div className={styles.videoCardGrid}>
+                                {[1, 2, 3].map((item) => (
+                                    <div key={item} className={styles.videoSkeletonCard} />
+                                ))}
                             </div>
-                        ) : dashboard.enrollments.length === 0 ? (
+                        ) : recentVideos.length === 0 ? (
                             <div className={styles.emptyState}>
-                                <BookOpen size={40} color="#cbd5e1" weight="duotone" />
-                                <p>No batches enrolled yet.</p>
+                                <VideoCamera size={40} color="#cbd5e1" weight="duotone" />
+                                <p>No uploaded videos yet.</p>
                             </div>
                         ) : (
-                            <div className={styles.batchList}>
-                                {dashboard.enrollments.slice(0, 4).map((item: any) => (
-                                    <Link key={item.id} href={`/learning/${item.batch?.id}`} className={styles.batchCard}>
-                                        <div className={styles.batchAvatar}>{item.batch?.course?.title?.charAt(0) || "B"}</div>
-                                        <div className={styles.batchInfo}>
-                                            <div className={styles.batchName}>{item.batch?.name || "Batch"}</div>
-                                            <div className={styles.batchCourse}>{item.batch?.course?.title}</div>
-                                            <div className={styles.progressBar}>
-                                                <div className={styles.progressFill} style={{ width: `${item.progressPercent || 0}%` }} />
+                            <div className={styles.videoCardGrid}>
+                                {recentVideos.map((video) => {
+                                    const viewerUrl = buildStudentContentViewerHref(video.contentUrl || video.fileUrl || "", video.title);
+                                    const thumbnail = getVideoThumbnail(video);
+                                    return (
+                                        <Link key={video.id} href={viewerUrl} className={styles.videoPreviewCard}>
+                                            <div className={styles.videoPreviewThumb}>
+                                                {thumbnail ? (
+                                                    <img
+                                                        src={thumbnail}
+                                                        alt={video.title}
+                                                        className={styles.videoPreviewImage}
+                                                    />
+                                                ) : (
+                                                    <div className={styles.videoPreviewFallback}>
+                                                        <VideoCamera size={28} weight="duotone" />
+                                                    </div>
+                                                )}
+                                                <div className={styles.videoPreviewPlay}>
+                                                    <PlayCircle size={56} weight="fill" />
+                                                </div>
                                             </div>
-                                        </div>
-                                        <ArrowRight size={18} color="#0881ec" />
-                                    </Link>
-                                ))}
+                                            <div className={styles.videoPreviewBody}>
+                                                <div className={styles.videoPreviewTitle}>{video.title || "Untitled Video"}</div>
+                                                <div className={styles.videoPreviewMeta}>
+                                                    {video.subject || "Course"}
+                                                    {"  "}
+                                                    {batchNameById[video.batchId || ""] || "Assigned Batch"}
+                                                </div>
+                                                <div className={styles.videoPreviewDate}>
+                                                    {formatDate(video.uploadedAt || video.createdAt)}
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
 
                     <div className={styles.section}>
                         <div className={styles.sectionHeader}>
-                            <span className={styles.sectionTitle}>Notifications</span>
-                            <Link href="/announcements" className={styles.viewAll}>Open Feed <ArrowRight size={14} /></Link>
+                            <div>
+                                <span className={styles.sectionTitle}>Recent Notifications</span>
+                                <div className={styles.sectionSub}>Showing the latest 3 updates from your LMS feed.</div>
+                            </div>
+                            <Link href="/announcements" className={styles.viewAll}>View More <ArrowRight size={14} /></Link>
                         </div>
 
                         {loading ? (
@@ -369,21 +371,20 @@ export default function StudentDashboard() {
                                         <div className={styles.annContent}>
                                             <div className={styles.annTitle}>{item.title}</div>
                                             <div className={styles.annBody} style={{ whiteSpace: "pre-line" }}>{item.body}</div>
-                                            <div className={styles.annMeta}>
-                                                {new Date(item.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
-                                                {" | "}{item.authorName}
-                                            </div>
                                             {item.actionUrl ? (
                                                 item.opensInNewTab ? (
-                                                    <a href={item.actionUrl} target="_blank" rel="noreferrer" className={styles.viewAll} style={{ display: "inline-flex", marginTop: "0.5rem" }}>
-                                                        {item.actionLabel || "Open"} <LinkIcon size={14} />
+                                                    <a href={item.actionUrl} target="_blank" rel="noreferrer" className={styles.annAction}>
+                                                        {item.actionLabel || "Open"}
+                                                        <ArrowRight size={14} />
                                                     </a>
                                                 ) : (
-                                                    <Link href={item.actionUrl} className={styles.viewAll} style={{ display: "inline-flex", marginTop: "0.5rem" }}>
-                                                        {item.actionLabel || "View in LMS"} <LinkIcon size={14} />
+                                                    <Link href={item.actionUrl} className={styles.annAction}>
+                                                        {item.actionLabel || "Open"}
+                                                        <ArrowRight size={14} />
                                                     </Link>
                                                 )
                                             ) : null}
+                                            <div className={styles.annMeta}>{formatDate(item.createdAt)}</div>
                                         </div>
                                     </div>
                                 ))}
@@ -391,123 +392,7 @@ export default function StudentDashboard() {
                         )}
                     </div>
                 </div>
-                <div className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <span className={styles.sectionTitle}>Attendance Records</span>
-                        <Link href="/attendance" className={styles.viewAll}>Open Attendance <ArrowRight size={14} /></Link>
-                    </div>
-
-                    {loading ? (
-                        <div className={styles.skeletonList}>
-                            {[1, 2].map((i) => <div key={i} className={styles.skeleton} />)}
-                        </div>
-                    ) : Object.keys(attendanceData).length === 0 ? (
-                        <div className={styles.emptyState}>
-                            <CalendarCheck size={40} color="#cbd5e1" weight="duotone" />
-                            <p>No attendance records yet.</p>
-                        </div>
-                    ) : (
-                        <div className={styles.attendanceSections}>
-                            {Object.entries(attendanceData).map(([batchName, data]) => {
-                                const percentage = data.total > 0 ? Math.round((data.present / data.total) * 100) : 0;
-
-                                return (
-                                    <div key={batchName} className={styles.attendanceCard}>
-                                       
-
-                                        <div className={styles.attendanceTableWrap}>
-                                            <table className={styles.attendanceTable}>
-                                                <thead>
-                                                    <tr>
-                                                        <th>Date</th>
-                                                        <th>Status</th>
-                                                        <th>Batch</th>
-                                                        
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {data.records?.length > 0 ? (
-                                                        data.records.slice(0, 5).map((record) => (
-                                                            <tr key={record.id}>
-                                                                <td>{formatDate(record.date)}</td>
-                                                                <td>
-                                                                    <span className={`${styles.statusPill} ${styles[record.status?.toLowerCase() || ""]}`}>
-                                                                        {record.status || "-"}
-                                                                    </span>
-                                                                </td>
-                                                                <td>{batchName}</td>
-                                                                
-                                                            </tr>
-                                                        ))
-                                                    ) : (
-                                                        <tr>
-                                                            <td colSpan={4} className={styles.attendanceEmpty}>No attendance records available.</td>
-                                                        </tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* Certificates */}
-                <div className={styles.section}>
-                    <div className={styles.sectionHeader}>
-                        <span className={styles.sectionTitle}>Certificates</span>
-                        <Link href="/certificates" className={styles.viewAll}>View All <ArrowRight size={14} /></Link>
-                    </div>
-
-                    {certificates.length === 0 ? (
-                        <div className={styles.emptyState}>
-                            <Scroll size={40} color="#cbd5e1" weight="duotone" />
-                            <p>No certificates issued yet.</p>
-                        </div>
-                    ) : (
-                        <div className={styles.certGrid}>
-                            {certificates.slice(0, 3).map((cert: any) => (
-                                <div key={cert.id} className={styles.certCard}>
-                                    <div className={styles.certIcon}>
-                                        <Scroll size={24} weight="duotone" color="#0f4c81" />
-                                    </div>
-                                    <div className={styles.certInfo}>
-                                        <div className={styles.certTitle}>{cert.course?.title || "Course Certificate"}</div>
-                                        <div className={styles.certMeta}>{cert.certificateNumber}</div>
-                                        <div className={styles.certMeta}>
-                                            Issued: {new Date(cert.issueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                                        </div>
-                                    </div>
-                                    <div className={styles.certActions}>
-                                        <button type="button" className={styles.certViewBtn} onClick={() => handleViewCertificate(cert.id)}>
-                                            <Eye size={16} /> View
-                                        </button>
-                                        <button type="button" className={styles.certDownloadBtn} onClick={() => handleDownloadCertificate(cert.id)}>
-                                            <DownloadSimple size={16} /> Download
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
             </div>
-
-            {certViewUrl && (
-                <div className={styles.viewerOverlay} onClick={closeCertViewer}>
-                    <div className={styles.viewerModal} onClick={(e) => e.stopPropagation()}>
-                        <div className={styles.viewerHeader}>
-                            <span className={styles.viewerTitle}>Certificate Preview</span>
-                            <button type="button" className={styles.viewerClose} onClick={closeCertViewer}>
-                                <X size={20} weight="bold" />
-                            </button>
-                        </div>
-                        <iframe src={`${certViewUrl}#toolbar=0&navpanes=0`} className={styles.viewerFrame} title="Certificate Preview" />
-                    </div>
-                </div>
-            )}
         </LMSShell>
     );
 }

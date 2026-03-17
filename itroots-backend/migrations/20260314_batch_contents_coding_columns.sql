@@ -1,0 +1,5 @@
+ALTER TABLE batch_contents
+    MODIFY COLUMN type ENUM('VIDEO', 'ASSIGNMENT', 'RESOURCE', 'CODING') NOT NULL,
+    ADD COLUMN IF NOT EXISTS codingLanguage VARCHAR(100) NULL AFTER contentUrl,
+    ADD COLUMN IF NOT EXISTS starterCode TEXT NULL AFTER codingLanguage,
+    ADD COLUMN IF NOT EXISTS codingInstructions TEXT NULL AFTER starterCode;

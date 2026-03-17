@@ -126,8 +126,12 @@
 }
 
 .adminSidebarNav .navItem:hover {
-    color: #f59e0b;
-    background: #fffbeb;
+    color: #0ea5e9;
+    background: #eef8ff;
+}
+
+.adminSidebarNav .navItem:hover .navIcon {
+    color: #0ea5e9 !important;
 }
 
 .adminSidebarNav .navItemActive,
@@ -592,7 +596,6 @@
         font-size: 0.75rem;
     }
 }
-
 
 
 
