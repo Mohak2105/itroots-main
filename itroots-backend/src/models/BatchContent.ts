@@ -7,19 +7,25 @@ interface BatchContentAttributes {
     batchId: string;
     title: string;
     description?: string;
-    type: 'VIDEO' | 'ASSIGNMENT' | 'RESOURCE';
-    contentUrl: string;
+    type: 'VIDEO' | 'ASSIGNMENT' | 'RESOURCE' | 'CODING';
+    contentUrl?: string;
+    codingLanguage?: string;
+    starterCode?: string;
+    codingInstructions?: string;
 }
 
-interface BatchContentCreationAttributes extends Optional<BatchContentAttributes, 'id' | 'description'> { }
+interface BatchContentCreationAttributes extends Optional<BatchContentAttributes, 'id' | 'description' | 'contentUrl' | 'codingLanguage' | 'starterCode' | 'codingInstructions'> { }
 
 class BatchContent extends Model<BatchContentAttributes, BatchContentCreationAttributes> implements BatchContentAttributes {
     public id!: string;
     public batchId!: string;
     public title!: string;
     public description?: string;
-    public type!: 'VIDEO' | 'ASSIGNMENT' | 'RESOURCE';
-    public contentUrl!: string;
+    public type!: 'VIDEO' | 'ASSIGNMENT' | 'RESOURCE' | 'CODING';
+    public contentUrl?: string;
+    public codingLanguage?: string;
+    public starterCode?: string;
+    public codingInstructions?: string;
 
     public readonly createdAt!: Date;
     public readonly updatedAt!: Date;
@@ -46,12 +52,24 @@ BatchContent.init(
             allowNull: true,
         },
         type: {
-            type: DataTypes.ENUM('VIDEO', 'ASSIGNMENT', 'RESOURCE'),
+            type: DataTypes.ENUM('VIDEO', 'ASSIGNMENT', 'RESOURCE', 'CODING'),
             allowNull: false,
         },
         contentUrl: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
+        },
+        codingLanguage: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        starterCode: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        codingInstructions: {
+            type: DataTypes.TEXT,
+            allowNull: true,
         },
     },
     {

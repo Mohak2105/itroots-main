@@ -9,25 +9,29 @@ interface AssignmentSubmissionAttributes {
     studentId: string;
     assignmentId: string;
     batchId: string;
-    fileUrl: string;
-    fileName: string;
+    fileUrl?: string;
+    fileName?: string;
     notes?: string;
+    submittedCode?: string;
+    codingLanguage?: string;
     status: 'SUBMITTED' | 'REVIEWED';
     grade?: number | null;
     feedback?: string | null;
     submittedAt: Date;
 }
 
-interface AssignmentSubmissionCreationAttributes extends Optional<AssignmentSubmissionAttributes, 'id' | 'notes' | 'grade' | 'feedback' | 'status' | 'submittedAt'> {}
+interface AssignmentSubmissionCreationAttributes extends Optional<AssignmentSubmissionAttributes, 'id' | 'notes' | 'grade' | 'feedback' | 'status' | 'submittedAt' | 'fileUrl' | 'fileName' | 'submittedCode' | 'codingLanguage'> {}
 
 class AssignmentSubmission extends Model<AssignmentSubmissionAttributes, AssignmentSubmissionCreationAttributes> implements AssignmentSubmissionAttributes {
     public id!: string;
     public studentId!: string;
     public assignmentId!: string;
     public batchId!: string;
-    public fileUrl!: string;
-    public fileName!: string;
+    public fileUrl?: string;
+    public fileName?: string;
     public notes?: string;
+    public submittedCode?: string;
+    public codingLanguage?: string;
     public status!: 'SUBMITTED' | 'REVIEWED';
     public grade?: number | null;
     public feedback?: string | null;
@@ -61,11 +65,19 @@ AssignmentSubmission.init(
         },
         fileUrl: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
         },
         fileName: {
             type: DataTypes.STRING,
-            allowNull: false,
+            allowNull: true,
+        },
+        submittedCode: {
+            type: DataTypes.TEXT,
+            allowNull: true,
+        },
+        codingLanguage: {
+            type: DataTypes.STRING,
+            allowNull: true,
         },
         notes: {
             type: DataTypes.TEXT,

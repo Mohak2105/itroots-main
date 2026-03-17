@@ -228,7 +228,7 @@ const createBatchStudentNotification = async ({
 export const addBatchContent = async (req: any, res: Response) => {
     try {
         const FacultyId = req.user.id;
-        const { batchId, title, description, contentUrl, fileData, fileName } = req.body;
+        const { batchId, title, description, contentUrl, fileData, fileName, codingLanguage, starterCode, codingInstructions } = req.body;
         const type = typeof req.body.type === 'string' ? req.body.type.toUpperCase() : req.body.type;
 
         const batch = await Batch.findOne({
@@ -241,28 +241,44 @@ export const addBatchContent = async (req: any, res: Response) => {
         }
 
         let resolvedContentUrl = String(contentUrl || '').trim();
-        if (type !== 'VIDEO' && fileData && fileName) {
-            resolvedContentUrl = saveBatchContentFile({ fileName, fileData });
+
+        if (type === 'CODING') {
+            const validLanguages = ['python', 'java', 'csharp'];
+            if (!codingLanguage || !validLanguages.includes(codingLanguage)) {
+                return res.status(400).json({ message: 'Valid coding language is required (python, java, csharp)' });
+            }
+            resolvedContentUrl = '';
+        } else {
+            if (type !== 'VIDEO' && fileData && fileName) {
+                resolvedContentUrl = saveBatchContentFile({ fileName, fileData });
+            }
+            if (!resolvedContentUrl) {
+                return res.status(400).json({ message: type === 'VIDEO' ? 'Video URL is required' : 'Assignment or resource file/URL is required' });
+            }
         }
 
-        if (!resolvedContentUrl) {
-            return res.status(400).json({ message: type === 'VIDEO' ? 'Video URL is required' : 'Assignment or resource file/URL is required' });
-        }
-
-        const content = await BatchContent.create({ batchId, title, description, type, contentUrl: resolvedContentUrl });
+        const content = await BatchContent.create({
+            batchId, title, description, type,
+            contentUrl: resolvedContentUrl || undefined,
+            codingLanguage: type === 'CODING' ? codingLanguage : undefined,
+            starterCode: type === 'CODING' ? starterCode : undefined,
+            codingInstructions: type === 'CODING' ? codingInstructions : undefined,
+        });
 
         const courseTitle = (batch as any).course?.title || 'Course';
         const batchName = (batch as any).name || 'Batch';
         const notificationTitle = type === 'VIDEO'
             ? `New Video Class: ${title}`
-            : type === 'ASSIGNMENT'
-                ? `New Assignment: ${title}`
-                : `New Study Material: ${title}`;
+            : type === 'CODING'
+                ? `New Coding Assignment: ${title}`
+                : type === 'ASSIGNMENT'
+                    ? `New Assignment: ${title}`
+                    : `New Study Material: ${title}`;
         const notificationMessage = [
             `${title}`,
             `Course: ${courseTitle}`,
             `Batch: ${batchName}`,
-            type === 'VIDEO' ? `Watch here: ${resolvedContentUrl}` : `Open here: ${resolvedContentUrl}`,
+            type === 'VIDEO' ? `Watch here: ${resolvedContentUrl}` : type === 'CODING' ? `Language: ${codingLanguage}` : `Open here: ${resolvedContentUrl}`,
             description ? `Details: ${description}` : null,
         ].filter(Boolean).join('\n');
 

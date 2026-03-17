@@ -11,7 +11,6 @@ import styles from "./dashboard.module.css";
 import {
     GraduationCap,
     CalendarCheck,
-    Trophy,
     ArrowRight,
     BookOpen,
     Megaphone,

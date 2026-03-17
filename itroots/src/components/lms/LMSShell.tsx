@@ -25,6 +25,7 @@ import {
     Trophy,
     Bell,
     Scroll,
+    VideoCamera,
 } from "@phosphor-icons/react";
 
 const ICON_MAP: Record<string, React.ElementType> = {
@@ -47,6 +48,7 @@ const ICON_MAP: Record<string, React.ElementType> = {
     "Resources": BookOpen,
     "Study Material": BookOpen,
     "Study Materials": BookOpen,
+    "Video Lectures": VideoCamera,
     "Performance": ChartBar,
     "Profile Settings": Gear,
     "Admin Dashboard": SquaresFour,
@@ -79,6 +81,7 @@ const ICON_COLOR_MAP: Record<string, string> = {
     "Resources": "#6366f1",
     "Study Material": "#6366f1",
     "Study Materials": "#6366f1",
+    "Video Lectures": "#8b5cf6",
     "Performance": "#ec4899",
     "Profile Settings": "#64748b",
     "Admin Dashboard": "#f59e0b",
@@ -112,11 +115,11 @@ const Faculty_NAV = [
     {
         section: "",
         items: [
-            { href: "/dashboard", label: "Course Overview" },
+            { href: "/dashboard", label: "Dashboard" },
+            { href: "/calendar", label: "Live Classes" },
+            { href: "/content", label: "Video Lectures" },
             { href: "/analytics", label: "Students Overview" },
-            { href: "/calendar", label: "Event Calendar" },
             { href: "/grades", label: "Grades" },
-            { href: "/engagement", label: "Students Engagement" },
             { href: "/assignments", label: "Students Test" },
             { href: "/announcements", label: "Send Notifications" },
         ],
