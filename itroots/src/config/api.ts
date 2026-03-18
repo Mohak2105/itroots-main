@@ -1,10 +1,38 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1";
+const LOCAL_API_BASE_URL = "http://localhost:5000/api/v1";
+const LOCAL_API_ORIGIN = "http://localhost:5000";
+
+function trimTrailingSlash(value: string) {
+    return value.replace(/\/+$/, "");
+}
+
+function getRuntimeApiBaseUrl() {
+    if (typeof window === "undefined") {
+        return LOCAL_API_BASE_URL;
+    }
+
+    const apiPort = process.env.NEXT_PUBLIC_API_PORT?.trim() || "5000";
+    const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+    const hostname = window.location.hostname;
+
+    return `${protocol}//${hostname}:${apiPort}/api/v1`;
+}
+
+function normalizeApiBaseUrl(value?: string) {
+    const trimmed = value?.trim();
+    if (!trimmed) {
+        return getRuntimeApiBaseUrl();
+    }
+
+    return trimTrailingSlash(trimmed);
+}
+
+export const API_BASE_URL = normalizeApiBaseUrl(process.env.NEXT_PUBLIC_API_URL);
 export const FRONTEND_ONLY_MODE = process.env.NEXT_PUBLIC_FRONTEND_ONLY_MODE === "true";
 export const API_ORIGIN = (() => {
     try {
         return new URL(API_BASE_URL).origin;
     } catch {
-        return "http://localhost:5000";
+        return LOCAL_API_ORIGIN;
     }
 })();
 

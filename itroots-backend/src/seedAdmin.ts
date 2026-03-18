@@ -2,8 +2,10 @@ import bcrypt from 'bcryptjs';
 import User from './models/User';
 import { connectDB } from './config/database';
 
-const createAdmin = async () => {
-    await connectDB();
+export const ensureDemoUsers = async (shouldConnect = true) => {
+    if (shouldConnect) {
+        await connectDB();
+    }
 
     const hashedPassword = await bcrypt.hash('admin123', 10);
     const hashedFaculty = await bcrypt.hash('Faculty123', 10);
@@ -26,12 +28,16 @@ const createAdmin = async () => {
             where: { email: 'cms@itroots.com' },
             defaults: { username: 'cmsmanager', name: 'Demo CMS', email: 'cms@itroots.com', password: hashedPassword, role: 'CMS_MANAGER', isActive: true }
         });
-        console.log('? All demo users seeded successfully!');
+        console.log('Demo users are ready');
     } catch (err) {
-        console.error('? Error seeding users:', err);
-    } finally {
-        process.exit();
+        console.error('Error seeding demo users:', err);
+        throw err;
     }
 };
 
-createAdmin();
+if (require.main === module) {
+    ensureDemoUsers()
+        .finally(() => {
+            process.exit();
+        });
+}

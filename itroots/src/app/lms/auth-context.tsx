@@ -1,7 +1,7 @@
 "use client";
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { ENDPOINTS, FRONTEND_ONLY_MODE } from "@/config/api";
+import { API_ORIGIN, ENDPOINTS, FRONTEND_ONLY_MODE } from "@/config/api";
 import { USERS } from "@/data/lms-data";
 
 export type UserRole = "SUPER_ADMIN" | "CMS_MANAGER" | "FACULTY" | "STUDENT";
@@ -182,7 +182,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
                 persistAuthState(data.user, data.token);
                 return { success: true, message: "Login successful", user: data.user };
             } catch {
-                return { success: false, message: "Backend API is not running on http://localhost:5000" };
+                return { success: false, message: `Backend API is not reachable at ${API_ORIGIN}` };
             }
         }
 

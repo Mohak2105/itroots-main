@@ -102,14 +102,21 @@ export const register = async (req: Request, res: Response) => {
 
 export const login = async (req: Request, res: Response) => {
     try {
-        const identifier = req.body.identifier || req.body.email || req.body.username;
-        const { password } = req.body;
+        const rawIdentifier = req.body.identifier || req.body.email || req.body.username;
+        const identifier = typeof rawIdentifier === 'string' ? rawIdentifier.trim() : '';
+        const normalizedIdentifier = identifier.toLowerCase();
+        const password = typeof req.body.password === 'string' ? req.body.password : '';
+
+        if (!identifier || !password) {
+            return res.status(400).json({ message: 'Email/username and password are required' });
+        }
 
         const user = await User.findOne({
             where: {
                 [Op.or]: [
-                    { email: identifier },
+                    { email: normalizedIdentifier },
                     { username: identifier },
+                    { username: normalizedIdentifier },
                 ],
             },
         });
