@@ -1,22 +1,10 @@
 import type { Metadata } from "next";
-import { Outfit, Inter } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  variable: "--font-outfit",
-  display: "swap",
-  weight: ["400", "500", "600", "700", "800"],
-});
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-  weight: ["400", "500", "600", "700"],
-});
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://itroots.com";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "ITROOTS - Transform Your Tech Career | Best IT Training Institute",
     template: "%s | ITROOTS"
@@ -42,7 +30,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_IN",
-    url: "https://itroots.com",
+    url: siteUrl,
     siteName: "ITROOTS",
     title: "ITROOTS - Transform Your Tech Career",
     description: "Premier IT training institute with 95% placement rate. Learn Data Science, AI, Cyber Security, and more.",
@@ -90,7 +78,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
         <meta name="theme-color" content="#0881ec" />
       </head>
-      <body className={`${outfit.variable} ${inter.variable}`} suppressHydrationWarning>
+      <body suppressHydrationWarning>
         <MainLayout>{children}</MainLayout>
       </body>
     </html>

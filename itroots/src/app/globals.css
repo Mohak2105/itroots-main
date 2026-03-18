@@ -43,9 +43,9 @@
   --gradient-orange: linear-gradient(135deg, var(--accent-orange) 0%, #f5a623 100%);
   --gradient-teal: linear-gradient(135deg, var(--teal) 0%, var(--teal-accent) 100%);
 
-  /* Typography - Uses Next.js font variables */
-  --font-heading: 'Outfit', system-ui, sans-serif;
-  --font-body: 'Inter', system-ui, sans-serif;
+  /* Typography */
+  --font-heading: "Segoe UI", "Trebuchet MS", system-ui, sans-serif;
+  --font-body: "Segoe UI", "Helvetica Neue", Arial, system-ui, sans-serif;
 
   /* Font Sizes - Adjusted slightly smaller per user feedback */
   --text-xs: 0.7rem;
@@ -106,7 +106,7 @@ html {
 }
 
 body {
-  font-family: var(--font-inter), 'Inter', system-ui, sans-serif;
+  font-family: var(--font-body);
   font-size: var(--text-base);
   line-height: 1.6;
   color: var(--text-dark);
@@ -123,7 +123,7 @@ h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-outfit), 'Outfit', system-ui, sans-serif;
+  font-family: var(--font-heading);
   font-weight: 700;
   line-height: 1.2;
   color: var(--text-dark);
