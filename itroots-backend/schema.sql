@@ -95,7 +95,7 @@ CREATE TABLE IF NOT EXISTS batches (
     id CHAR(36) NOT NULL,
     name VARCHAR(255) NOT NULL,
     courseId CHAR(36) NOT NULL,
-    FacultyId CHAR(36) NOT NULL,
+    teacherId CHAR(36) NULL,
     schedule VARCHAR(255) NOT NULL,
     startDate DATE NOT NULL,
     endDate DATE NOT NULL,
@@ -103,10 +103,10 @@ CREATE TABLE IF NOT EXISTS batches (
     updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     KEY idx_batches_courseId (courseId),
-    KEY idx_batches_FacultyId (FacultyId),
+    KEY idx_batches_teacherId (teacherId),
     CONSTRAINT fk_batches_course FOREIGN KEY (courseId) REFERENCES courses(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
-    CONSTRAINT fk_batches_Faculty FOREIGN KEY (FacultyId) REFERENCES users(id)
+    CONSTRAINT fk_batches_teacher FOREIGN KEY (teacherId) REFERENCES users(id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -195,6 +195,8 @@ CREATE TABLE IF NOT EXISTS assignment_submissions (
     fileUrl VARCHAR(255) NOT NULL,
     fileName VARCHAR(255) NOT NULL,
     notes TEXT NULL,
+    submittedCode TEXT NULL,
+    codingLanguage VARCHAR(100) NULL,
     status ENUM('SUBMITTED', 'REVIEWED') NOT NULL DEFAULT 'SUBMITTED',
     grade INT NULL,
     feedback TEXT NULL,
@@ -254,7 +256,7 @@ CREATE TABLE IF NOT EXISTS live_classes (
     title VARCHAR(255) NOT NULL,
     courseId CHAR(36) NOT NULL,
     batchId CHAR(36) NOT NULL,
-    FacultyId CHAR(36) NOT NULL,
+    teacherId CHAR(36) NOT NULL,
     scheduledAt DATETIME NOT NULL,
     meetingLink VARCHAR(255) NOT NULL,
     description TEXT NULL,
@@ -264,13 +266,13 @@ CREATE TABLE IF NOT EXISTS live_classes (
     PRIMARY KEY (id),
     KEY idx_live_classes_courseId (courseId),
     KEY idx_live_classes_batchId (batchId),
-    KEY idx_live_classes_FacultyId (FacultyId),
+    KEY idx_live_classes_teacherId (teacherId),
     KEY idx_live_classes_scheduledAt (scheduledAt),
     CONSTRAINT fk_live_classes_course FOREIGN KEY (courseId) REFERENCES courses(id)
         ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT fk_live_classes_batch FOREIGN KEY (batchId) REFERENCES batches(id)
         ON DELETE CASCADE ON UPDATE CASCADE,
-    CONSTRAINT fk_live_classes_Faculty FOREIGN KEY (FacultyId) REFERENCES users(id)
+    CONSTRAINT fk_live_classes_teacher FOREIGN KEY (teacherId) REFERENCES users(id)
         ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

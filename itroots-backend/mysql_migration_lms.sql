@@ -1,9 +1,82 @@
 ﻿USE itroots_db;
 
-ALTER TABLE users
-    ADD COLUMN IF NOT EXISTS username VARCHAR(255) NULL,
-    ADD COLUMN IF NOT EXISTS specialization VARCHAR(255) NULL,
-    ADD COLUMN IF NOT EXISTS profileImage VARCHAR(255) NULL;
+SET @has_users_username_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'username'
+);
+SET @alter_users_username := IF(@has_users_username_column = 0, 'ALTER TABLE users ADD COLUMN username VARCHAR(255) NULL', 'SELECT 1');
+PREPARE stmt FROM @alter_users_username;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_users_specialization_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'specialization'
+);
+SET @alter_users_specialization := IF(@has_users_specialization_column = 0, 'ALTER TABLE users ADD COLUMN specialization VARCHAR(255) NULL', 'SELECT 1');
+PREPARE stmt FROM @alter_users_specialization;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_users_profile_image_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'users' AND column_name = 'profileImage'
+);
+SET @alter_users_profile_image := IF(@has_users_profile_image_column = 0, 'ALTER TABLE users ADD COLUMN profileImage VARCHAR(255) NULL', 'SELECT 1');
+PREPARE stmt FROM @alter_users_profile_image;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_batches_teacher_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'batches' AND column_name = 'teacherId'
+);
+SET @alter_batches_teacher := IF(@has_batches_teacher_column = 0, 'ALTER TABLE batches ADD COLUMN teacherId CHAR(36) NULL', 'SELECT 1');
+PREPARE stmt FROM @alter_batches_teacher;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_batches_faculty_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'batches' AND column_name = 'FacultyId'
+);
+SET @backfill_batches_teacher := IF(
+    @has_batches_faculty_column = 1,
+    'UPDATE batches SET teacherId = COALESCE(teacherId, FacultyId) WHERE teacherId IS NULL AND FacultyId IS NOT NULL',
+    'SELECT 1'
+);
+PREPARE stmt FROM @backfill_batches_teacher;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_live_classes_teacher_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'live_classes' AND column_name = 'teacherId'
+);
+SET @alter_live_classes_teacher := IF(@has_live_classes_teacher_column = 0, 'ALTER TABLE live_classes ADD COLUMN teacherId CHAR(36) NULL', 'SELECT 1');
+PREPARE stmt FROM @alter_live_classes_teacher;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_live_classes_faculty_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'live_classes' AND column_name = 'FacultyId'
+);
+SET @backfill_live_classes_teacher := IF(
+    @has_live_classes_faculty_column = 1,
+    'UPDATE live_classes SET teacherId = COALESCE(teacherId, FacultyId) WHERE teacherId IS NULL AND FacultyId IS NOT NULL',
+    'SELECT 1'
+);
+PREPARE stmt FROM @backfill_live_classes_teacher;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 SET @has_username_index := (
     SELECT COUNT(*)
@@ -15,9 +88,25 @@ PREPARE stmt FROM @create_username_index;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
-ALTER TABLE courses
-    ADD COLUMN IF NOT EXISTS duration VARCHAR(255) NULL,
-    ADD COLUMN IF NOT EXISTS status ENUM('ACTIVE', 'DRAFT', 'ARCHIVED') NOT NULL DEFAULT 'DRAFT';
+SET @has_courses_duration_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'courses' AND column_name = 'duration'
+);
+SET @alter_courses_duration := IF(@has_courses_duration_column = 0, 'ALTER TABLE courses ADD COLUMN duration VARCHAR(255) NULL', 'SELECT 1');
+PREPARE stmt FROM @alter_courses_duration;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_courses_status_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'courses' AND column_name = 'status'
+);
+SET @alter_courses_status := IF(@has_courses_status_column = 0, 'ALTER TABLE courses ADD COLUMN status ENUM(''ACTIVE'', ''DRAFT'', ''ARCHIVED'') NOT NULL DEFAULT ''DRAFT''', 'SELECT 1');
+PREPARE stmt FROM @alter_courses_status;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 CREATE TABLE IF NOT EXISTS payments (
     id CHAR(36) NOT NULL,
@@ -119,6 +208,8 @@ CREATE TABLE IF NOT EXISTS assignment_submissions (
     fileUrl VARCHAR(255) NOT NULL,
     fileName VARCHAR(255) NOT NULL,
     notes TEXT NULL,
+    submittedCode TEXT NULL,
+    codingLanguage VARCHAR(100) NULL,
     status ENUM('SUBMITTED', 'REVIEWED') NOT NULL DEFAULT 'SUBMITTED',
     grade INT NULL,
     feedback TEXT NULL,
@@ -136,3 +227,31 @@ CREATE TABLE IF NOT EXISTS assignment_submissions (
     CONSTRAINT fk_assignment_submissions_batch FOREIGN KEY (batchId) REFERENCES batches(id)
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+SET @has_assignment_submissions_submitted_code_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'assignment_submissions' AND column_name = 'submittedCode'
+);
+SET @alter_assignment_submissions_submitted_code := IF(
+    @has_assignment_submissions_submitted_code_column = 0,
+    'ALTER TABLE assignment_submissions ADD COLUMN submittedCode TEXT NULL',
+    'SELECT 1'
+);
+PREPARE stmt FROM @alter_assignment_submissions_submitted_code;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+SET @has_assignment_submissions_coding_language_column := (
+    SELECT COUNT(*)
+    FROM information_schema.columns
+    WHERE table_schema = DATABASE() AND table_name = 'assignment_submissions' AND column_name = 'codingLanguage'
+);
+SET @alter_assignment_submissions_coding_language := IF(
+    @has_assignment_submissions_coding_language_column = 0,
+    'ALTER TABLE assignment_submissions ADD COLUMN codingLanguage VARCHAR(100) NULL',
+    'SELECT 1'
+);
+PREPARE stmt FROM @alter_assignment_submissions_coding_language;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;

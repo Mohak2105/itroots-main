@@ -68,7 +68,7 @@ LiveClass.init(
         FacultyId: {
             type: DataTypes.UUID,
             allowNull: false,
-            field: 'FacultyId',
+            field: 'teacherId',
             references: { model: User, key: 'id' },
         },
         scheduledAt: {
@@ -116,9 +116,9 @@ LiveClass.init(
 
 LiveClass.belongsTo(Course, { as: 'course', foreignKey: 'courseId' });
 LiveClass.belongsTo(Batch, { as: 'batch', foreignKey: 'batchId' });
-LiveClass.belongsTo(User, { as: 'Faculty', foreignKey: 'teacherId' });
+LiveClass.belongsTo(User, { as: 'Faculty', foreignKey: 'FacultyId' });
 Course.hasMany(LiveClass, { as: 'liveClasses', foreignKey: 'courseId' });
 Batch.hasMany(LiveClass, { as: 'liveClasses', foreignKey: 'batchId' });
-User.hasMany(LiveClass, { as: 'scheduledLiveClasses', foreignKey: 'teacherId' });
+User.hasMany(LiveClass, { as: 'scheduledLiveClasses', foreignKey: 'FacultyId' });
 
 export default LiveClass;

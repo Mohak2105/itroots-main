@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+Server: nginx
+Content-Type: application/json
+Transfer-Encoding: chunked
+Connection: keep-alive
+Cache-Control: max-age=0, must-revalidate, no-cache, no-store, private
+Date: Wed, 18 Mar 2026 12:32:16 GMT
+Pragma: no-cache
+Expires: Fri, 01 Jan 1990 00:00:00 GMT
+Set-Cookie: XSRF-TOKEN=eyJpdiI6IlBXNjlhTFFaODNzZ0xRVVkrQlhYQlE9PSIsInZhbHVlIjoiRU91R3pxdWVMNzkwVnE2Tkx0aWNqdHNyYWkvVVFsNmZXOWNPcWRUeW5XVnZOUlpydERoRXJxdmRsV0FCSDNKa3VmM3hRUXVuQTVhT0hHN2FpTkZnNVlqemliMUd6OWZNdDZ6R3NncnFKUjZHNW9YYWlPS0pOaXczUGNqbExMb2kiLCJtYWMiOiJkOWFiYzM4NWEzMDVjZDYyODAwNzQ2ODE4YjYwZGEzNzlhZjFiZGU4ODU1MzA0YThiNjEwNGQ3N2UyMzgxMmNmIiwidGFnIjoiIn0%3D; expires=Wed, 25 Mar 2026 12:32:16 GMT; Max-Age=604800; path=/; samesite=lax
+Set-Cookie: coolify_session=eyJpdiI6IlNKczJsTGlqd2JvcmF3S2FVRG90YlE9PSIsInZhbHVlIjoib05rTDljMjVjYjY5anhWbStQVHBrd2NkbWtYanRBUEc0ZGdKaXFwVmxRNXgxR0VRS2dkall3L2IzMVFKNlhaUUhqTG0zUG90YWQzQ0lMMGNUY1ZjK3hZODdFb0g3UHhEcEhPdUdTay84YjNUTnZpajgyQzJIaThRMDdSMk8zYnkiLCJtYWMiOiJmY2UxOTg4Njg2MzI5MDhhM2IyYWQ5OTg2YTNlZTJiNmEwZjM0MDMzMDkzMWU5YjQzMzkzODEwMDBmZTA2MTVjIiwidGFnIjoiIn0%3D; expires=Wed, 25 Mar 2026 12:32:16 GMT; Max-Age=604800; path=/; httponly; samesite=lax
+

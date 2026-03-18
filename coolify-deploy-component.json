@@ -1,0 +1,4 @@
+{
+    "id":  "BvbNR899t1f18XDxtbqf",
+    "snapshot":  "{\"data\":{\"application\":[null,{\"class\":\"App\\\\Models\\\\Application\",\"key\":1,\"s\":\"mdl\"}],\"lastDeploymentInfo\":\"a83647b... \",\"lastDeploymentLink\":\"https:\\/\\/github.com\\/Mohak2105\\/itroots-main\\/commit\\/a83647bdaa8f27d77a08bbdb0a5b7cfd87d9fae5\",\"parameters\":[{\"project_uuid\":\"zrhca7dkrxv91o64n4dpsz69\",\"environment_uuid\":\"o477q8af0dir233gvb1q8zhs\",\"application_uuid\":\"ha82d0dq83zpu2nfqmvdq59f\"},{\"s\":\"arr\"}],\"docker_cleanup\":true},\"memo\":{\"id\":\"BvbNR899t1f18XDxtbqf\",\"name\":\"project.application.heading\",\"path\":\"project\\/zrhca7dkrxv91o64n4dpsz69\\/environment\\/o477q8af0dir233gvb1q8zhs\\/application\\/ha82d0dq83zpu2nfqmvdq59f\\/logs\",\"method\":\"GET\",\"release\":\"a-a-a\",\"children\":[],\"scripts\":[],\"assets\":[],\"errors\":[],\"locale\":\"en\"},\"checksum\":\"7831886e658fe52a0858ea036b456174c5fad55444e0a6a200e2676366d27895\"}"
+}

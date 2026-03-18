@@ -7,7 +7,7 @@ interface BatchAttributes {
     id: string;
     name: string;
     courseId: string;
-    FacultyId: string;
+    FacultyId?: string | null;
     schedule: string;
     startDate: string;
     endDate: string;
@@ -17,7 +17,7 @@ class Batch extends Model<BatchAttributes> implements BatchAttributes {
     public id!: string;
     public name!: string;
     public courseId!: string;
-    public FacultyId!: string;
+    public FacultyId?: string | null;
     public schedule!: string;
     public startDate!: string;
     public endDate!: string;
@@ -45,7 +45,7 @@ Batch.init(
         FacultyId: {
             type: DataTypes.UUID,
             allowNull: true,
-            field: 'FacultyId',
+            field: 'teacherId',
             references: { model: User, key: 'id' }
         },
         schedule: {
@@ -70,8 +70,8 @@ Batch.init(
 );
 
 Batch.belongsTo(Course, { as: 'course', foreignKey: 'courseId' });
-Batch.belongsTo(User, { as: 'Faculty', foreignKey: 'teacherId' });
+Batch.belongsTo(User, { as: 'Faculty', foreignKey: 'FacultyId' });
 Course.hasMany(Batch, { as: 'batches', foreignKey: 'courseId' });
-User.hasMany(Batch, { as: 'FacultyBatches', foreignKey: 'teacherId' });
+User.hasMany(Batch, { as: 'FacultyBatches', foreignKey: 'FacultyId' });
 
 export default Batch;
