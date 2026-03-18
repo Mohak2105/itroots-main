@@ -185,7 +185,7 @@ export default function StudentDashboard() {
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
-            router.push("/lms/login");
+            router.push("/student/login");
         }
     }, [user, isLoading, router]);
 
@@ -288,7 +288,7 @@ export default function StudentDashboard() {
                                     Showing {recentVideos.length} of {uploadedVideos.length} videos in this view
                                 </div>
                             </div>
-                            <Link href="/my-learning" className={styles.viewAll}>View More <ArrowRight size={14} /></Link>
+                            <Link href="/student/my-learning" className={styles.viewAll}>View More <ArrowRight size={14} /></Link>
                         </div>
 
                         {loading ? (
@@ -349,7 +349,7 @@ export default function StudentDashboard() {
                                 <span className={styles.sectionTitle}>Recent Notifications</span>
                                 <div className={styles.sectionSub}>Showing the latest 3 updates from your LMS feed.</div>
                             </div>
-                            <Link href="/announcements" className={styles.viewAll}>View More <ArrowRight size={14} /></Link>
+                            <Link href="/student/announcements" className={styles.viewAll}>View More <ArrowRight size={14} /></Link>
                         </div>
 
                         {loading ? (

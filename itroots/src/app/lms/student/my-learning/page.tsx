@@ -145,7 +145,7 @@ export default function StudentLearningPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
-            router.push("/lms/login");
+            router.push("/student/login");
         }
     }, [user, isLoading, router]);
 
@@ -284,7 +284,7 @@ export default function StudentLearningPage() {
                         <Books size={44} color="#94a3b8" weight="duotone" />
                         <h3>No enrolled batches yet</h3>
                         <p>Your courses will appear here as soon as you are assigned to a batch.</p>
-                        <Link href="/available-batches" className={styles.ctaBtn}>
+                        <Link href="/student/available-batches" className={styles.ctaBtn}>
                             Browse Available Batches
                         </Link>
                     </div>

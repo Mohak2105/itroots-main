@@ -35,10 +35,10 @@ export default function FacultyLoginPage() {
         if (result.success) {
             const userRole = result.user?.role;
             if (userRole?.toUpperCase() === "FACULTY") {
-                router.push("/dashboard");
+                router.push("/faculty/dashboard");
             } else if (userRole === "SUPER_ADMIN" || userRole === "CMS_MANAGER") {
                 logout();
-                setError("Access Denied: Please use admin.itroots.com (or admin.localhost:3000 in dev)");
+                setError("Access Denied: Please use the Admin Portal at /admin/login.");
                 setIsLoading(false);
             } else {
                 // Must be a student
@@ -132,6 +132,3 @@ export default function FacultyLoginPage() {
         </div>
     );
 }
-
-
-

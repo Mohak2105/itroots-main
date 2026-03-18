@@ -47,7 +47,7 @@ export default function ResourcesPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
-            router.push("/lms/login");
+            router.push("/student/login");
         }
     }, [user, isLoading, router]);
 

@@ -7,7 +7,7 @@ export default function AdminWebsiteBlogPage() {
     const router = useRouter();
 
     useEffect(() => {
-        router.replace("/dashboard");
+        router.replace("/admin/dashboard");
     }, [router]);
 
     return null;

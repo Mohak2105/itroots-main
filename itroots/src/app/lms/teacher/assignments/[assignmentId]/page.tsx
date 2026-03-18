@@ -97,7 +97,7 @@ export default function TeacherAssignmentDetailPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
-            router.push("/lms/login");
+            router.push("/faculty/login");
         }
     }, [user, isLoading, router]);
 
@@ -201,7 +201,7 @@ export default function TeacherAssignmentDetailPage() {
         <LMSShell pageTitle="Assignment Review">
             <div className={styles.page}>
                 <div className={styles.backRow}>
-                    <button type="button" className={styles.backBtn} onClick={() => router.push("/assignments")}>
+                    <button type="button" className={styles.backBtn} onClick={() => router.push("/faculty/assignments")}>
                         <ArrowLeft size={16} /> Back to Assignments
                     </button>
                 </div>

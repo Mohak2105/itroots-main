@@ -1,5 +1,5 @@
 const EXTERNAL_URL_PATTERN = /^https?:\/\//i;
-const LIVE_CLASS_ROUTE_PATTERN = /^\/(?:lms\/(?:student|teacher)\/)?live-classes\/([^/?#]+)/i;
+const LIVE_CLASS_ROUTE_PATTERN = /^\/(?:(?:lms\/(?:student|teacher)|student|faculty)\/)?live-classes\/([^/?#]+)/i;
 
 export type LiveClassAudience = "TEACHER" | "STUDENT";
 
@@ -12,8 +12,8 @@ export type LiveClassJoinSource = {
 
 export const buildLiveClassHref = (liveClassId: string, audience: LiveClassAudience) => (
     audience === "TEACHER"
-        ? `/lms/teacher/live-classes/${liveClassId}`
-        : `/lms/student/live-classes/${liveClassId}`
+        ? `/faculty/live-classes/${liveClassId}`
+        : `/student/live-classes/${liveClassId}`
 );
 
 const normalizeJoinPath = (joinPath: string, audience: LiveClassAudience) => {

@@ -193,7 +193,11 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     const pathname = usePathname();
 
     // Immediately detectable via path — no header/footer needed
-    const isAppPath = pathname?.startsWith("/lms") || pathname?.startsWith("/admin");
+    const isAppPath =
+        pathname?.startsWith("/lms") ||
+        pathname?.startsWith("/admin") ||
+        pathname?.startsWith("/student") ||
+        pathname?.startsWith("/faculty");
 
     // Hostname-based detection (admin / student / Faculty subdomains)
     const [isAppHost, setIsAppHost] = useState<boolean | null>(null);

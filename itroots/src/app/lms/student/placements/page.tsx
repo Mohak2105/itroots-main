@@ -62,7 +62,7 @@ export default function StudentPlacementsPage({ searchParams }: StudentPlacement
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
-            router.push("/lms/login");
+            router.push("/student/login");
         }
     }, [user, isLoading, router]);
 

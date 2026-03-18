@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
@@ -51,7 +51,7 @@ export default function StudentAssignmentsPage() {
     const [notesByAssignment, setNotesByAssignment] = useState<Record<string, string>>({});
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "STUDENT")) router.push("/lms/login");
+        if (!isLoading && (!user || user.role !== "STUDENT")) router.push("/student/login");
     }, [user, isLoading, router]);
 
     const fetchAssignments = async () => {

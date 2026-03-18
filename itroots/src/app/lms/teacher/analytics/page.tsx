@@ -20,7 +20,7 @@ export default function FacultyAnalyticsPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
-            router.push("/lms/login");
+            router.push("/faculty/login");
         }
     }, [user, isLoading, router]);
 

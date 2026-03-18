@@ -13,7 +13,7 @@ export default function FacultyEngagementPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
-            router.push("/lms/login");
+            router.push("/faculty/login");
         }
     }, [user, isLoading, router]);
 
@@ -34,4 +34,3 @@ export default function FacultyEngagementPage() {
         </LMSShell>
     );
 }
-

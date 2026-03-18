@@ -31,7 +31,7 @@ export default function CourseDetailPage() {
     const [completedIds, setCompletedIds] = useState<string[]>([]);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "STUDENT")) router.push("/lms/login");
+        if (!isLoading && (!user || user.role !== "STUDENT")) router.push("/student/login");
     }, [user, isLoading, router]);
 
     const course = getCourseById(courseId);
@@ -83,7 +83,7 @@ export default function CourseDetailPage() {
     return (
         <LMSShell pageTitle={course.title}>
             <div className={styles.layout}>
-                {/* ── Left: Lesson Player ── */}
+                {/* â”€â”€ Left: Lesson Player â”€â”€ */}
                 <div className={styles.playerSection}>
                     {activeLesson ? (
                         <>
@@ -152,7 +152,7 @@ export default function CourseDetailPage() {
                     )}
                 </div>
 
-                {/* ── Right: Curriculum Sidebar ── */}
+                {/* â”€â”€ Right: Curriculum Sidebar â”€â”€ */}
                 <aside className={styles.curriculum}>
                     {/* Progress */}
                     <div className={styles.curriculumProgress}>

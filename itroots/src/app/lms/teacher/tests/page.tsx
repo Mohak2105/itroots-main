@@ -209,7 +209,7 @@ export default function TeacherTestsPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
-            router.push("/lms/login");
+            router.push("/faculty/login");
         }
     }, [user, isLoading, router]);
 
@@ -545,7 +545,7 @@ export default function TeacherTestsPage() {
                                         <td>{formatDate(test.createdAt)}</td>
                                         <td>
                                             <div className={styles.actionGroup}>
-                                                <Link href={`/tests/${test.id}/results`} className={styles.viewBtn}>
+                                                <Link href={`/faculty/tests/${test.id}/results`} className={styles.viewBtn}>
                                                     View Results <ArrowRight size={14} />
                                                 </Link>
                                                 <button

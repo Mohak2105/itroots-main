@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -93,7 +93,7 @@ export default function AdminDashboard() {
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "SUPER_ADMIN")) {
-            router.push("/login");
+            router.push("/admin/login");
         }
     }, [user, isLoading, router]);
 
@@ -149,15 +149,15 @@ export default function AdminDashboard() {
                     <div className={styles.section} style={{ gridColumn: "1 / -1" }}>
 
                         <div className={styles.controlsGrid} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem", padding: "1.5rem" }}>
-                            <Link href="/students" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
+                            <Link href="/admin/students" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
                                 <Users size={48} color="#0881ec" />
                                 <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Student Records</span>
                             </Link>
-                            <Link href="/Faculty" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
+                            <Link href="/admin/teachers" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
                                 <Chalkboard size={48} color="#0881ec" />
                                 <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Faculty Management</span>
                             </Link>
-                            <Link href="/batches" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
+                            <Link href="/admin/batches" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
                                 <Calendar size={48} color="#0881ec" />
                                 <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Batch Scheduling</span>
                             </Link>
@@ -167,7 +167,7 @@ export default function AdminDashboard() {
                     <div className={styles.section} style={{ gridColumn: "1 / -1" }}>
                         <div className={styles.sectionHeader}>
                             <span>Batch Schedule</span>
-                            <Link href="/batches" style={{ color: "#0881ec", textDecoration: "none", fontSize: "0.85rem", fontWeight: 700 }}>
+                            <Link href="/admin/batches" style={{ color: "#0881ec", textDecoration: "none", fontSize: "0.85rem", fontWeight: 700 }}>
                                 Open All Batches
                             </Link>
                         </div>
@@ -190,7 +190,7 @@ export default function AdminDashboard() {
                                         dashboard.allBatches.map((batch) => (
                                             <tr key={batch.id}>
                                                 <td>
-                                                    <Link href="/batches" className={styles.tableLink}>{batch.name}</Link>
+                                                    <Link href="/admin/batches" className={styles.tableLink}>{batch.name}</Link>
                                                 </td>
                                                 <td>{batch.course?.title || "Unassigned"}</td>
                                                 <td>{batch.Faculty?.name || "Unassigned"}</td>

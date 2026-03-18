@@ -90,7 +90,7 @@ export default function AdminStudentsPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "SUPER_ADMIN")) {
-            router.push("/login");
+            router.push("/admin/login");
         }
     }, [user, isLoading, router]);
 

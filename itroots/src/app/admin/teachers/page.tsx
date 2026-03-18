@@ -89,7 +89,7 @@ export default function AdminFacultyPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "SUPER_ADMIN")) {
-            router.push("/login");
+            router.push("/admin/login");
         }
     }, [user, isLoading, router]);
 
@@ -272,7 +272,7 @@ export default function AdminFacultyPage() {
             }
             impersonate(data.user, data.token);
             toast.success(`Logged in as ${data.user.name}`);
-            router.push("/lms/teacher/dashboard");
+            router.push("/faculty/dashboard");
         } catch (err) {
             console.error("Impersonation error:", err);
             toast.error(err instanceof Error ? err.message : "Impersonation failed");
@@ -529,4 +529,3 @@ export default function AdminFacultyPage() {
         </LMSShell>
     );
 }
-

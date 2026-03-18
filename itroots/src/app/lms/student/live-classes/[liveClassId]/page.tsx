@@ -47,7 +47,7 @@ export default function StudentLiveClassRoomPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "STUDENT")) {
-            router.push("/lms/login");
+            router.push("/student/login");
         }
     }, [user, isLoading, router]);
 
@@ -92,7 +92,7 @@ export default function StudentLiveClassRoomPage() {
     return (
         <LMSShell pageTitle="Live Class Room">
             <div className={styles.page}>
-                <Link href="/lms/student/calendar" className={styles.backLink}>
+                <Link href="/student/calendar" className={styles.backLink}>
                     <ArrowLeft size={16} /> Back to Live Classes
                 </Link>
 
@@ -145,7 +145,7 @@ export default function StudentLiveClassRoomPage() {
                             <div className={styles.actionCard}>
                                 <div className={styles.actionTitle}>This live class has ended</div>
                                 <div className={styles.actionBody}>The teacher ended the session, so the join room has been closed.</div>
-                                <Link href="/lms/student/calendar" className={styles.primaryAction}>
+                                <Link href="/student/calendar" className={styles.primaryAction}>
                                     Back to Live Classes
                                 </Link>
                             </div>

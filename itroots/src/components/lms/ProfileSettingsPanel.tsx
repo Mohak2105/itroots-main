@@ -6,6 +6,7 @@ import { Camera, CheckCircle, Gear, LockKey, ShieldCheck, User as UserIcon, Warn
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { API_ORIGIN, ENDPOINTS } from "@/config/api";
+import { FACULTY_LOGIN_PATH, STUDENT_LOGIN_PATH } from "@/utils/portalRoutes";
 import styles from "./profile-settings.module.css";
 
 type SupportedRole = "STUDENT" | "FACULTY";
@@ -53,8 +54,7 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
     });
 
     useEffect(() => {
-        const isPortalSubdomain = typeof window !== "undefined" && (window.location.hostname.startsWith("student") || window.location.hostname.startsWith("Faculty") || window.location.hostname.startsWith("Faculty"));
-        const loginPath = isPortalSubdomain ? "/login" : "/lms/login";
+        const loginPath = requiredRole === "FACULTY" ? FACULTY_LOGIN_PATH : STUDENT_LOGIN_PATH;
 
         if (!isLoading) {
             const isFacultyRoleRequired = requiredRole === "FACULTY";
@@ -353,5 +353,3 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
         </LMSShell>
     );
 }
-
-

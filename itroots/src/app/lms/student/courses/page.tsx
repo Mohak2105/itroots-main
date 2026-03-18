@@ -32,7 +32,7 @@ export default function StudentCoursesPage() {
     const router = useRouter();
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "STUDENT")) router.push("/lms/login");
+        if (!isLoading && (!user || user.role !== "STUDENT")) router.push("/student/login");
     }, [user, isLoading, router]);
 
     if (isLoading || !user) return null;
@@ -96,7 +96,7 @@ export default function StudentCoursesPage() {
 
                                     <div className={styles.cardActions}>
                                         <Link
-                                            href={`/lms/student/courses/${course.id}`}
+                                            href={`/student/courses/${course.id}`}
                                             className={styles.btnPrimary}
                                         >
                                             {enrollment.progress > 0 ? "Continue Learning →" : "Start Learning →"}

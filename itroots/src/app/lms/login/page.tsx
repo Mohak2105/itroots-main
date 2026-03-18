@@ -55,10 +55,10 @@ export default function LMSLoginPage() {
 
             if (userRole === "SUPER_ADMIN" || userRole === "CMS_MANAGER") {
                 logout();
-                setError("Access Denied: Please use admin.itroots.com (or admin.localhost:3000 in dev)");
+                setError("Access Denied: Please use the Admin Portal at /admin/login.");
                 setIsLoading(false);
             } else if (userRole === "STUDENT") {
-                router.push("/dashboard");
+                router.push("/student/dashboard");
             } else {
                 logout();
                 setError("This portal is for students. Please use the Instructor Portal.");

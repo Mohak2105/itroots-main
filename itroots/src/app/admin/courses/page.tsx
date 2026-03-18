@@ -44,7 +44,7 @@ export default function AdminCoursesPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "SUPER_ADMIN")) {
-            router.push("/login");
+            router.push("/admin/login");
         }
     }, [user, isLoading, router]);
 
@@ -303,4 +303,3 @@ export default function AdminCoursesPage() {
         </LMSShell>
     );
 }
-

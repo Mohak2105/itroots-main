@@ -109,13 +109,13 @@ export default function StudentTestsPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "STUDENT")) {
-            router.push("/lms/login");
+            router.push("/student/login");
         }
     }, [user, isLoading, router]);
 
     const handleSessionExpired = useCallback(() => {
         logout();
-        router.push("/lms/login");
+        router.push("/student/login");
     }, [logout, router]);
 
     const fetchTests = useCallback(async () => {

@@ -81,7 +81,7 @@ export default function AdminStudentProfilePage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "SUPER_ADMIN")) {
-            router.push("/login");
+            router.push("/admin/login");
         }
     }, [user, isLoading, router]);
 
@@ -141,7 +141,7 @@ export default function AdminStudentProfilePage() {
                         <p>Admin view of the student profile, enrolled batches, fee status, and certificate history.</p>
                     </div>
                     <div className={styles.heroActions}>
-                        <Link href="/students" className={styles.backLink}>Back to Students</Link>
+                        <Link href="/admin/students" className={styles.backLink}>Back to Students</Link>
                     </div>
                 </section>
 

@@ -11,7 +11,9 @@ export default function TimetablePage() {
     const router = useRouter();
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "STUDENT")) router.push("/lms/login");
+        if (!isLoading && (!user || user.role !== "STUDENT")) {
+            router.push("/student/login");
+        }
     }, [user, isLoading, router]);
 
     if (isLoading || !user) return null;
@@ -20,14 +22,15 @@ export default function TimetablePage() {
     const course = batch ? getCourseById(batch.courseId) : null;
 
     const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-    const classdays = batch?.schedule?.split("—")[0]?.split(",").map((d) => d.trim()) ?? [];
-    const time = batch?.schedule?.split("—")[1]?.trim() ?? "";
+    const [scheduleDays = "", scheduleTime = ""] = batch?.schedule?.split(/\s*[—-]\s*/) ?? [];
+    const classdays = scheduleDays.split(",").map((day) => day.trim()).filter(Boolean);
+    const time = scheduleTime.trim();
 
     return (
         <LMSShell pageTitle="Timetable">
             <div style={{ marginBottom: "1.75rem" }}>
                 <h2 style={{ fontFamily: "Outfit", fontSize: "1.5rem", fontWeight: 800, color: "#0a0f1e", marginBottom: "0.25rem" }}>
-                    📅 Weekly Timetable
+                    Weekly Timetable
                 </h2>
                 <p style={{ fontSize: "0.88rem", color: "#64748b", margin: 0 }}>
                     {batch ? batch.name : "No batch assigned"}
@@ -41,22 +44,25 @@ export default function TimetablePage() {
             ) : (
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
                     {days.map((day) => {
-                        const hasClass = classdays.some((d) => day.startsWith(d.substring(0, 3)));
+                        const hasClass = classdays.some((currentDay) => day.startsWith(currentDay.substring(0, 3)));
                         return (
-                            <div key={day} style={{
-                                background: hasClass ? "linear-gradient(135deg, #0c2d4c, #0881ec)" : "#fff",
-                                color: hasClass ? "#fff" : "#94a3b8",
-                                border: hasClass ? "none" : "1px dashed #e2e8f0",
-                                borderRadius: "16px",
-                                padding: "1.5rem",
-                                textAlign: "center",
-                                boxShadow: hasClass ? "0 8px 24px rgba(8,129,236,0.3)" : "none",
-                            }}>
+                            <div
+                                key={day}
+                                style={{
+                                    background: hasClass ? "linear-gradient(135deg, #0c2d4c, #0881ec)" : "#fff",
+                                    color: hasClass ? "#fff" : "#94a3b8",
+                                    border: hasClass ? "none" : "1px dashed #e2e8f0",
+                                    borderRadius: "16px",
+                                    padding: "1.5rem",
+                                    textAlign: "center",
+                                    boxShadow: hasClass ? "0 8px 24px rgba(8,129,236,0.3)" : "none",
+                                }}
+                            >
                                 <div style={{ fontFamily: "Outfit", fontWeight: 800, fontSize: "1.1rem", marginBottom: "0.5rem" }}>{day}</div>
                                 {hasClass ? (
                                     <>
                                         <div style={{ fontSize: "0.85rem", opacity: 0.85, marginBottom: "0.4rem" }}>{course?.title}</div>
-                                        <div style={{ fontSize: "0.78rem", opacity: 0.7 }}>🕐 {time}</div>
+                                        <div style={{ fontSize: "0.78rem", opacity: 0.7 }}>Time: {time}</div>
                                     </>
                                 ) : (
                                     <div style={{ fontSize: "0.8rem" }}>No Class</div>

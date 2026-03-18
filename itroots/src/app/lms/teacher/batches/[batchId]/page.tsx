@@ -271,7 +271,7 @@ export default function BatchManagementPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
-            router.push("/lms/login");
+            router.push("/faculty/login");
         }
     }, [user, isLoading, router]);
 
@@ -703,7 +703,7 @@ export default function BatchManagementPage() {
                                         <small>{test.totalMarks} Marks | {test.durationMinutes} min</small>
                                     </div>
                                     <button
-                                        onClick={() => router.push(`/lms/Faculty/tests/${test.id}/results`)}
+                                        onClick={() => router.push(`/faculty/tests/${test.id}/results`)}
                                         className={styles.statBtn}
                                         title="View Results"
                                     >

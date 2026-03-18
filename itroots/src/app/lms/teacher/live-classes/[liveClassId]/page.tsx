@@ -48,7 +48,7 @@ export default function TeacherLiveClassRoomPage() {
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
-            router.push("/lms/login");
+            router.push("/faculty/login");
         }
     }, [user, isLoading, router]);
 
@@ -96,7 +96,7 @@ export default function TeacherLiveClassRoomPage() {
             }
 
             setLiveClass((current) => current ? { ...current, status: "COMPLETED" } : current);
-            router.push("/lms/teacher/calendar");
+            router.push("/faculty/calendar");
         } catch (err) {
             alert(err instanceof Error ? err.message : "Unable to end live class");
         } finally {
@@ -111,7 +111,7 @@ export default function TeacherLiveClassRoomPage() {
     return (
         <LMSShell pageTitle="Live Class Room">
             <div className={styles.page}>
-                <Link href="/lms/teacher/calendar" className={styles.backLink}>
+                <Link href="/faculty/calendar" className={styles.backLink}>
                     <ArrowLeft size={16} /> Back to Live Classes
                 </Link>
 

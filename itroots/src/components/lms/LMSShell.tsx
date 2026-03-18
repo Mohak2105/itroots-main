@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
@@ -6,6 +6,13 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import { ENDPOINTS } from "@/config/api";
+import {
+    buildPortalPath,
+    detectPortalFromPathname,
+    detectPortalFromUserRole,
+    getPortalLoginPath,
+    stripPortalPathPrefix,
+} from "@/utils/portalRoutes";
 import styles from "./lms-shell.module.css";
 import {
     SquaresFour,
@@ -176,13 +183,12 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
 
     if (isLoading) return null;
 
-    const hostname = typeof window !== "undefined" ? window.location.hostname : "";
-    const isAdminDomain = hostname.startsWith("admin");
-    const isSubdomain = hostname.toLowerCase().startsWith("admin") || hostname.toLowerCase().startsWith("student") || hostname.toLowerCase().startsWith("faculty");
-    const isAdminSidebar = isAdminDomain && user?.role === "SUPER_ADMIN";
+    const portal = detectPortalFromPathname(pathname) || detectPortalFromUserRole(user?.role);
+    const isAdminPortal = portal === "admin";
+    const isAdminSidebar = isAdminPortal && user?.role === "SUPER_ADMIN";
 
     const navGroups =
-        isAdminDomain && user?.role === "SUPER_ADMIN"
+        isAdminPortal && user?.role === "SUPER_ADMIN"
             ? ADMIN_NAV
             : user?.role?.toUpperCase() === "FACULTY" ? Faculty_NAV
                 : user?.role === "CMS_MANAGER"
@@ -191,7 +197,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
 
     const handleLogout = () => {
         logout();
-        router.push(isSubdomain ? "/login" : "/lms/login");
+        router.push(getPortalLoginPath(portal));
     };
 
     const userInitials = user?.name
@@ -204,35 +210,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
             : `${new URL(ENDPOINTS.AUTH.ME).origin}${user.profileImage}`)
         : "";
 
-    const normalizedPathname = (() => {
-        if (!pathname) return "/";
-
-        if (pathname.startsWith("/admin/")) {
-            return pathname.replace("/admin", "") || "/";
-        }
-
-        if (pathname === "/admin") {
-            return "/dashboard";
-        }
-
-        if (pathname.startsWith("/lms/student/")) {
-            return pathname.replace("/lms/student", "") || "/";
-        }
-
-        if (pathname === "/lms/student") {
-            return "/dashboard";
-        }
-
-        if (pathname.toLowerCase().startsWith("/lms/teacher/")) {
-            return pathname.replace(/\/lms\/teacher/i, "") || "/";
-        }
-
-        if (pathname.toLowerCase() === "/lms/teacher") {
-            return "/dashboard";
-        }
-
-        return pathname;
-    })();
+    const normalizedPathname = stripPortalPathPrefix(pathname);
 
     const isNavItemActive = (href: string) => {
         const [itemPath, queryString] = href.split("?");
@@ -282,7 +260,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                 return (
                                     <Link
                                         key={item.href}
-                                        href={item.href}
+                                        href={buildPortalPath(portal, item.href)}
                                         className={`${styles.navItem} ${isActive ? styles.navItemActive : ""}`}
                                         onClick={() => setSidebarOpen(false)}
                                     >
@@ -316,7 +294,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                     <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         {user?.role === "STUDENT" && (
                             <Link
-                                href="/announcements"
+                                href={buildPortalPath(portal, "/announcements")}
                                 style={{
                                     width: "36px",
                                     height: "36px",
@@ -366,7 +344,10 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                     <div className={styles.dropdownDivider} />
 
                                     <Link
-                                        href={user?.role === "SUPER_ADMIN" ? "/dashboard" : "/settings"}
+                                        href={buildPortalPath(
+                                            portal,
+                                            user?.role === "SUPER_ADMIN" ? "/dashboard" : "/settings"
+                                        )}
                                         className={styles.dropdownItem}
                                         onClick={() => setProfileDropdownOpen(false)}
                                     >

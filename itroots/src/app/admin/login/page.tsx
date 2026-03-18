@@ -35,7 +35,7 @@ export default function AdminLoginPage() {
             const userRole = result.user?.role;
 
             if (userRole === "SUPER_ADMIN" || userRole === "CMS_MANAGER") {
-                router.push("/dashboard");
+                router.push("/admin/dashboard");
             } else {
                 logout();
                 setError("Access Denied: Only admins and CMS managers can access this panel.");
