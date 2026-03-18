@@ -62,7 +62,7 @@ export default function Footer() {
                                     <li><Link href="/about">About Us</Link></li>
                                     <li><Link href="/contact">Contact Us</Link></li>
                                     <li style={{ marginTop: '1rem' }}>
-                                        <Link href="/lms/login" className={styles.loginButton}>Student Login →</Link>
+                                        <a href="http://student.localhost:3000/lms/login" className={styles.loginButton}>Student Login →</a>
                                     </li>
                                 </ul>
                             </div>
