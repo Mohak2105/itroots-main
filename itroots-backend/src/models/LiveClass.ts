@@ -68,7 +68,7 @@ LiveClass.init(
         FacultyId: {
             type: DataTypes.UUID,
             allowNull: false,
-            field: 'teacherId',
+            field: 'FacultyId',
             references: { model: User, key: 'id' },
         },
         scheduledAt: {

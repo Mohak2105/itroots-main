@@ -45,7 +45,7 @@ Batch.init(
         FacultyId: {
             type: DataTypes.UUID,
             allowNull: true,
-            field: 'teacherId',
+            field: 'FacultyId',
             references: { model: User, key: 'id' }
         },
         schedule: {
