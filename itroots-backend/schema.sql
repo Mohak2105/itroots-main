@@ -23,6 +23,7 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(255) NOT NULL,
     email VARCHAR(255) NOT NULL,
     phone VARCHAR(255) NULL,
+    profileImage VARCHAR(255) NULL,
     password VARCHAR(255) NOT NULL,
     role ENUM('SUPER_ADMIN', 'CMS_MANAGER', 'Faculty', 'STUDENT') NOT NULL DEFAULT 'STUDENT',
     specialization VARCHAR(255) NULL,

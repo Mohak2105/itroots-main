@@ -15,6 +15,7 @@ import publicRoutes from './routes/publicRoutes';
 import { verifyMailerConnection } from './services/mailer';
 import { ensureTestDueAtColumn, ensureTestResultAnalyticsColumns } from './utils/testSchema';
 import { ensureLiveClassJitsiColumns } from './utils/liveClassSchema';
+import { ensureUserProfileImageColumn } from './utils/userSchema';
 import { ensureDemoUsers } from './seedAdmin';
 
 import './models/User';
@@ -71,6 +72,7 @@ const startServer = async () => {
     try {
         await connectDB();
         console.log('Database connection ready');
+        await ensureUserProfileImageColumn();
         await ensureDemoUsers();
         await ensureTestDueAtColumn();
         await ensureTestResultAnalyticsColumns();

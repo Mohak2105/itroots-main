@@ -2,7 +2,8 @@
 
 ALTER TABLE users
     ADD COLUMN IF NOT EXISTS username VARCHAR(255) NULL,
-    ADD COLUMN IF NOT EXISTS specialization VARCHAR(255) NULL;
+    ADD COLUMN IF NOT EXISTS specialization VARCHAR(255) NULL,
+    ADD COLUMN IF NOT EXISTS profileImage VARCHAR(255) NULL;
 
 SET @has_username_index := (
     SELECT COUNT(*)
