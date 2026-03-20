@@ -1,0 +1,27 @@
+.shinyButton {
+    position: relative;
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.shinyButton::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -100%;
+    width: 50%;
+    height: 200%;
+    background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    transform: skewX(-20deg);
+    animation: shinySweep 2.8s linear infinite;
+    pointer-events: none;
+}
+
+@keyframes shinySweep {
+    0% {
+        transform: translateX(-120%) skewX(-20deg);
+    }
+    100% {
+        transform: translateX(320%) skewX(-20deg);
+    }
+}

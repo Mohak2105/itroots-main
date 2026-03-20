@@ -1,0 +1,160 @@
+.selectWrapper {
+    position: relative;
+    width: 100%;
+}
+
+.selectButton {
+    width: 100%;
+    min-height: 50px;
+    padding: var(--space-4);
+    background: var(--white);
+    border: 1px solid var(--light-gray);
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-2);
+    transition: all var(--transition-fast);
+    box-sizing: border-box;
+}
+
+.selectButton:hover {
+    border-color: var(--primary-blue);
+}
+
+.selectButton:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(8, 129, 236, 0.1);
+}
+
+.open {
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px rgba(8, 129, 236, 0.1);
+}
+
+.placeholderText {
+    color: var(--gray);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.selectedText {
+    color: var(--text-dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.optionContent {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.optionLabelText {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.selectCountBadge {
+    min-width: 28px;
+    height: 28px;
+    padding: 0 0.45rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--primary-blue);
+    border: 1px solid rgba(8, 129, 236, 0.28);
+    color: #ffffff;
+    font-size: 0.78rem;
+    font-weight: 800;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.hasValue {
+    color: var(--text-dark);
+}
+
+.chevron {
+    color: var(--gray);
+    transition: transform 0.2s ease;
+    flex-shrink: 0;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.optionsList {
+    background: var(--white);
+    border: 1px solid var(--light-gray);
+    border-radius: 10px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.12);
+    list-style: none;
+    padding: 10px 0;
+    margin: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.option {
+    padding: 10px 12px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-dark);
+    transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.option:hover,
+.highlighted {
+    background: var(--off-white);
+}
+
+.selected {
+    background: rgba(8, 129, 236, 0.08);
+    color: var(--primary-blue);
+}
+
+.selected .selectCountBadge {
+    background: var(--primary-blue);
+    border-color: rgba(8, 129, 236, 0.24);
+}
+
+.optionsList::-webkit-scrollbar {
+    width: 6px;
+}
+
+.optionsList::-webkit-scrollbar-track {
+    background: var(--off-white);
+    border-radius: 3px;
+}
+
+.optionsList::-webkit-scrollbar-thumb {
+    background: var(--light-gray);
+    border-radius: 3px;
+}
+
+.optionsList::-webkit-scrollbar-thumb:hover {
+    background: var(--gray);
+}
+
+.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    pointer-events: none;
+}

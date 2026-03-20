@@ -1,0 +1,313 @@
+/* ─── Student Management ─────────────────────── */
+
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.banner {
+    background: linear-gradient(90deg, #0f3f6f 0%, #1571c1 60%, #2088e6 100%);
+    border-radius: 28px;
+    padding: 2rem 2.5rem;
+    min-height: 160px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.banner::before {
+    content: '';
+    position: absolute;
+    right: -48px;
+    top: -36px;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+.bannerTitle {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    position: relative;
+    z-index: 1;
+}
+
+.bannerSub {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 620px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Summary Cards */
+.summaryGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+}
+
+.summaryCard {
+    background: #fff;
+    border-radius: 14px;
+    padding: 1.25rem;
+    border: 1px solid #f0f4f8;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.summaryIcon {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.summaryValue {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1;
+}
+
+.summaryLabel {
+    font-size: 0.78rem;
+    color: #6b7280;
+    font-weight: 500;
+}
+
+/* Controls */
+.controls {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+    background: #fff;
+    padding: 1rem 1.5rem;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    flex-wrap: wrap;
+}
+
+.selectWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.customSelectWrap {
+    min-width: 280px;
+}
+
+.customSelectWrap > div {
+    width: 100%;
+}
+
+.customSelectWrap :is(button, select) {
+    min-height: 44px;
+    border-radius: 8px;
+    border-color: #e5e7eb;
+    background: #f8fafc;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.selectLabel {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #6b7280;
+}
+
+.searchWrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    background: #f8fafc;
+}
+
+.searchInput {
+    border: none;
+    background: transparent;
+    outline: none;
+    font-size: 0.875rem;
+    font-family: inherit;
+    color: #111827;
+    min-width: 180px;
+}
+
+/* Table */
+.tableContainer {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e5e7eb;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    background: #f8fafc;
+    padding: 0.875rem 1.25rem;
+    text-align: left;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+    padding: 0.875rem 1.25rem;
+    border-bottom: 1px solid #f3f4f6;
+    font-size: 0.875rem;
+    color: #111827;
+    vertical-align: middle;
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background: #f8fafc;
+}
+
+.studentInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #0c2d4c, #0881ec);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.name {
+    font-weight: 600;
+    color: #111827;
+    display: block;
+    font-size: 0.875rem;
+}
+
+.email {
+    font-size: 0.72rem;
+    color: #6b7280;
+}
+
+.attBadge {
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+.progressWrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.progressBar {
+    width: 90px;
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.progressFill {
+    height: 100%;
+    border-radius: 99px;
+}
+
+.progressPct {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: #374151;
+}
+
+.emptyState {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: #6b7280;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.skeleton {
+    height: 52px;
+    background: linear-gradient(90deg, #f0f4f8 25%, #e5eaf0 50%, #f0f4f8 75%);
+    background-size: 200% 100%;
+    border-radius: 8px;
+    animation: shimmer 1.4s infinite;
+    width: 100%;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .banner {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .customSelectWrap { min-width: 100%; }
+
+    .searchInput {
+        min-width: 120px;
+    }
+
+    .table {
+        font-size: 0.8rem;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.75rem;
+    }
+}

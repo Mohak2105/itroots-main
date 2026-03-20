@@ -1,0 +1,231 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+}
+
+.banner {
+    background: linear-gradient(90deg, #0f3f6f 0%, #1571c1 60%, #2088e6 100%);
+    border-radius: 28px;
+    padding: 2rem 2.5rem;
+    min-height: 160px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+}
+
+.banner::before {
+    content: "";
+    position: absolute;
+    right: -48px;
+    top: -36px;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+.bannerTitle {
+    position: relative;
+    z-index: 1;
+    font-family: "Outfit", "Inter", sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+}
+
+.bannerSub {
+    position: relative;
+    z-index: 1;
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 620px;
+}
+
+.tableCard {
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1.15rem 1.3rem;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.cardHeader h3 {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.cardMeta {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #64748b;
+}
+
+.tableWrap {
+    overflow-x: auto;
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 980px;
+}
+
+.table thead th {
+    padding: 1.1rem 1rem;
+    text-align: left;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #94a3b8;
+    background: #f8fafc;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.table tbody td {
+    padding: 1.2rem 1rem;
+    vertical-align: top;
+    border-bottom: 1px solid #eef2f7;
+    font-size: 0.92rem;
+    color: #334155;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.tableStack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.tablePrimary {
+    font-size: 0.98rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.tablePrimarySmall {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.tableSecondary {
+    font-size: 0.85rem;
+    color: #64748b;
+    line-height: 1.6;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+}
+
+.messageClamp {
+    display: inline-block;
+    max-width: 360px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.inlineLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #0881ec;
+    font-size: 0.84rem;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.readBadge,
+.unreadBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 72px;
+    padding: 0.45rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.76rem;
+    font-weight: 700;
+}
+
+.readBadge {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.unreadBadge {
+    background: #eff6ff;
+    color: #1d4ed8;
+}
+
+.actionCell {
+    white-space: nowrap;
+}
+
+.readBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    border: none;
+    background: #0f172a;
+    color: #fff;
+    border-radius: 999px;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.76rem;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.readBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.doneText {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #64748b;
+}
+
+.emptyAction {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #cbd5e1;
+}
+
+.emptyCell {
+    padding: 2.5rem 1.5rem !important;
+    text-align: center;
+    color: #64748b !important;
+}
+
+@media (max-width: 768px) {
+    .banner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

@@ -1,0 +1,308 @@
+/* Admin Login - Dark Glassmorphism */
+.pageWrapper {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+    background: #030712;
+    /* Very dark blue/black */
+    font-family: 'Inter', sans-serif;
+    padding: 1rem;
+}
+
+/* Animated background blobs */
+.bgBlob1 {
+    position: absolute;
+    width: 60vw;
+    height: 60vw;
+    background: radial-gradient(circle, rgba(220, 38, 38, 0.15) 0%, rgba(220, 38, 38, 0) 70%);
+    top: -20vw;
+    left: -10vw;
+    border-radius: 50%;
+    filter: blur(60px);
+    animation: float1 15s ease-in-out infinite;
+}
+
+.bgBlob2 {
+    position: absolute;
+    width: 50vw;
+    height: 50vw;
+    background: radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, rgba(147, 51, 234, 0) 70%);
+    bottom: -20vw;
+    right: -10vw;
+    border-radius: 50%;
+    filter: blur(60px);
+    animation: float2 18s ease-in-out infinite alternate;
+}
+
+@keyframes float1 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(5%, 5%) scale(1.1);
+    }
+
+    66% {
+        transform: translate(-5%, 8%) scale(0.95);
+    }
+
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+}
+
+@keyframes float2 {
+    0% {
+        transform: translate(0, 0) scale(1);
+    }
+
+    33% {
+        transform: translate(-8%, -5%) scale(1.05);
+    }
+
+    66% {
+        transform: translate(5%, -8%) scale(0.9);
+    }
+
+    100% {
+        transform: translate(0, 0) scale(1);
+    }
+}
+
+.bgGrid {
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    z-index: 1;
+}
+
+.glassCard {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 440px;
+    background: rgba(15, 23, 42, 0.6);
+    /* Slate 900 */
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 28px;
+    padding: 3rem 2.5rem;
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.logoContainer {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+}
+
+.iconWrapper {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, #ef4444, #991b1b);
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 12px 24px rgba(220, 38, 38, 0.25);
+    transform: rotate(5deg);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.glassCard:hover .iconWrapper {
+    transform: rotate(0deg) scale(1.05);
+}
+
+.title {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #f8fafc;
+    text-align: center;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.5px;
+}
+
+.subtitle {
+    color: #94a3b8;
+    text-align: center;
+    font-size: 0.95rem;
+    margin-bottom: 2.5rem;
+}
+
+.formGroup {
+    margin-bottom: 1.25rem;
+}
+
+.label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    margin-bottom: 0.5rem;
+}
+
+.inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 1rem;
+    color: #64748b;
+    transition: color 0.2s ease;
+}
+
+.input {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #f8fafc;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.input::placeholder {
+    color: #475569;
+}
+
+.input:focus {
+    border-color: #ef4444;
+    background: rgba(30, 41, 59, 0.8);
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.15);
+}
+
+.input:focus+.inputIcon,
+.input:not(:placeholder-shown)+.inputIcon {
+    color: #ef4444;
+}
+
+.togglePass {
+    position: absolute;
+    right: 1rem;
+    background: none;
+    border: none;
+    color: #64748b;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    transition: color 0.2s;
+}
+
+.togglePass:hover {
+    color: #cbd5e1;
+}
+
+.errorBox {
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.2);
+    color: #fca5a5;
+    padding: 0.875rem 1rem;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 500;
+}
+
+.submitBtn {
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
+    color: #fff;
+    border: none;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    box-shadow: 0 4px 12px rgba(8, 129, 236, 0.2);
+}
+
+.submitBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(8, 129, 236, 0.35);
+}
+
+.submitBtn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.demoBox {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    padding: 0.75rem;
+    font-size: 0.75rem;
+    color: #94a3b8;
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.demoBox strong {
+    color: #e2e8f0;
+}
+
+.backLink {
+    display: flex;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.backBtn {
+    color: #94a3b8;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s;
+}
+
+.backBtn:hover {
+    color: #f8fafc;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}

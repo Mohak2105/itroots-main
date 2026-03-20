@@ -1,0 +1,552 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.banner {
+    background: linear-gradient(90deg, #0f3f6f 0%, #1571c1 60%, #2088e6 100%);
+    border-radius: 28px;
+    padding: 2rem 2.5rem;
+    min-height: 160px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    color: #fff;
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+}
+
+.banner::before {
+    content: '';
+    position: absolute;
+    right: -48px;
+    top: -36px;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+}
+
+.bannerTitle {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin-bottom: 0.4rem;
+    position: relative;
+    z-index: 1;
+}
+
+.bannerSub {
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.82);
+    max-width: 620px;
+    position: relative;
+    z-index: 1;
+}
+
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    background: #fff;
+    border-radius: 16px;
+    border: 2px dashed #e2e8f0;
+    text-align: center;
+    gap: 0.75rem;
+}
+
+.emptyState h3 {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #374151;
+    margin: 0;
+}
+
+.emptyState p {
+    font-size: 0.875rem;
+    color: #6b7280;
+    margin: 0;
+}
+
+.testsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.testCard {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: box-shadow 0.2s;
+}
+
+.testCard:hover {
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.1);
+}
+
+.testCardDone {
+    background: #f0fdf4;
+    border-color: #86efac;
+}
+
+.testCardClosed {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+}
+
+.testCardIcon {
+    font-size: 2rem;
+    flex-shrink: 0;
+}
+
+.testCardBody {
+    flex: 1;
+    min-width: 0;
+}
+
+.testCoursePill {
+    display: inline-block;
+    background: rgba(8, 129, 236, 0.08);
+    color: #0881ec;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+}
+
+.testTitle {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0a0f1e;
+    margin: 0 0 0.5rem;
+}
+
+.testMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    font-size: 0.78rem;
+    color: #64748b;
+    align-items: center;
+    margin-top: 0.35rem;
+}
+
+.testMeta span {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.scoreChip {
+    background: rgba(16, 185, 129, 0.1);
+    color: #047857;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 100px;
+}
+
+.dueChip {
+    background: rgba(245, 158, 11, 0.12);
+    color: #b45309;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 100px;
+}
+
+.startBtn {
+    padding: 0.6rem 1.5rem;
+    background: linear-gradient(135deg, #ee9602, #f5a623);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+    flex-shrink: 0;
+}
+
+.startBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(238, 150, 2, 0.4);
+}
+
+.startBtnDone {
+    background: #e2e8f0;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.startBtnClosed {
+    background: #e2e8f0;
+    color: #64748b;
+    cursor: not-allowed;
+}
+
+.quizContainer {
+    max-width: 860px;
+    margin: 0 auto;
+}
+
+.quizHeader {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    gap: 1rem;
+}
+
+.quizHeaderSide {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.75rem;
+}
+
+.quizTitle {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #0a0f1e;
+    margin-bottom: 0.25rem;
+}
+
+.quizMeta {
+    font-size: 0.82rem;
+    color: #64748b;
+    margin: 0;
+}
+
+.quizDeadline {
+    margin: 0.5rem 0 0;
+    color: #b45309;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.quizDescription {
+    margin: 0.6rem 0 0;
+    color: #475569;
+    font-size: 0.88rem;
+    line-height: 1.5;
+}
+
+.quizProgress {
+    background: rgba(8, 129, 236, 0.1);
+    color: #0881ec;
+    font-size: 0.82rem;
+    font-weight: 700;
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    white-space: nowrap;
+}
+
+.timerChip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(15, 23, 42, 0.06);
+    color: #0f172a;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 0.5rem 0.9rem;
+    border-radius: 10px;
+}
+
+.timerDanger {
+    background: rgba(239, 68, 68, 0.12);
+    color: #dc2626;
+}
+
+.securityBanner {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    background: #fff7ed;
+    border: 1px solid #fdba74;
+    color: #9a3412;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+
+.resultBanner {
+    border-radius: 16px;
+    padding: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.resultPass {
+    background: linear-gradient(135deg, #064e3b, #10b981);
+    color: #fff;
+}
+
+.resultFail {
+    background: linear-gradient(135deg, #7f1d1d, #ef4444);
+    color: #fff;
+}
+
+.resultScore {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+}
+
+.resultPct {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    opacity: 0.85;
+}
+
+.resultMsg {
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.resultDetails {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.resultNote {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: 100%;
+    justify-content: center;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.backBtn {
+    padding: 0.5rem 1.25rem;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.backBtn:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.questionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.questionCard {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 14px;
+    display: flex;
+    gap: 1rem;
+    padding: 1.25rem;
+    box-shadow: 0 1px 6px rgba(0, 0, 0, 0.04);
+}
+
+.qCorrect {
+    border-color: #86efac;
+    background: #f0fdf4;
+}
+
+.qWrong {
+    border-color: #fca5a5;
+    background: #fff1f2;
+}
+
+.qSkipped {
+    border-color: #fde68a;
+    background: #fffbeb;
+}
+
+.questionNum {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #0a0f1e;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+    font-family: 'Outfit', sans-serif;
+}
+
+.questionBody {
+    flex: 1;
+    min-width: 0;
+}
+
+.questionText {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #0a0f1e;
+    line-height: 1.5;
+    margin-bottom: 0.875rem;
+}
+
+.optionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.optionBtn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.625rem 1rem;
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    text-align: left;
+    font-size: 0.875rem;
+    color: #1e293b;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: 'Inter', sans-serif;
+}
+
+.optionBtn:hover:not(:disabled) {
+    border-color: #0881ec;
+    background: rgba(8, 129, 236, 0.05);
+}
+
+.optionSelected {
+    border-color: #0881ec !important;
+    background: rgba(8, 129, 236, 0.08) !important;
+    color: #0c2d4c !important;
+    font-weight: 600;
+}
+
+.optionCorrect {
+    border-color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.08) !important;
+    color: #047857 !important;
+    font-weight: 600;
+}
+
+.optionWrong {
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.08) !important;
+    color: #dc2626 !important;
+}
+
+.optionLetter {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.explanation {
+    margin-top: 0.6rem;
+    font-size: 0.8rem;
+    color: #047857;
+    background: rgba(16, 185, 129, 0.08);
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+}
+
+.quizSubmitArea {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.submitTestBtn {
+    padding: 0.875rem 2.5rem;
+    background: linear-gradient(135deg, #ee9602, #f5a623);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Outfit', sans-serif;
+}
+
+.submitTestBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(238, 150, 2, 0.45);
+}
+
+.submitTestBtn:disabled {
+    background: #e2e8f0;
+    color: #94a3b8;
+    cursor: not-allowed;
+}
+
+@media (max-width: 700px) {
+    .testCard {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .quizHeader {
+        flex-direction: column;
+    }
+
+    .quizHeaderSide {
+        width: 100%;
+        align-items: flex-start;
+    }
+
+    .resultBanner {
+        flex-direction: column;
+    }
+}

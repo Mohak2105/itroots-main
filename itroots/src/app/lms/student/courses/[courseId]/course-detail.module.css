@@ -1,0 +1,313 @@
+/* ─────────────────────────────────────────────
+   ITROOTS LMS — Course Detail / Lesson Player
+───────────────────────────────────────────── */
+
+.layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* ── Video Player ── */
+.playerSection {
+    background: #ffffff;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+}
+
+.videoWrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 56.25%;
+    /* 16:9 ratio */
+    background: #000;
+}
+
+.videoIframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.lessonInfo {
+    padding: 1.5rem;
+}
+
+.lessonBreadcrumb {
+    font-size: 0.75rem;
+    color: #64748b;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.lessonTitle {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0a0f1e;
+    margin-bottom: 0.75rem;
+    line-height: 1.3;
+}
+
+.lessonDesc {
+    font-size: 0.88rem;
+    color: #64748b;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.lessonActions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.markBtn {
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, #0881ec, #0c5db5);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.markBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(8, 129, 236, 0.4);
+}
+
+.markBtnDone {
+    background: linear-gradient(135deg, #047857, #10b981);
+    cursor: default;
+}
+
+.nextBtn {
+    padding: 0.625rem 1.25rem;
+    background: linear-gradient(135deg, #ee9602, #f5a623);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Inter', sans-serif;
+}
+
+.nextBtn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(238, 150, 2, 0.4);
+}
+
+.pdfBtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.625rem 1.25rem;
+    background: #f1f5f9;
+    color: #475569;
+    border-radius: 10px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.pdfBtn:hover {
+    background: #e2e8f0;
+    color: #0a0f1e;
+}
+
+.noLesson {
+    padding: 4rem 2rem;
+    text-align: center;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+/* ── Curriculum Sidebar ── */
+.curriculum {
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 2px 16px rgba(0, 0, 0, 0.07);
+    overflow: hidden;
+    position: sticky;
+    top: 80px;
+    max-height: calc(100vh - 100px);
+    overflow-y: auto;
+}
+
+/* custom scrollbar for sidebar */
+.curriculum::-webkit-scrollbar {
+    width: 4px;
+}
+
+.curriculum::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 4px;
+}
+
+.curriculumProgress {
+    padding: 1.25rem 1.25rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+    background: #f8fafc;
+}
+
+.progressHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.5rem;
+}
+
+.progressPct {
+    color: #0881ec;
+    font-weight: 700;
+}
+
+.progressBar {
+    height: 6px;
+    background: #e2e8f0;
+    border-radius: 100px;
+    overflow: hidden;
+    margin-bottom: 0.5rem;
+}
+
+.progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, #0881ec, #4db8ff);
+    border-radius: 100px;
+    transition: width 0.8s ease;
+}
+
+.progressMeta {
+    font-size: 0.72rem;
+    color: #94a3b8;
+}
+
+/* Module */
+.moduleList {
+    padding: 0.75rem 0;
+}
+
+.moduleItem {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.moduleItem:last-child {
+    border-bottom: none;
+}
+
+.moduleHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.875rem 1.25rem;
+    background: #f8fafc;
+}
+
+.moduleTitle {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #0a0f1e;
+    font-family: 'Outfit', sans-serif;
+}
+
+.moduleMeta {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+/* Lesson items */
+.lessonList {
+    padding: 0.25rem 0;
+}
+
+.lessonItem {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.625rem 1.25rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.15s;
+}
+
+.lessonItem:hover {
+    background: #f1f5f9;
+}
+
+.lessonActive {
+    background: rgba(8, 129, 236, 0.07) !important;
+    border-left: 3px solid #0881ec;
+}
+
+.lessonDone .lessonItemTitle {
+    color: #047857;
+}
+
+.lessonStatus {
+    font-size: 0.9rem;
+    flex-shrink: 0;
+    width: 20px;
+    text-align: center;
+}
+
+.lessonMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.lessonItemTitle {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+}
+
+.lessonDuration {
+    font-size: 0.7rem;
+    color: #94a3b8;
+}
+
+/* Responsive */
+@media (max-width: 1100px) {
+    .layout {
+        grid-template-columns: 1fr 300px;
+    }
+}
+
+@media (max-width: 800px) {
+    .layout {
+        grid-template-columns: 1fr;
+    }
+
+    .curriculum {
+        position: static;
+        max-height: none;
+    }
+}

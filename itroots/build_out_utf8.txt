@@ -1,0 +1,79 @@
+﻿Γû▓ Next.js 16.1.6 (Turbopack)
+
+node.exe : ΓÜá The "middleware" file convention 
+is deprecated. Please use "proxy" instead. Learn 
+more: https://nextjs.org/docs/messages/middleware-
+to-proxy
+At line:1 char:1
++ & "C:\Program Files\nodejs/node.exe" 
+"C:\Program Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (ΓÜá  
+   The "middle...leware-to-proxy:String) [], Rem  
+  oteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  Creating an optimized production build ...
+Γ£ô Compiled successfully in 6.1s
+  Running TypeScript ...
+  Collecting page data using 11 workers ...
+  Generating static pages using 11 workers (0/67) ...
+ΓÜá metadataBase property in metadata export is 
+not set for resolving social open graph or 
+twitter images, using "http://localhost:3000". 
+See https://nextjs.org/docs/app/api-reference/func
+tions/generate-metadata#metadatabase
+ΓÜá metadataBase property in metadata export is 
+not set for resolving social open graph or 
+twitter images, using "http://localhost:3000". 
+See https://nextjs.org/docs/app/api-reference/func
+tions/generate-metadata#metadatabase
+ΓÜá metadataBase property in metadata export is 
+not set for resolving social open graph or 
+twitter images, using "http://localhost:3000". 
+See https://nextjs.org/docs/app/api-reference/func
+tions/generate-metadata#metadatabase
+  Generating static pages using 11 workers (16/67) 
+  Generating static pages using 11 workers (33/67) 
+  Generating static pages using 11 workers (50/67) 
+Γ¿» useSearchParams() should be wrapped in a 
+suspense boundary at page 
+"/lms/student/content-viewer". Read more: https://
+nextjs.org/docs/messages/missing-suspense-with-csr
+-bailout
+    at Q (D:\itroots-main\itroots\.next\server\chu
+nks\ssr\node_modules_next_920e7746._.js:2:2111)
+    at o (D:\itroots-main\itroots\.next\server\chu
+nks\ssr\node_modules_next_920e7746._.js:4:5285)
+    at o (D:\itroots-main\itroots\.next\server\chu
+nks\ssr\_b6422e8e._.js:1:7996)
+    at an (D:\itroots-main\itroots\node_modules\ne
+xt\dist\compiled\next-server\app-page-turbo.runtim
+e.prod.js:2:84360)
+    at ai (D:\itroots-main\itroots\node_modules\ne
+xt\dist\compiled\next-server\app-page-turbo.runtim
+e.prod.js:2:86179)
+    at al (D:\itroots-main\itroots\node_modules\ne
+xt\dist\compiled\next-server\app-page-turbo.runtim
+e.prod.js:2:107953)
+    at as (D:\itroots-main\itroots\node_modules\ne
+xt\dist\compiled\next-server\app-page-turbo.runtim
+e.prod.js:2:105368)
+    at aa (D:\itroots-main\itroots\node_modules\ne
+xt\dist\compiled\next-server\app-page-turbo.runtim
+e.prod.js:2:84712)
+    at ai (D:\itroots-main\itroots\node_modules\ne
+xt\dist\compiled\next-server\app-page-turbo.runtim
+e.prod.js:2:86228)
+    at ai (D:\itroots-main\itroots\node_modules\ne
+xt\dist\compiled\next-server\app-page-turbo.runtim
+e.prod.js:2:104708)
+Error occurred prerendering page 
+"/lms/student/content-viewer". Read more: 
+https://nextjs.org/docs/messages/prerender-error
+Export encountered an error on 
+/lms/student/content-viewer/page: 
+/lms/student/content-viewer, exiting the build.
+Γ¿» Next.js build worker exited with code: 1 and 
+signal: null

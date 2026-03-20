@@ -1,0 +1,132 @@
+/* Mobile Slider Styles */
+.mobileSliderContainer {
+    display: none;
+    /* Hidden by default (Desktop) */
+    width: 100%;
+    overflow: hidden;
+    position: relative;
+    padding: var(--space-8) 0;
+    /* No mask-image/smoke effect as requested */
+}
+
+.sliderTrack {
+    display: flex;
+    gap: var(--space-6);
+    width: max-content;
+    animation: scroll 20s linear infinite;
+    /* Adjusted speed for readability */
+}
+
+.mobileSliderContainer:hover .sliderTrack {
+    animation-play-state: paused;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+        /* Moves exactly one set width if duplicated once */
+    }
+}
+
+/* Desktop Grid Styles */
+.desktopGrid {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-8);
+    flex-wrap: wrap;
+}
+
+/* Card Styles */
+.mentorCard {
+    background: var(--white);
+    border-radius: var(--radius-xl);
+    padding: var(--space-6);
+    text-align: center;
+    width: 340px;
+    max-width: 100%;
+    min-height: 320px;
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-base);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.mentorCard:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.mentorImage {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    margin: 0 auto var(--space-4);
+    background-size: cover;
+    background-position: center;
+    border: 3px solid var(--light-gray);
+    background-color: var(--off-white);
+}
+
+.mentorImagePlaceholder {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    margin: 0 auto var(--space-4);
+    background: linear-gradient(135deg, var(--primary-blue) 0%, var(--navy) 100%);
+    border: 3px solid var(--light-gray);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: var(--text-2xl);
+    font-weight: 600;
+    font-family: var(--font-heading);
+}
+
+.mentorInfo h3 {
+    font-size: var(--text-lg);
+    color: var(--text-dark);
+    margin-bottom: var(--space-1);
+}
+
+.mentorRole {
+    font-size: var(--text-sm);
+    color: var(--primary-blue);
+    font-weight: 600;
+    margin-bottom: var(--space-1);
+}
+
+.mentorCompany {
+    font-size: var(--text-sm);
+    color: var(--gray);
+}
+
+/* Responsive Switching */
+@media (max-width: 768px) {
+    .desktopGrid {
+        display: none;
+    }
+
+    .mobileSliderContainer {
+        display: block;
+    }
+
+    .mentorCard {
+        width: 260px;
+        min-height: 280px;
+        padding: var(--space-4);
+    }
+
+    .mentorImage,
+    .mentorImagePlaceholder {
+        width: 100px;
+        height: 100px;
+        margin-bottom: var(--space-3);
+    }
+}

@@ -1,0 +1,645 @@
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.headerCard {
+    padding: 2rem 2.5rem;
+    min-height: 160px;
+    box-sizing: border-box;
+    background: linear-gradient(90deg, #0f3f6f 0%, #1571c1 60%, #2088e6 100%);
+    border-radius: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    position: relative;
+    overflow: visible;
+    color: #fff;
+    gap: 1.5rem;
+}
+
+.headerCard::before {
+    content: '';
+    position: absolute;
+    right: -48px;
+    top: -36px;
+    width: 180px;
+    height: 180px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 50%;
+    pointer-events: none;
+}
+
+.headerInfo,
+.headerActions {
+    position: relative;
+    z-index: 1;
+}
+
+.headerInfo h1 {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.8rem;
+    color: #ffffff;
+    font-weight: 800;
+    margin: 0 0 0.4rem;
+    letter-spacing: -0.02em;
+}
+
+.headerInfo p {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.82);
+    font-size: 0.95rem;
+    font-weight: 500;
+    max-width: 620px;
+}
+
+.headerActions {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.searchBox {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 11px 16px;
+    border-radius: 12px;
+    width: 210px;
+    min-height: 50px;
+    color: white;
+}
+
+.searchBox input {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: white;
+}
+
+.searchBox input::placeholder {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Custom status filter select wrapper for blue header */
+.statusSelectWrap {
+    width: 210px;
+    min-width: 230px;
+}
+
+.statusSelectWrap button {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 12px;
+    color: white;
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.55rem 1rem;
+    min-height: 50px;
+    width: 100%;
+    backdrop-filter: blur(8px);
+}
+
+.statusSelectWrap button:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.statusSelectWrap button:focus,
+.statusSelectWrap button[aria-expanded="true"] {
+    border-color: rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+}
+
+.statusSelectWrap button span {
+    color: white;
+    white-space: nowrap;
+}
+
+.statusSelectWrap button svg {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.statusSelectWrap ul {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.statusSelectWrap li {
+    font-weight: 600;
+    color: #1f2937 !important;
+}
+
+.statusSelectWrap li:hover {
+    background: #f1f5f9 !important;
+}
+
+.enrollBtn {
+    width: 210px;
+    min-height: 50px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(8px);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    padding: 11px 16px;
+    border-radius: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    text-align: center;
+}
+
+.tableWrapper {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    overflow-x: auto;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.02);
+    position: relative;
+}
+
+.studentTable {
+    width: 100%;
+    min-width: 1120px;
+    border-collapse: collapse;
+    text-align: left;
+}
+
+.studentTable thead {
+    background: #f8fafc;
+}
+
+.studentTable th {
+    padding: 1.1rem 1.5rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #e2e8f0;
+    white-space: nowrap;
+}
+
+.studentTable td {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+    text-align: left;
+}
+
+.studentTable th {
+    text-align: left;
+}
+
+.studentTable th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: #f8fafc;
+    min-width: 300px;
+}
+
+.studentTable td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: #ffffff;
+    min-width: 300px;
+}
+
+.studentTable tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.studentInfo {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 220px;
+}
+
+.avatar {
+    width: 46px;
+    height: 46px;
+    background: linear-gradient(135deg, #f59e0b, #ed8936);
+    border-radius: 14px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.05rem;
+    flex-shrink: 0;
+    text-transform: uppercase;
+}
+
+.name {
+    font-weight: 700;
+    color: #0f172a;
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
+.email {
+    font-size: 0.84rem;
+    color: #64748b;
+    margin-top: 2px;
+    line-height: 1.4;
+}
+
+.tableStack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.tablePrimary {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.4;
+}
+
+.tableSecondary {
+    font-size: 0.88rem;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.batchList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+    min-width: 220px;
+}
+
+.batchItem {
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 0.5rem 0.8rem;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    width: fit-content;
+    max-width: 100%;
+}
+
+.unassigned {
+    color: #94a3b8;
+    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.contact,
+.date {
+    font-weight: 600;
+    color: #475569;
+    font-size: 0.9rem;
+}
+
+.date {
+    white-space: nowrap;
+}
+
+.dateBadge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #475569;
+    white-space: nowrap;
+}
+
+.toggleSwitch {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: flex-start;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    min-width: 108px;
+    white-space: nowrap;
+}
+
+.toggleTrack {
+    width: 46px;
+    height: 26px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    position: relative;
+    transition: background 0.3s ease;
+    flex-shrink: 0;
+}
+
+.toggleTrack.on {
+    background: #10b981;
+}
+
+.toggleTrack.off {
+    background: #f87171;
+}
+
+.toggleThumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.toggleTrack.on .toggleThumb {
+    transform: translateX(20px);
+}
+
+.toggleLabel {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #10b981;
+    line-height: 1;
+    white-space: nowrap;
+}
+
+.toggleLabel.off {
+    color: #ef4444;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+}
+
+.deleteBtn,
+.editBtn,
+.mailBtn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: transparent;
+    box-shadow: none;
+}
+
+.deleteBtn {
+    border: 1px solid #fecaca;
+    color: #ef4444;
+}
+
+.deleteBtn:hover {
+    background: #fef2f2;
+    transform: translateY(-2px);
+    border-color: #fca5a5;
+    box-shadow: 0 6px 15px rgba(239, 68, 68, 0.15);
+}
+
+.editBtn {
+    border: 1px solid #bfdbfe;
+    color: #2563eb;
+}
+
+.editBtn:hover {
+    background: #eff6ff;
+    transform: translateY(-2px);
+    border-color: #93c5fd;
+    box-shadow: 0 6px 15px rgba(59, 130, 246, 0.15);
+}
+
+.mailBtn {
+    border: 1px solid #ddd6fe;
+    color: #7c3aed;
+}
+
+.mailBtn:hover {
+    background: #f5f3ff;
+    transform: translateY(-2px);
+    border-color: #c4b5fd;
+    box-shadow: 0 6px 15px rgba(139, 92, 246, 0.15);
+}
+
+.empty {
+    padding: 2.5rem !important;
+    text-align: center;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 24px;
+    width: 900px;
+    max-width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 2.5rem;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.modalHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.modalHeader h3 {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0;
+}
+
+.modalHeader button {
+    background: #f1f5f9;
+    border: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+}
+
+.formGroup {
+    margin-bottom: 1.5rem;
+}
+
+.formGroup label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #475569;
+    margin-bottom: 8px;
+}
+
+.formGroup input,
+.formGroup select,
+.formGroup textarea {
+    width: 100%;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    padding: 12px 18px;
+    border-radius: 12px;
+    outline: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.formGroup textarea {
+    resize: vertical;
+    min-height: 96px;
+}
+
+.formGroup input:focus,
+.formGroup select:focus,
+.formGroup textarea:focus {
+    background: #fff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1);
+}
+
+.submitBtn {
+    width: 100%;
+    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
+    color: #fff;
+    border: none;
+    padding: 14px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 1rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.submitBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(8, 129, 236, 0.35);
+}
+
+.submitBtn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    transform: none;
+}
+
+@media (max-width: 1024px) {
+    .headerCard {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .headerActions {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .headerInfo p {
+        white-space: normal;
+    }
+
+    .searchBox {
+        width: 100%;
+    }
+
+    .statusSelectWrap {
+        width: 100%;
+        min-width: 0;
+    }
+}
+
+@media (max-width: 768px) {
+    .headerCard {
+        padding: 2rem 1.5rem;
+        gap: 1.5rem;
+    }
+
+    .studentTable th,
+    .studentTable td {
+        padding: 1rem;
+    }
+
+    .modal {
+        padding: 2rem 1.5rem;
+    }
+}
+
+.tableSection {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.tableSectionHeader {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+    padding: 0 0.25rem;
+}
+
+.nameLink {
+    display: inline-block;
+    font-weight: normal;
+    color: #0f172a;
+    font-size: 0.88rem;
+    line-height: 1.45;
+    text-decoration: none;
+}
+
+.nameLink:hover {
+    color: #0881ec;
+}

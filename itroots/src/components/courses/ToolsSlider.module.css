@@ -1,0 +1,135 @@
+.container {
+    width: 100%;
+    /* Back to transparent to blend with section background */
+    background: transparent;
+    position: relative;
+}
+
+/* Desktop Grid View - Matching toolsGridDS style */
+.desktopGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: var(--space-6);
+    width: 100%;
+    margin-top: var(--space-6);
+}
+
+/* Mobile Slider View */
+.mobileSlider {
+    display: none;
+    width: 100%;
+    overflow: hidden;
+    mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent);
+    padding: var(--space-4) 0;
+}
+
+.sliderTrack {
+    display: flex;
+    gap: var(--space-6);
+    width: max-content;
+    animation: scroll 30s linear infinite;
+    padding: var(--space-2) 0;
+}
+
+.mobileSlider:hover .sliderTrack {
+    animation-play-state: paused;
+}
+
+@keyframes scroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-33.333333%);
+    }
+}
+
+/* Tool Card Styles - Matching toolCardDS style */
+.toolCard {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px;
+    background: #ffffff;
+    border-radius: 20px;
+    border: 1px solid rgba(0, 0, 0, 0.04);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    transition: all 0.3s ease;
+    height: 100%;
+    min-height: 160px;
+    /* Ensure consistent height */
+}
+
+.toolCard:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px -4px rgba(0, 0, 0, 0.08);
+    border-color: rgba(8, 129, 236, 0.2);
+}
+
+.toolIconWrapper {
+    width: 64px;
+    height: 64px;
+    background: #f8fafc;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    transition: all 0.3s ease;
+}
+
+.toolCard:hover .toolIconWrapper {
+    background: #eff6ff;
+    transform: scale(1.1);
+}
+
+.toolIcon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.toolName {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: #334155;
+    text-align: center;
+    line-height: 1.4;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+    .desktopGrid {
+        display: none;
+    }
+
+    .mobileSlider {
+        display: block;
+    }
+
+    .toolCard {
+        width: 140px;
+        height: 140px;
+        min-height: auto;
+        padding: 16px;
+    }
+
+    .toolIconWrapper {
+        width: 50px;
+        height: 50px;
+        padding: 8px;
+    }
+
+    .toolName {
+        font-size: 0.85rem;
+    }
+
+    /* Adjust slider track for mobile */
+    .sliderTrack {
+        gap: var(--space-4);
+        animation-duration: 40s;
+    }
+}

@@ -1,0 +1,468 @@
+/* ─────────────────────────────────────────────
+   ITROOTS LMS — Student Login Page (Redesign)
+───────────────────────────────────────────── */
+
+.loginPage {
+    height: 100vh;
+    display: flex;
+    width: 100%;
+    overflow: hidden;
+}
+
+/* ─── Left Brand Panel (Light BG) ─── */
+.brandPanel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem;
+    position: relative;
+    overflow: hidden;
+    /* Static Wireframe / Grid Background */
+    background: linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 50%, #f5f0ff 100%);
+    background-image:
+        linear-gradient(rgba(8, 129, 236, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(8, 129, 236, 0.12) 1px, transparent 1px),
+        linear-gradient(135deg, #f0f7ff 0%, #e8f0fe 50%, #f5f0ff 100%);
+    background-size: 40px 40px, 40px 40px, 100% 100%;
+    background-position: center center;
+}
+
+/* Subtle gradient overlay to soften the wireframe edges */
+.brandPanel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 0%, #e8f0fe 90%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Wireframe decorative elements */
+.wireCircle1 {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    border: 1px dashed rgba(8, 129, 236, 0.3);
+    border-radius: 50%;
+    top: -200px;
+    left: -200px;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.wireCircle2 {
+    position: absolute;
+    width: 400px;
+    height: 400px;
+    border: 1px dashed rgba(8, 129, 236, 0.25);
+    border-radius: 50%;
+    bottom: -150px;
+    right: -100px;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.wireLine1 {
+    position: absolute;
+    width: 1px;
+    height: 100vh;
+    background: rgba(8, 129, 236, 0.3);
+    top: 0;
+    right: 25%;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.wireLine2 {
+    position: absolute;
+    width: 100vw;
+    height: 1px;
+    background: rgba(8, 129, 236, 0.3);
+    bottom: 25%;
+    left: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.brandContent {
+    max-width: 520px;
+    position: relative;
+    z-index: 1;
+}
+
+.brandLogo {
+    margin-bottom: 2.5rem;
+}
+
+.brandHeading {
+    font-family: 'Outfit', sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #0a0f1e;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+}
+
+.brandHeading span {
+    background: linear-gradient(135deg, #0881ec, #0c5db5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.brandDescription {
+    font-size: 0.9rem;
+    color: #64748b;
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+}
+
+/* Feature Grid */
+.featureGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.875rem;
+    margin-bottom: 2.5rem;
+}
+
+.featureCard {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(8, 129, 236, 0.08);
+    border-radius: 14px;
+    transition: all 0.25s ease;
+}
+
+.featureCard:hover {
+    background: #ffffff;
+    border-color: rgba(8, 129, 236, 0.2);
+    box-shadow: 0 4px 16px rgba(8, 129, 236, 0.08);
+    transform: translateY(-1px);
+}
+
+.featureIconWrap {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #e8f4fd, #dbeafe);
+    border-radius: 10px;
+    color: #0881ec;
+    flex-shrink: 0;
+}
+
+.featureTitle {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: #1e293b;
+    line-height: 1.2;
+}
+
+.featureSub {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    margin-top: 1px;
+}
+
+/* Stats Row */
+.statsRow {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(8, 129, 236, 0.06);
+    border-radius: 16px;
+}
+
+.statItem {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #475569;
+}
+
+.statItem svg {
+    color: #0881ec;
+}
+
+.statNum {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #0a0f1e;
+}
+
+.statLabel {
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.statDivider {
+    width: 1px;
+    height: 28px;
+    background: #e2e8f0;
+}
+
+/* ─── Right Form Panel (Dark) ─── */
+.formPanel {
+    width: 500px;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 8vh 3rem 0;
+    background: #0a0f1e;
+    position: relative;
+    overflow: hidden;
+}
+
+.studentIllustration {
+    margin-top: auto;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    justify-content: center;
+    opacity: 0.85;
+    pointer-events: none;
+    /* Negative bottom margin to pull it as far down as possible, no padding */
+    margin-bottom: -10px;
+}
+
+.formCard {
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Student Badge + Title */
+.formHeader {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.studentBadge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, rgba(8, 129, 236, 0.2), rgba(8, 129, 236, 0.05));
+    border: 1px solid rgba(8, 129, 236, 0.3);
+    border-radius: 20px;
+    color: #60a5fa;
+    margin-bottom: 1.25rem;
+}
+
+.formTitle {
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.4rem;
+}
+
+.formSubtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.45);
+}
+
+/* Form Fields */
+.fieldGroup {
+    display: flex;
+    flex-direction: column;
+    gap: 1.125rem;
+    margin-bottom: 1.25rem;
+}
+
+.fieldLabel {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.5);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+}
+
+.fieldWrapper {
+    position: relative;
+}
+
+.fieldIconSvg {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.3);
+    pointer-events: none;
+}
+
+.fieldInput {
+    width: 100%;
+    padding: 0.875rem 1rem 0.875rem 2.75rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: all 0.25s ease;
+    box-sizing: border-box;
+}
+
+.fieldInput::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+.fieldInput:focus {
+    border-color: rgba(8, 129, 236, 0.5);
+    background: rgba(8, 129, 236, 0.08);
+    box-shadow: 0 0 0 3px rgba(8, 129, 236, 0.12);
+}
+
+.passwordToggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.35);
+    transition: color 0.2s;
+    display: flex;
+    align-items: center;
+}
+
+.passwordToggle:hover {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Hint row */
+.hintRow {
+    margin-bottom: 1.5rem;
+}
+
+.hintCredentials {
+    font-size: 0.72rem;
+    color: rgba(255, 255, 255, 0.3);
+}
+
+.hintCredentials span {
+    color: rgba(238, 150, 2, 0.7);
+    font-family: monospace;
+}
+
+/* Error */
+.errorBox {
+    background: rgba(220, 38, 38, 0.1);
+    border: 1px solid rgba(220, 38, 38, 0.25);
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #fca5a5;
+}
+
+/* Submit Button */
+.submitBtn {
+    width: 100%;
+    padding: 0.9rem;
+    background: linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%);
+    border: none;
+    border-radius: 999px;
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-family: 'Outfit', sans-serif;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.submitBtn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(8, 129, 236, 0.4);
+}
+
+.submitBtn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Back link */
+.backLink {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.backLink a {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 0.8rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: color 0.2s;
+}
+
+.backLink a:hover {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 1024px) {
+    .featureGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .brandPanel {
+        padding: 2rem;
+    }
+}
+
+@media (max-width: 900px) {
+    .loginPage {
+        flex-direction: column;
+    }
+
+    .brandPanel {
+        display: none;
+    }
+
+    .formPanel {
+        width: 100%;
+        min-height: 100vh;
+        padding: 2rem;
+    }
+
+    .formCard {
+        max-width: 400px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .formPanel {
+        padding: 1.5rem;
+    }
+
+    .formTitle {
+        font-size: 1.3rem;
+    }
+}

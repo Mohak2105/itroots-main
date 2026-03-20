@@ -1,0 +1,460 @@
+.panel {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 420px;
+    width: 100%;
+    z-index: 1;
+}
+
+.svg {
+    width: 100%;
+    max-width: 500px;
+    height: auto;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, .06));
+}
+
+/* Radar / spinner sweep */
+.radarSweep {
+    transform-origin: center;
+    animation: sweepRotate 8s linear infinite;
+}
+
+@keyframes sweepRotate {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Pulse nodes */
+.pulse {
+    animation: nodePulse 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes nodePulse {
+    from {
+        opacity: .55;
+        transform: scale(.92);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1.08);
+    }
+}
+
+/* Blinking cursor */
+.blink {
+    animation: cursorBlink 1s step-end infinite;
+}
+
+@keyframes cursorBlink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+}
+
+/* Typewriter effect for test lines */
+.typeIn {
+    opacity: 0;
+    animation: fadeSlideIn .5s ease forwards;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Alert badges */
+.alertBadge {
+    position: absolute;
+    padding: 7px 12px;
+    background: white;
+    border: 1px solid #fee2e2;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    box-shadow: 0 6px 20px rgba(220, 38, 38, .07);
+    font-size: .7rem;
+    font-weight: 700;
+    color: #ef4444;
+    animation: badgeFloat 4s ease-in-out infinite;
+}
+
+.alert1 {
+    top: 10%;
+    right: 4%;
+    animation-delay: 0s;
+}
+
+.alert2 {
+    bottom: 18%;
+    left: 4%;
+    animation-delay: 1.5s;
+}
+
+@keyframes badgeFloat {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.alertDot,
+.alertDotGreen {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    animation: dotBlink 1.5s ease-in-out infinite;
+}
+
+.alertDot {
+    background: #ef4444;
+}
+
+.alertDotGreen {
+    background: #22c55e;
+}
+
+@keyframes dotBlink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: .3;
+    }
+}
+
+/* Chip badges (AI) */
+.chipBadge {
+    position: absolute;
+    padding: 8px 14px;
+    background: rgba(255, 255, 255, .95);
+    border: 1px solid rgba(99, 102, 241, .15);
+    border-radius: 10px;
+    font-size: .72rem;
+    font-weight: 700;
+    color: #4f46e5;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, .08);
+    animation: badgeFloat 4s ease-in-out infinite;
+}
+
+.chipAI1 {
+    top: 14%;
+    right: 6%;
+    animation-delay: 0s;
+}
+
+.chipAI2 {
+    bottom: 16%;
+    left: 6%;
+    animation-delay: 2s;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .panel {
+        min-height: 320px;
+        margin-top: 24px;
+    }
+
+    .svg {
+        max-width: 380px;
+    }
+
+    .alertBadge,
+    .chipBadge {
+        font-size: .65rem;
+        padding: 5px 10px;
+    }
+}
+
+@media (max-width: 640px) {
+    .panel {
+        min-height: 260px;
+    }
+
+    .svg {
+        max-width: 300px;
+    }
+
+    .alertBadge,
+    .chipBadge {
+        display: none;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   DATA SCIENCE – Glowing Tech Sphere Visual
+   ═══════════════════════════════════════════════════════════════ */
+.sphereContainer {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 500px;
+    height: 500px;
+    margin: 0 auto;
+    z-index: 1;
+}
+
+.sphereSvg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.rotateSlow {
+    transform-origin: 250px 250px;
+    animation: spin 20s linear infinite;
+}
+
+.rotateFastReverse {
+    transform-origin: 250px 250px;
+    animation: spinReverse 15s linear infinite;
+}
+
+.atomRotate {
+    transform-origin: 250px 250px;
+    animation: atomSpin 10s linear infinite;
+}
+
+@keyframes spin {
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes spinReverse {
+    100% {
+        transform: rotate(-360deg);
+    }
+}
+
+@keyframes atomSpin {
+    0% {
+        transform: rotate(0deg) scale(1);
+    }
+
+    50% {
+        transform: rotate(180deg) scale(1.05);
+    }
+
+    100% {
+        transform: rotate(360deg) scale(1);
+    }
+}
+
+.centerNode {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80px;
+    height: 80px;
+    background: rgba(14, 165, 233, 0.15);
+    border: 2px solid #38bdf8;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 30px rgba(56, 189, 248, 0.4), inset 0 0 20px rgba(56, 189, 248, 0.4);
+    z-index: 10;
+    animation: pulseGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes pulseGlow {
+    from {
+        box-shadow: 0 0 20px rgba(56, 189, 248, 0.3), inset 0 0 15px rgba(56, 189, 248, 0.3);
+    }
+
+    to {
+        box-shadow: 0 0 40px rgba(56, 189, 248, 0.6), inset 0 0 25px rgba(56, 189, 248, 0.6);
+    }
+}
+
+.hexNode {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    filter: drop-shadow(0 0 15px rgba(2, 132, 199, 0.5));
+}
+
+.hexInner {
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Hexagon clip path */
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.hexInner::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    background: rgba(14, 165, 233, 0.1);
+    border-radius: 5px;
+    transition: all 0.3s ease;
+}
+
+.hexNode:hover .hexInner {
+    background: rgba(14, 165, 233, 0.3);
+    transform: scale(1.15);
+}
+
+.hexNode::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(135deg, #0ea5e9, #38bdf8);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    z-index: -1;
+}
+
+/* Positions matching a radius of 200px from 50% (assuming 500x500 space) */
+.hex1 {
+    top: 50%;
+    left: 10%;
+    animation: floatNode 3s infinite alternate 0s;
+}
+
+/* Left */
+.hex2 {
+    top: 15%;
+    left: 30%;
+    animation: floatNode 3.5s infinite alternate 0.5s;
+}
+
+/* Top-left */
+.hex3 {
+    top: 15%;
+    left: 70%;
+    animation: floatNode 3s infinite alternate 1s;
+}
+
+/* Top-right */
+.hex4 {
+    top: 50%;
+    left: 90%;
+    animation: floatNode 3.2s infinite alternate 1.5s;
+}
+
+/* Right */
+.hex5 {
+    top: 85%;
+    left: 70%;
+    animation: floatNode 2.8s infinite alternate 0.8s;
+}
+
+/* Bottom-right */
+.hex6 {
+    top: 85%;
+    left: 30%;
+    animation: floatNode 3.5s infinite alternate 1.2s;
+}
+
+/* Bottom-left */
+
+@keyframes floatNode {
+    from {
+        transform: translate(-50%, -50%) translateY(-3px);
+    }
+
+    to {
+        transform: translate(-50%, -50%) translateY(3px);
+    }
+}
+
+@media (max-width: 991px) {
+    .sphereContainer {
+        max-width: 400px;
+        height: 400px;
+    }
+
+    .hexNode {
+        width: 44px;
+        height: 44px;
+    }
+
+    .hexNode svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .centerNode {
+        width: 60px;
+        height: 60px;
+    }
+
+    .centerNode svg {
+        width: 28px;
+        height: 28px;
+    }
+}
+
+@media (max-width: 640px) {
+    .sphereContainer {
+        max-width: 320px;
+        height: 320px;
+    }
+
+    .hexNode {
+        width: 36px;
+        height: 36px;
+    }
+
+    .hexNode svg {
+        width: 16px;
+        height: 16px;
+    }
+
+    .centerNode {
+        width: 50px;
+        height: 50px;
+    }
+
+    .centerNode svg {
+        width: 24px;
+        height: 24px;
+    }
+}
