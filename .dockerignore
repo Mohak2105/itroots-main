@@ -1,0 +1,15 @@
+.git
+.gitignore
+**/node_modules
+**/.next
+**/dist
+**/playwright-report
+**/coverage
+**/uploads
+**/build_out*.txt
+**/compile_errors*.txt
+**/lint_errors.txt
+**/lint_src.txt
+**/ts_errors.txt
+**/typescript-errors.txt
+_tmp_npmci_check
