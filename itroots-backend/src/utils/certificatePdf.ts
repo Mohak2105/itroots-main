@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { Response } from 'express';
+import { resolveStoredCertificateSignature } from './certificateSignature';
 
 const renderCenteredLogo = (doc: any, imagePath: string, x: number, y: number, width: number, height: number) => {
     if (!fs.existsSync(imagePath)) {
@@ -22,6 +23,7 @@ export const streamCertificatePdf = (res: Response, certificate: any) => {
         month: 'long',
         year: 'numeric',
     });
+    const signatorySignaturePath = resolveStoredCertificateSignature(certificate.signatorySignature);
     const lmsLogoPath = path.resolve(__dirname, '..', '..', '..', 'itroots', 'public', 'images', 'lms_logo.png');
     const sealLogoPath = path.resolve(__dirname, '..', '..', '..', 'itroots', 'public', 'images', 'logo.png');
 
@@ -96,10 +98,18 @@ export const streamCertificatePdf = (res: Response, certificate: any) => {
     }
 
     doc.moveTo(148, 500).lineTo(304, 500).lineWidth(1).strokeColor('#12395b').stroke();
-    doc.font('Times-Italic').fontSize(22).fillColor('#111827').text(certificate.signatoryName, 0, 470, {
-        width: 452,
-        align: 'center',
-    });
+    if (signatorySignaturePath) {
+        doc.image(signatorySignaturePath, 148, 438, {
+            fit: [156, 48],
+            align: 'center',
+            valign: 'center',
+        });
+    } else {
+        doc.font('Times-Italic').fontSize(22).fillColor('#111827').text(certificate.signatoryName, 0, 470, {
+            width: 452,
+            align: 'center',
+        });
+    }
     doc.font('Helvetica-Bold').fontSize(12).fillColor('#111827').text(certificate.signatoryName, 130, 508, {
         width: 190,
         align: 'center',

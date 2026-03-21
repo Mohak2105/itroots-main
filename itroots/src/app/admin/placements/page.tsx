@@ -6,7 +6,10 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
+import Calendar from "react-calendar";
 import {
+    CalendarBlank,
+    CaretDown,
     MagnifyingGlass,
     Plus,
     X,
@@ -18,6 +21,8 @@ import { API_ORIGIN, ENDPOINTS } from "@/config/api";
 import styles from "../students/admin-students.module.css";
 import toast from "react-hot-toast";
 import { showDeleteConfirmation } from "@/utils/toastUtils";
+import { useRef } from "react";
+import "react-calendar/dist/Calendar.css";
 
 interface Placement {
     id: string;
@@ -28,6 +33,7 @@ interface Placement {
     passoutYears: string;
     applyLink: string;
     companyLogo?: string;
+    dueDate?: string | null;
     createdAt: string;
 }
 
@@ -39,6 +45,39 @@ const EMPTY_FORM = {
     passoutYears: "",
     applyLink: "",
     companyLogo: "",
+    dueDate: "",
+};
+const isBrowser = typeof window !== "undefined";
+
+const formatDate = (value?: string | null) => {
+    if (!value) return "Not set";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Not set";
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
+};
+
+const parseLocalDate = (value: string) => {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, (month || 1) - 1, day || 1);
+};
+
+const toDateValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const isPlacementExpired = (placement: Pick<Placement, "dueDate">) => {
+    if (!placement.dueDate) return false;
+    const dueDate = new Date(placement.dueDate);
+    if (Number.isNaN(dueDate.getTime())) return false;
+    return dueDate.getTime() < Date.now();
 };
 
 const readFileAsDataUrl = (file: File) =>
@@ -60,6 +99,7 @@ const resolveLogoUrl = (value?: string) => {
 export default function AdminPlacementsPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
+    const dueDatePickerRef = useRef<HTMLDivElement>(null);
     const [placements, setPlacements] = useState<Placement[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [loadingData, setLoadingData] = useState(true);
@@ -67,12 +107,29 @@ export default function AdminPlacementsPage() {
     const [formData, setFormData] = useState(EMPTY_FORM);
     const [logoPreview, setLogoPreview] = useState("");
     const [sendingPlacementId, setSendingPlacementId] = useState<string | null>(null);
+    const [showDueDatePicker, setShowDueDatePicker] = useState(false);
 
     useEffect(() => {
         if (!isLoading && (!user || user.role !== "SUPER_ADMIN")) {
             router.push("/admin/login");
         }
     }, [user, isLoading, router]);
+
+    useEffect(() => {
+        const handlePointerDown = (event: PointerEvent) => {
+            if (!dueDatePickerRef.current?.contains(event.target as Node)) {
+                setShowDueDatePicker(false);
+            }
+        };
+
+        if (showDueDatePicker) {
+            document.addEventListener("pointerdown", handlePointerDown);
+        }
+
+        return () => {
+            document.removeEventListener("pointerdown", handlePointerDown);
+        };
+    }, [showDueDatePicker]);
 
     const fetchPlacements = useCallback(async () => {
         if (!token) return;
@@ -105,11 +162,13 @@ export default function AdminPlacementsPage() {
         setShowModal(false);
         setFormData(EMPTY_FORM);
         setLogoPreview("");
+        setShowDueDatePicker(false);
     };
 
     const handleCreateClick = () => {
         setFormData(EMPTY_FORM);
         setLogoPreview("");
+        setShowDueDatePicker(false);
         setShowModal(true);
     };
 
@@ -204,13 +263,15 @@ export default function AdminPlacementsPage() {
 
     if (isLoading || !user) return null;
 
+    const compactModalLayout = isBrowser && window.innerWidth <= 640;
+
     return (
         <LMSShell pageTitle="Placements">
             <div className={styles.container}>
                 <div className={styles.headerCard}>
                     <div className={styles.headerInfo}>
                         <h1>Placements & Jobs</h1>
-                        <p>Manage job placements, drives, and opportunities.</p>
+                        <p>Manage job placements, drives, due dates, and student access.</p>
                     </div>
                     <div className={styles.headerActions}>
                         <div className={styles.searchBox}>
@@ -237,6 +298,8 @@ export default function AdminPlacementsPage() {
                                 <th>Salary Range</th>
                                 <th>Description</th>
                                 <th>Passout Years</th>
+                                <th>Due Date</th>
+                                <th>Status</th>
                                 <th>Apply Link</th>
                                 <th>Actions</th>
                             </tr>
@@ -244,15 +307,16 @@ export default function AdminPlacementsPage() {
                         <tbody>
                             {loadingData ? (
                                 <tr>
-                                    <td colSpan={7} className={styles.empty}>Loading placement records...</td>
+                                    <td colSpan={9} className={styles.empty}>Loading placement records...</td>
                                 </tr>
                             ) : filtered.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} className={styles.empty}>No placements found.</td>
+                                    <td colSpan={9} className={styles.empty}>No placements found.</td>
                                 </tr>
                             ) : (
                                 filtered.map((placement) => {
                                     const logoUrl = resolveLogoUrl(placement.companyLogo);
+                                    const expired = isPlacementExpired(placement);
                                     return (
                                         <tr key={placement.id}>
                                             <td>
@@ -273,15 +337,28 @@ export default function AdminPlacementsPage() {
                                             <td><div className={styles.tablePrimary}>{placement.salaryRange}</div></td>
                                             <td><div className={styles.tablePrimary} style={{ maxWidth: "200px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{placement.jobDescription}</div></td>
                                             <td><span className={styles.dateBadge}>{placement.passoutYears}</span></td>
-                                            <td><a href={placement.applyLink} target="_blank" rel="noreferrer" style={{ color: "#0881ec", fontWeight: "bold", textDecoration: "underline" }}>Apply</a></td>
+                                            <td><span className={styles.dateBadge}>{formatDate(placement.dueDate)}</span></td>
+                                            <td>
+                                                <span
+                                                    className={styles.dateBadge}
+                                                    style={expired ? { background: "#fef2f2", borderColor: "#fecaca", color: "#b91c1c" } : { background: "#ecfdf5", borderColor: "#bbf7d0", color: "#15803d" }}
+                                                >
+                                                    {expired ? "Expired" : "Open"}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href={placement.applyLink} target="_blank" rel="noreferrer" style={{ color: "#0881ec", fontWeight: "bold", textDecoration: "underline", opacity: expired ? 0.55 : 1, pointerEvents: expired ? "none" : "auto" }}>
+                                                    {expired ? "Expired" : "Apply"}
+                                                </a>
+                                            </td>
                                             <td>
                                                 <div className={styles.actions}>
                                                     <button
                                                         onClick={() => { void handleSendPlacement(placement.id); }}
                                                         className={styles.mailBtn}
-                                                        title="Send to students"
-                                                        disabled={sendingPlacementId === placement.id}
-                                                        style={sendingPlacementId === placement.id ? { opacity: 0.7, cursor: "wait", transform: "none" } : undefined}
+                                                        title={expired ? "Expired placements cannot be sent" : "Send to students"}
+                                                        disabled={sendingPlacementId === placement.id || expired}
+                                                        style={sendingPlacementId === placement.id || expired ? { opacity: 0.7, cursor: expired ? "not-allowed" : "wait", transform: "none" } : undefined}
                                                     >
                                                         {sendingPlacementId === placement.id ? (
                                                             <Spinner size={18} weight="bold" />
@@ -311,7 +388,7 @@ export default function AdminPlacementsPage() {
                             <button onClick={resetModal}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className={styles.form}>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 1rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: compactModalLayout ? "1fr" : "1fr 1fr", gap: compactModalLayout ? "0" : "0 1rem" }}>
                                 <div className={styles.formGroup}>
                                     <label>Company Name</label>
                                     <input required value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} placeholder="e.g. Google, Amazon" />
@@ -321,7 +398,7 @@ export default function AdminPlacementsPage() {
                                     <input required value={formData.designation} onChange={(e) => setFormData({ ...formData, designation: e.target.value })} placeholder="e.g. Software Engineer" />
                                 </div>
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0 1rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: compactModalLayout ? "1fr" : "1fr 1fr", gap: compactModalLayout ? "0" : "0 1rem" }}>
                                 <div className={styles.formGroup}>
                                     <label>Salary Range</label>
                                     <input required value={formData.salaryRange} onChange={(e) => setFormData({ ...formData, salaryRange: e.target.value })} placeholder="e.g. 6-10 LPA" />
@@ -329,6 +406,43 @@ export default function AdminPlacementsPage() {
                                 <div className={styles.formGroup}>
                                     <label>Passout Years</label>
                                     <input required value={formData.passoutYears} onChange={(e) => setFormData({ ...formData, passoutYears: e.target.value })} placeholder="e.g. 2024, 2025" />
+                                </div>
+                            </div>
+                            <div className={styles.formGroup}>
+                                <label>Due Date</label>
+                                <div className={styles.datePickerWrap} ref={dueDatePickerRef}>
+                                    <button
+                                        type="button"
+                                        className={styles.dateFieldButton}
+                                        onClick={() => setShowDueDatePicker((current) => !current)}
+                                        aria-expanded={showDueDatePicker}
+                                    >
+                                        <CalendarBlank size={18} weight="duotone" />
+                                        <span className={styles.dateFieldValue}>
+                                            {formData.dueDate ? formatDate(formData.dueDate) : "Select due date"}
+                                        </span>
+                                        <CaretDown size={16} weight="bold" className={styles.dateFieldCaret} />
+                                    </button>
+                                    {showDueDatePicker ? (
+                                        <div className={styles.datePopover}>
+                                            <Calendar
+                                                onChange={(value) => {
+                                                    const nextDate = Array.isArray(value) ? value[0] : value;
+                                                    if (nextDate instanceof Date && !Number.isNaN(nextDate.getTime())) {
+                                                        setFormData((current) => ({
+                                                            ...current,
+                                                            dueDate: toDateValue(nextDate),
+                                                        }));
+                                                        setShowDueDatePicker(false);
+                                                    }
+                                                }}
+                                                value={formData.dueDate ? parseLocalDate(formData.dueDate) : new Date()}
+                                                minDate={new Date()}
+                                                maxDetail="month"
+                                                className={styles.reactCalendar}
+                                            />
+                                        </div>
+                                    ) : null}
                                 </div>
                             </div>
                             <div className={styles.formGroup}>

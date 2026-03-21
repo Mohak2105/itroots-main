@@ -101,17 +101,22 @@
 
 .controls {
     display: grid;
-    grid-template-columns: minmax(220px, 280px) minmax(200px, 240px) minmax(260px, 1fr);
+    grid-template-columns: minmax(220px, 280px) minmax(200px, 240px) minmax(260px, 1fr) minmax(220px, 240px);
     gap: 1rem;
     align-items: end;
 }
 
 .filterWrap,
 .dateWrap,
-.searchWrap {
+.searchWrap,
+.actionWrap {
     display: flex;
     flex-direction: column;
     gap: 0.55rem;
+}
+
+.actionWrap {
+    align-self: end;
 }
 
 .controlLabel {
@@ -255,6 +260,35 @@
 
 .searchIcon {
     color: #94a3b8;
+}
+
+.saveButton {
+    min-height: 56px;
+    border: none;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #0f3f6f 0%, #2088e6 100%);
+    color: #ffffff;
+    padding: 0 1.25rem;
+    font-size: 0.95rem;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.65rem;
+    cursor: pointer;
+    box-shadow: 0 12px 28px rgba(15, 63, 111, 0.18);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+}
+
+.saveButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 30px rgba(15, 63, 111, 0.2);
+}
+
+.saveButton:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+    box-shadow: none;
 }
 
 .successBanner,
@@ -492,7 +526,7 @@
     }
 
     .controls {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -508,6 +542,10 @@
     }
 
     .statsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .controls {
         grid-template-columns: 1fr;
     }
 

@@ -10,3 +10,5 @@ tsconfig.tsbuildinfo
 .gemini/
 test-output.*
 lint_output.txt
+playwright-report/
+test-results/

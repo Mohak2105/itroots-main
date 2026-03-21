@@ -61,6 +61,7 @@ type CertificateRecord = {
     duration: string;
     signatoryName: string;
     signatoryTitle?: string;
+    signatorySignature?: string | null;
     issueDate: string;
     student?: { id: string; name: string; email: string };
     course?: { id: string; title: string; duration?: string; category?: string };
@@ -74,6 +75,8 @@ type CertificateForm = {
     duration: string;
     signatoryName: string;
     signatoryTitle: string;
+    signatorySignature: string;
+    signatorySignatureFileName: string;
     issueDate: string;
 };
 
@@ -107,6 +110,33 @@ const toDateValue = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
+const readFileAsDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+        reader.onerror = () => reject(new Error("Unable to read the selected signature file"));
+        reader.readAsDataURL(file);
+    });
+
+const resolveAssetUrl = (value?: string | null) => {
+    if (!value) return "";
+    if (value.startsWith("data:") || /^https?:\/\//i.test(value)) {
+        return value;
+    }
+    if (typeof window === "undefined") {
+        return value;
+    }
+    return new URL(value, window.location.origin).toString();
+};
+
+const escapeHtml = (value?: string | null) =>
+    String(value || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+
 export default function AdminCertificatesPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
@@ -125,6 +155,8 @@ export default function AdminCertificatesPage() {
         duration: "",
         signatoryName: "",
         signatoryTitle: "Authorized Signatory",
+        signatorySignature: "",
+        signatorySignatureFileName: "",
         issueDate: new Date().toISOString().slice(0, 10),
     });
 
@@ -232,13 +264,14 @@ export default function AdminCertificatesPage() {
             duration: form.duration,
             signatoryName: form.signatoryName,
             signatoryTitle: form.signatoryTitle,
+            signatorySignature: form.signatorySignature || null,
             issueDate: form.issueDate,
             student: { id: selectedStudent.id, name: selectedStudent.name, email: selectedStudent.email },
             course: selectedCourse,
             batch: { id: "preview-batch", name: selectedBatchName },
             creator: { id: user?.id || "", name: user?.name || "Admin" },
         } as CertificateRecord;
-    }, [activeCertificate, selectedStudent, selectedCourse, form.duration, form.signatoryName, form.signatoryTitle, form.issueDate, selectedBatchName, user?.id, user?.name]);
+    }, [activeCertificate, selectedStudent, selectedCourse, form.duration, form.signatoryName, form.signatoryTitle, form.signatorySignature, form.issueDate, selectedBatchName, user?.id, user?.name]);
 
     const handleStudentChange = (studentId: string) => {
         const student = students.find((item) => item.id === studentId);
@@ -297,6 +330,41 @@ export default function AdminCertificatesPage() {
         }
     };
 
+    const handleSignatureUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        if (!["image/png", "image/jpeg", "image/jpg"].includes(file.type.toLowerCase())) {
+            toast.error("Please upload a PNG or JPG file for the e-signature");
+            event.target.value = "";
+            return;
+        }
+
+        try {
+            const fileDataUrl = await readFileAsDataUrl(file);
+            setActiveCertificate(null);
+            setForm((current) => ({
+                ...current,
+                signatorySignature: fileDataUrl,
+                signatorySignatureFileName: file.name,
+            }));
+        } catch (error) {
+            console.error("Signature upload failed:", error);
+            toast.error(error instanceof Error ? error.message : "Unable to read signature image");
+        } finally {
+            event.target.value = "";
+        }
+    };
+
+    const handleRemoveSignature = () => {
+        setActiveCertificate(null);
+        setForm((current) => ({
+            ...current,
+            signatorySignature: "",
+            signatorySignatureFileName: "",
+        }));
+    };
+
     const handleDownload = async (certificateId: string) => {
         if (!token) return;
         try {
@@ -340,6 +408,13 @@ export default function AdminCertificatesPage() {
         const previewWindow = window.open("", "_blank", "width=1200,height=800");
         if (!previewWindow) return;
 
+        const signatorySignatureUrl = resolveAssetUrl(previewCertificate.signatorySignature);
+        const printLogoUrl = resolveAssetUrl("/images/lms_logo.png");
+        const printSealUrl = resolveAssetUrl("/images/logo.png");
+        const signatoryBlockMarkup = signatorySignatureUrl
+            ? `<div class="signature-image-wrap"><img class="signature-image" src="${escapeHtml(signatorySignatureUrl)}" alt="Signatory e-signature" /></div>`
+            : `<div class="script">${escapeHtml(previewCertificate.signatoryName || "Authorized Signatory")}</div>`;
+
         previewWindow.document.write(`
             <html>
             <head>
@@ -372,6 +447,8 @@ export default function AdminCertificatesPage() {
                     .footer { display: grid; grid-template-columns: 1fr 130px 1fr; align-items: end; gap: 24px; margin-top: 74px; position: relative; z-index: 2; }
                     .block { text-align: center; }
                     .script { font-size: 34px; font-family: "Brush Script MT", "Times New Roman", serif; color: #111827; line-height: 1; margin-bottom: 14px; }
+                    .signature-image-wrap { height: 58px; margin-bottom: 14px; display: flex; align-items: flex-end; justify-content: center; }
+                    .signature-image { max-width: 180px; max-height: 58px; object-fit: contain; }
                     .rule { border-top: 1px solid #12395b; margin-bottom: 10px; }
                     .label { color: #64748b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
                     .seal { width: 110px; height: 110px; margin: 0 auto; border-radius: 999px; border: 1px solid #b9cce0; box-shadow: inset 0 0 0 6px #f4f8fc, inset 0 0 0 7px #d8e3ef; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.96); }
@@ -385,26 +462,26 @@ export default function AdminCertificatesPage() {
                         <div class="frame"></div>
                         <div class="curve-top"></div>
                         <div class="curve-bottom"></div>
-                        <div class="logo-wrap"><img src="/images/lms_logo.png" alt="ITROOTS logo" /></div>
+                        <div class="logo-wrap"><img src="${escapeHtml(printLogoUrl)}" alt="ITROOTS logo" /></div>
                         <div class="title-main">CERTIFICATE</div>
                         <div class="title-sub">OF ACHIEVEMENT</div>
                         <div class="ornament"><span></span><i></i><span></span></div>
                         <div class="lead">THIS CERTIFICATE IS PROUDLY PRESENTED TO</div>
-                        <div class="name">${previewCertificate.student?.name || "Student Name"}</div>
+                        <div class="name">${escapeHtml(previewCertificate.student?.name || "Student Name")}</div>
                         <div class="name-line"></div>
                         <div class="body">
                             for successfully completing the professional course conducted by ITROOTS LMS
-                            <span class="course">${previewCertificate.course?.title || "Course Title"}</span>
+                            <span class="course">${escapeHtml(previewCertificate.course?.title || "Course Title")}</span>
                         </div>
-                        <div class="meta">Batch: ${previewCertificate.batch?.name || "Assigned Batch"}</div>
-                        <div class="meta">Duration: ${previewCertificate.duration || "Not specified"}</div>
+                        <div class="meta">Batch: ${escapeHtml(previewCertificate.batch?.name || "Assigned Batch")}</div>
+                        <div class="meta">Duration: ${escapeHtml(previewCertificate.duration || "Not specified")}</div>
                         <div class="footer">
                             <div class="block">
-                                <div class="script">${previewCertificate.signatoryName || "Authorized Signatory"}</div>
+                                ${signatoryBlockMarkup}
                                 <div class="rule"></div>
-                                <div class="label">${previewCertificate.signatoryTitle || "Authorized Signatory"}</div>
+                                <div class="label">${escapeHtml(previewCertificate.signatoryTitle || "Authorized Signatory")}</div>
                             </div>
-                            <div class="seal"><img src="/images/logo.png" alt="ITROOTS seal" /></div>
+                            <div class="seal"><img src="${escapeHtml(printSealUrl)}" alt="ITROOTS seal" /></div>
                             <div class="block">
                                 <div class="script">ITROOTS LMS</div>
                                 <div class="rule"></div>
@@ -412,8 +489,8 @@ export default function AdminCertificatesPage() {
                             </div>
                         </div>
                         <div class="meta-row">
-                            <div>Certificate No: ${previewCertificate.certificateNumber}</div>
-                            <div>Issued On: ${formatDate(previewCertificate.issueDate)}</div>
+                            <div>Certificate No: ${escapeHtml(previewCertificate.certificateNumber)}</div>
+                            <div>Issued On: ${escapeHtml(formatDate(previewCertificate.issueDate))}</div>
                         </div>
                     </div>
                 </div>
@@ -485,7 +562,17 @@ export default function AdminCertificatesPage() {
                                     <div className={styles.metaLine}>Duration: {previewCertificate.duration || "Not specified"}</div>
                                     <div className={styles.certificateFooter}>
                                         <div className={styles.signatureBlock}>
-                                            <div className={styles.signatureScript}>{previewCertificate.signatoryName || "Authorized Signatory"}</div>
+                                            {previewCertificate.signatorySignature ? (
+                                                <div className={styles.signatureImageWrap}>
+                                                    <img
+                                                        src={resolveAssetUrl(previewCertificate.signatorySignature)}
+                                                        alt="Signatory e-signature"
+                                                        className={styles.signatureImage}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                <div className={styles.signatureScript}>{previewCertificate.signatoryName || "Authorized Signatory"}</div>
+                                            )}
                                             <div className={styles.signatureLine} />
                                             <div className={styles.signatureRole}>{previewCertificate.signatoryTitle || "Authorized Signatory"}</div>
                                         </div>
@@ -693,6 +780,53 @@ export default function AdminCertificatesPage() {
                                             placeholder="Managing Director"
                                         />
                                     </label>
+                                </div>
+
+                                <div className={styles.field}>
+                                    <span>Upload E-Signature</span>
+                                    <div className={styles.signatureUploadPanel}>
+                                        <div className={styles.signatureUploadHeader}>
+                                            <div>
+                                                <div className={styles.signatureUploadTitle}>Admin signatory e-sign</div>
+                                                <div className={styles.signatureUploadMeta}>PNG or JPG only. Transparent PNG works best on certificates.</div>
+                                            </div>
+                                            <label className={styles.signatureUploadButton}>
+                                                Upload Signature
+                                                <input
+                                                    type="file"
+                                                    accept="image/png,image/jpeg"
+                                                    className={styles.hiddenInput}
+                                                    onChange={handleSignatureUpload}
+                                                />
+                                            </label>
+                                        </div>
+
+                                        {form.signatorySignature ? (
+                                            <div className={styles.signaturePreviewCard}>
+                                                <img
+                                                    src={resolveAssetUrl(form.signatorySignature)}
+                                                    alt="Uploaded e-signature preview"
+                                                    className={styles.signaturePreviewImage}
+                                                />
+                                                <div className={styles.signaturePreviewActions}>
+                                                    <div className={styles.signatureUploadMeta}>
+                                                        {form.signatorySignatureFileName || "Signature uploaded"}
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.secondaryButton}
+                                                        onClick={handleRemoveSignature}
+                                                    >
+                                                        Remove
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className={styles.formHint}>
+                                                No e-sign uploaded yet. The certificate will use the typed signatory name as a fallback signature style.
+                                            </div>
+                                        )}
+                                    </div>
                                 </div>
 
                                 <div className={styles.formHint}>

@@ -67,7 +67,7 @@ export default function AdminCoursesPage() {
             setFetchError(
                 err instanceof Error
                     ? err.message
-                    : "Backend API is not reachable. Please make sure the backend server is running on port 5000."
+                    : "Backend API is not reachable. Please check the configured backend connection."
             );
         } finally {
             setIsFetching(false);
@@ -158,21 +158,9 @@ export default function AdminCoursesPage() {
                         <p>Manage courses, pricing,and publish courses.</p>
                     </div>
                     <button
+                        type="button"
+                        className={heroStyles.heroButton}
                         onClick={openCreateModal}
-                        style={{
-                            padding: "0.75rem 1.5rem",
-                            background: "rgba(255, 255, 255, 0.15)",
-                            backdropFilter: "blur(8px)",
-                            color: "#fff",
-                            border: "1px solid rgba(255, 255, 255, 0.25)",
-                            borderRadius: "12px",
-                            fontWeight: 700,
-                            cursor: "pointer",
-                            fontSize: "0.85rem",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.5rem",
-                        }}
                     >
                         <Plus size={16} weight="bold" /> Create New Course
                     </button>

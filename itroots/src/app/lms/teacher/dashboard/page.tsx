@@ -16,6 +16,7 @@ import {
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import { buildStudentContentViewerHref } from "@/utils/studentContentViewer";
+import { resolveLiveClassJoinTarget } from "@/utils/liveClasses";
 import styles from "./teacher-dashboard.module.css";
 
 const ALL_BATCHES_VALUE = "__ALL_BATCHES__";
@@ -128,23 +129,7 @@ const formatTime = (value?: string) => {
 };
 
 const resolveLiveClassJoin = (liveClass: LiveClassItem) => {
-    const joinPath = String(liveClass.joinPath || "").trim();
-    if (joinPath) {
-        return {
-            href: joinPath,
-            external: /^https?:\/\//i.test(joinPath),
-        };
-    }
-
-    const meetingLink = String(liveClass.meetingLink || "").trim();
-    if (meetingLink) {
-        return {
-            href: meetingLink,
-            external: /^https?:\/\//i.test(meetingLink),
-        };
-    }
-
-    return { href: "", external: false };
+    return resolveLiveClassJoinTarget(liveClass, "TEACHER");
 };
 
 export default function FacultyDashboard() {

@@ -263,15 +263,7 @@ export default function TeacherAttendancePage() {
                             Select a batch, view every student, and mark attendance with one click.
                         </div>
                     </div>
-                    <button
-                        type="button"
-                        className={styles.bannerAction}
-                        onClick={saveAttendance}
-                        disabled={!selectedBatchId || saving || enrollments.length === 0}
-                    >
-                        <CheckCircle size={18} weight="bold" />
-                        {saving ? "Saving..." : "Save Attendance"}
-                    </button>
+                    
                 </div>
 
                 
@@ -330,7 +322,21 @@ export default function TeacherAttendancePage() {
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
                             />
+                            
                         </div>
+                        
+                    </div>
+                    <div className={styles.actionWrap}>
+                        <span className={styles.controlLabel}>&nbsp;</span>
+                        <button
+                            type="button"
+                            className={styles.saveButton}
+                            onClick={() => void saveAttendance()}
+                            disabled={saving || !selectedBatchId || enrollments.length === 0}
+                        >
+                            <CheckCircle size={18} weight="duotone" />
+                            <span>{saving ? "Saving..." : "Save Attendance"}</span>
+                        </button>
                     </div>
                 </div>
 

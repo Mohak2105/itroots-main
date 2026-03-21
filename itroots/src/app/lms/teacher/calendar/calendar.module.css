@@ -378,6 +378,7 @@
         flex-direction: column;
         align-items: flex-start;
         gap: 0.5rem;
+        padding: 1.75rem 1.4rem;
     }
 
     .calLayout {
@@ -396,5 +397,65 @@
         width: 28px;
         height: 28px;
         font-size: 0.8rem;
+    }
+
+    .calendarCard {
+        padding: 1.25rem;
+    }
+
+    .calHeader {
+        gap: 0.75rem;
+    }
+
+    .calMonthGroup {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.4rem;
+        text-align: center;
+    }
+
+    .eventsPanelHeader {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 560px) {
+    .bannerTitle {
+        font-size: 1.45rem;
+    }
+
+    .bannerSub {
+        font-size: 0.88rem;
+    }
+
+    .calendarCard {
+        padding: 1rem;
+    }
+
+    .calHeader {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .calMonth {
+        font-size: 1.15rem;
+    }
+
+    .weekLabel {
+        font-size: 0.68rem;
+    }
+
+    .dayCell {
+        min-height: 54px;
+        padding: 0.4rem 0.2rem;
+    }
+
+    .eventsBody {
+        padding: 0.85rem;
+    }
+
+    .eventItem {
+        padding: 0.8rem;
     }
 }

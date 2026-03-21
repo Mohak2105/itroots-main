@@ -595,8 +595,29 @@
 }
 
 @media (max-width: 480px) {
+    .banner {
+        padding: 1.6rem 1.1rem;
+    }
+
+    .bannerTitle {
+        font-size: 1.45rem;
+    }
+
+    .bannerSub {
+        font-size: 0.88rem;
+    }
+
     .statsGrid {
         grid-template-columns: 1fr;
+    }
+
+    .attendanceTable {
+        min-width: 520px;
+    }
+
+    .sectionHeader {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }
 
@@ -720,6 +741,19 @@
     .certDownloadBtn {
         flex: 1;
         justify-content: center;
+    }
+
+    .viewerOverlay {
+        padding: 0.75rem;
+    }
+
+    .viewerModal {
+        height: 88vh;
+        border-radius: 12px;
+    }
+
+    .viewerHeader {
+        padding: 0.85rem 1rem;
     }
 }
 

@@ -7,7 +7,12 @@ import { ArrowLeft, Power, VideoCamera } from "@phosphor-icons/react";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import JitsiLiveRoom from "@/components/lms/JitsiLiveRoom";
+import ZoomLiveRoom from "@/components/lms/ZoomLiveRoom";
 import { ENDPOINTS } from "@/config/api";
+import {
+    getLiveClassAccessState,
+    getNormalizedLiveClassProvider,
+} from "@/utils/liveClasses";
 import styles from "@/components/lms/live-class-page.module.css";
 
 type LiveClassDetail = {
@@ -16,9 +21,10 @@ type LiveClassDetail = {
     scheduledAt: string;
     status: string;
     provider?: string;
-    roomName?: string | null;
-    jitsiDomain?: string | null;
     meetingLink?: string | null;
+    zoomMeetingNumber?: string | null;
+    zoomPasscode?: string | null;
+    jitsiRoomName?: string | null;
     description?: string;
     course?: { title?: string };
     batch?: { name?: string };
@@ -45,6 +51,7 @@ export default function TeacherLiveClassRoomPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [ending, setEnding] = useState(false);
+    const [nowTick, setNowTick] = useState(() => Date.now());
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
@@ -78,6 +85,14 @@ export default function TeacherLiveClassRoomPage() {
         void fetchLiveClass();
     }, [token, params?.liveClassId]);
 
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            setNowTick(Date.now());
+        }, 1000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
+
     if (isLoading || !user) return null;
 
     const handleEndLiveClass = async () => {
@@ -104,6 +119,8 @@ export default function TeacherLiveClassRoomPage() {
         }
     };
 
+    const provider = getNormalizedLiveClassProvider(liveClass?.provider);
+    const accessState = liveClass ? getLiveClassAccessState(liveClass, nowTick) : "UNAVAILABLE";
     const subtitle = liveClass
         ? `${liveClass.course?.title || "Course"} · ${liveClass.batch?.name || "Batch"} · ${formatDateTime(liveClass.scheduledAt)}`
         : "Loading live class details";
@@ -136,62 +153,66 @@ export default function TeacherLiveClassRoomPage() {
                 </div>
 
                 {loading ? (
-                    <div className={styles.actionCard}>
+                    <div className={styles.actionCard} data-testid="live-class-room-state" data-state="loading">
                         <div className={styles.actionTitle}>Loading live class...</div>
                     </div>
                 ) : error ? (
-                    <div className={styles.actionCard}>
+                    <div className={styles.actionCard} data-testid="live-class-room-state" data-state="error">
                         <div className={styles.actionTitle}>Unable to open live class</div>
                         <div className={styles.actionBody}>{error}</div>
                     </div>
                 ) : liveClass ? (
                     <>
-                        <div className={styles.infoCard}>
-                            <div className={styles.infoGrid}>
-                                <div className={styles.infoItem}>
-                                    <span className={styles.infoLabel}>Provider</span>
-                                    <span className={styles.infoValue}>{liveClass.provider || "EXTERNAL"}</span>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <span className={styles.infoLabel}>Schedule</span>
-                                    <span className={styles.infoValue}>{formatDateTime(liveClass.scheduledAt)}</span>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <span className={styles.infoLabel}>Status</span>
-                                    <span className={styles.infoValue}>{liveClass.status}</span>
-                                </div>
-                                <div className={styles.infoItem}>
-                                    <span className={styles.infoLabel}>Room</span>
-                                    <span className={styles.infoValue}>{liveClass.roomName || "External meeting"}</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        {liveClass.status === "CANCELLED" ? (
-                            <div className={styles.actionCard}>
+                        {accessState === "CANCELLED" ? (
+                            <div className={styles.actionCard} data-testid="live-class-room-state" data-state="cancelled">
                                 <div className={styles.actionTitle}>This class has been cancelled</div>
                                 <div className={styles.actionBody}>Students can no longer join this session.</div>
                             </div>
-                        ) : liveClass.status === "COMPLETED" ? (
-                            <div className={styles.actionCard}>
+                        ) : accessState === "COMPLETED" ? (
+                            <div className={styles.actionCard} data-testid="live-class-room-state" data-state="completed">
                                 <div className={styles.actionTitle}>This live class has ended</div>
                                 <div className={styles.actionBody}>The join link is no longer available to students.</div>
                             </div>
-                        ) : liveClass.provider === "JITSI" && liveClass.roomName ? (
+                        ) : accessState === "NOT_STARTED" ? (
+                            <div className={styles.actionCard} data-testid="live-class-room-state" data-state="not-started">
+                                <div className={styles.actionTitle}>Class has not started yet</div>
+                                <div className={styles.actionBody}>Embedded access opens exactly at the scheduled start time.</div>
+                            </div>
+                        ) : accessState === "EXPIRED" ? (
+                            <div className={styles.actionCard} data-testid="live-class-room-state" data-state="expired">
+                                <div className={styles.actionTitle}>Class session expired</div>
+                                <div className={styles.actionBody}>This live class can only be opened for 120 minutes after the scheduled start time.</div>
+                            </div>
+                        ) : accessState === "UNAVAILABLE" ? (
+                            <div className={styles.actionCard} data-testid="live-class-room-state" data-state="unavailable">
+                                <div className={styles.actionTitle}>Live class unavailable</div>
+                                <div className={styles.actionBody}>The schedule for this live class is invalid or incomplete.</div>
+                            </div>
+                        ) : provider === "JITSI" && liveClass.jitsiRoomName ? (
                             <JitsiLiveRoom
-                                roomName={liveClass.roomName}
-                                displayName={user.name}
-                                email={user.email}
-                                role="TEACHER"
-                                domain={liveClass.jitsiDomain || undefined}
+                                roomName={liveClass.jitsiRoomName}
+                                userName={user.name}
+                                userEmail={user.email}
                                 title={liveClass.title}
                                 subtitle={subtitle}
+                                audience="TEACHER"
+                            />
+                        ) : provider === "ZOOM" && liveClass.zoomMeetingNumber ? (
+                            <ZoomLiveRoom
+                                liveClassId={liveClass.id}
+                                token={token!}
+                                audience="TEACHER"
+                                userName={user.name}
+                                userEmail={user.email}
+                                title={liveClass.title}
+                                subtitle={subtitle}
+                                fallbackMeetingLink={liveClass.meetingLink}
                             />
                         ) : liveClass.meetingLink ? (
                             <div className={styles.actionCard}>
-                                <div className={styles.actionTitle}>External meeting link</div>
+                                <div className={styles.actionTitle}>Meeting link</div>
                                 <div className={styles.actionBody}>
-                                    This class still uses the previous external-link flow. Open it below.
+                                    Open this live class in a new tab using the external meeting link.
                                 </div>
                                 <a href={liveClass.meetingLink} target="_blank" rel="noreferrer" className={styles.primaryAction}>
                                     Open Meeting Link
@@ -199,8 +220,8 @@ export default function TeacherLiveClassRoomPage() {
                             </div>
                         ) : (
                             <div className={styles.actionCard}>
-                                <div className={styles.actionTitle}>Join link unavailable</div>
-                                <div className={styles.actionBody}>No valid room or external meeting link was found for this class.</div>
+                                <div className={styles.actionTitle}>Meeting link unavailable</div>
+                                <div className={styles.actionBody}>No valid meeting link was found for this class.</div>
                             </div>
                         )}
                     </>

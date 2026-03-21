@@ -1,141 +1,420 @@
 "use client";
 
-import { JitsiMeeting } from "@jitsi/react-sdk";
-import styles from "./jitsi-live-room.module.css";
-
-type JitsiRole = "TEACHER" | "STUDENT";
+import { useEffect, useMemo, useRef, useState } from "react";
+import styles from "./live-class-page.module.css";
 
 type JitsiLiveRoomProps = {
     roomName: string;
-    displayName: string;
-    email?: string;
-    role: JitsiRole;
-    domain?: string;
-    title?: string;
-    subtitle?: string;
-    showMetaBar?: boolean;
+    userName: string;
+    userEmail?: string;
+    title: string;
+    subtitle: string;
+    audience?: "TEACHER" | "STUDENT";
 };
 
-const STUDENT_TOOLBAR_BUTTONS = [
-    "microphone",
-    "camera",
-    "chat",
-    "tileview",
-    "hangup",
-    "fullscreen",
-];
+declare global {
+    interface Window {
+        JitsiMeetExternalAPI?: new (domain: string, options: Record<string, unknown>) => {
+            dispose?: () => void;
+        };
+        __itrootsJitsiScriptPromise?: Promise<void>;
+    }
+}
 
-const TEACHER_TOOLBAR_BUTTONS = [
-    "microphone",
-    "camera",
-    "desktop",
-    "chat",
-    "participants-pane",
-    "tileview",
-    "hangup",
-    "fullscreen",
-];
+const JITSI_SCRIPT_ID = "itroots-jitsi-external-api";
 
-const IFRAME_ALLOW_PERMISSIONS = [
-    "autoplay",
-    "camera",
-    "microphone",
-    "display-capture",
-    "fullscreen",
-    "clipboard-write",
-].join("; ");
+const normalizeJitsiDomain = (value: string) => (
+    value
+        .trim()
+        .replace(/^https?:\/\//i, "")
+        .replace(/\/+$/, "")
+);
 
-const applyIframePermissions = (iframe: HTMLIFrameElement | null) => {
-    if (!(iframe instanceof HTMLIFrameElement)) {
+const normalizeJitsiAppId = (value: string) => value.trim().replace(/^\/+|\/+$/g, "");
+const isJaasDomain = (domain: string) => domain === "8x8.vc";
+
+const resolveJitsiRoomPath = (domain: string, roomName: string, appId: string) => {
+    if (!roomName) return "";
+    if (isJaasDomain(domain) && appId) {
+        return `${appId}/${roomName}`;
+    }
+    return roomName;
+};
+
+const buildJitsiMeetingLink = (domain: string, roomPath: string) => (
+    domain && roomPath ? `https://${domain}/${roomPath}` : ""
+);
+
+const resetJitsiExternalApiLoader = () => {
+    window.__itrootsJitsiScriptPromise = undefined;
+    const existingScript = document.getElementById(JITSI_SCRIPT_ID);
+    existingScript?.remove();
+};
+
+const loadJitsiExternalApi = async (domain: string) => {
+    if (window.JitsiMeetExternalAPI) {
         return;
     }
 
-    iframe.style.width = "100%";
-    iframe.style.height = "100%";
-    iframe.style.display = "block";
-    iframe.style.border = "0";
-    iframe.setAttribute("allow", IFRAME_ALLOW_PERMISSIONS);
-    iframe.setAttribute("allowfullscreen", "true");
-    iframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+    if (!window.__itrootsJitsiScriptPromise) {
+        window.__itrootsJitsiScriptPromise = new Promise<void>((resolve, reject) => {
+            const existingScript = document.getElementById(JITSI_SCRIPT_ID) as HTMLScriptElement | null;
+
+            const handleLoad = () => resolve();
+            const handleError = () => {
+                resetJitsiExternalApiLoader();
+                reject(new Error("Unable to load the Jitsi embed script"));
+            };
+
+            if (existingScript) {
+                existingScript.addEventListener("load", handleLoad, { once: true });
+                existingScript.addEventListener("error", handleError, { once: true });
+
+                if (window.JitsiMeetExternalAPI) {
+                    resolve();
+                }
+                return;
+            }
+
+            const script = document.createElement("script");
+            script.id = JITSI_SCRIPT_ID;
+            script.src = `https://${domain}/external_api.js`;
+            script.async = true;
+            script.onload = () => resolve();
+            script.onerror = handleError;
+            document.body.appendChild(script);
+        });
+    }
+
+    try {
+        await window.__itrootsJitsiScriptPromise;
+    } catch (error) {
+        resetJitsiExternalApiLoader();
+        throw error;
+    }
 };
 
 export default function JitsiLiveRoom({
     roomName,
-    displayName,
-    email,
-    role,
-    domain,
+    userName,
+    userEmail,
     title,
     subtitle,
-    showMetaBar = true,
+    audience = "STUDENT",
 }: JitsiLiveRoomProps) {
-    const resolvedDomain = String(domain || process.env.NEXT_PUBLIC_JITSI_DOMAIN || "meet.jit.si").trim();
-    const isTeacher = role === "TEACHER";
+    const jitsiRootRef = useRef<HTMLDivElement | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState("");
+    const [hasJoined, setHasJoined] = useState(false);
+    const [mediaNotice, setMediaNotice] = useState("");
+    const [retryNonce, setRetryNonce] = useState(0);
+    const joinWithoutInitialMedia = true;
+    const jitsiDomain = useMemo(
+        () => normalizeJitsiDomain(process.env.NEXT_PUBLIC_JITSI_DOMAIN || ""),
+        [],
+    );
+    const jitsiAppId = useMemo(
+        () => normalizeJitsiAppId(process.env.NEXT_PUBLIC_JITSI_APP_ID || ""),
+        [],
+    );
+    const roomPath = useMemo(
+        () => resolveJitsiRoomPath(jitsiDomain, roomName, jitsiAppId),
+        [jitsiAppId, jitsiDomain, roomName],
+    );
+    const fallbackMeetingLink = useMemo(
+        () => buildJitsiMeetingLink(jitsiDomain, roomPath),
+        [jitsiDomain, roomPath],
+    );
+    const isAutomationMode = useMemo(() => {
+        if (typeof window === "undefined") return false;
+        return new URLSearchParams(window.location.search).get("e2e") === "1";
+    }, []);
+    const jitsiSessionConfig = useMemo(
+        () => ({
+            audience,
+            isAutomationMode,
+            jitsiAppId,
+            jitsiDomain,
+            roomPath,
+            joinWithoutInitialMedia,
+            userEmail,
+            userName,
+        }),
+        [audience, isAutomationMode, jitsiAppId, jitsiDomain, roomPath, joinWithoutInitialMedia, userEmail, userName],
+    );
 
-    return (
-        <div className={styles.shell}>
-            {showMetaBar ? (
-                <div className={styles.metaBar}>
-                    <div>
-                        <div className={styles.metaTitle}>{title || "Live Class Room"}</div>
-                        <div className={styles.metaSub}>{subtitle || roomName}</div>
-                    </div>
-                    <div className={styles.rolePill}>{isTeacher ? "Host" : "Student"}</div>
-                </div>
-            ) : null}
+    useEffect(() => {
+        let mounted = true;
+        let autoMediaEnabled = false;
+        let mediaEnableAttempts = 0;
+        let reconnectTimer: number | null = null;
+        let jitsiApi: {
+            dispose?: () => void;
+            addEventListener?: (event: string, listener: (...args: unknown[]) => void) => void;
+            executeCommand?: (command: string, ...args: unknown[]) => void;
+            getIFrame?: () => HTMLIFrameElement;
+            isAudioAvailable?: () => Promise<boolean>;
+            isVideoAvailable?: () => Promise<boolean>;
+            isAudioMuted?: () => Promise<boolean>;
+            isVideoMuted?: () => Promise<boolean>;
+        } | null = null;
 
-            <div className={styles.frameWrap}>
-                <JitsiMeeting
-                    domain={resolvedDomain}
-                    roomName={roomName}
-                    userInfo={{
-                        displayName,
-                        email: email || "",
-                    }}
-                    configOverwrite={{
+        const initJitsi = async () => {
+            try {
+                setIsLoading(true);
+                setError("");
+                setMediaNotice("");
+
+                if (!roomName) {
+                    throw new Error("Jitsi room name is unavailable for this live class");
+                }
+
+                if (!jitsiSessionConfig.jitsiDomain) {
+                    throw new Error("Jitsi domain is not configured. Set NEXT_PUBLIC_JITSI_DOMAIN.");
+                }
+
+                if (isJaasDomain(jitsiSessionConfig.jitsiDomain) && !jitsiSessionConfig.jitsiAppId) {
+                    throw new Error("Jitsi app id is not configured. Set NEXT_PUBLIC_JITSI_APP_ID for your 8x8 JaaS app.");
+                }
+
+                if (!jitsiSessionConfig.roomPath) {
+                    throw new Error("Jitsi room path could not be created for this live class");
+                }
+
+                await loadJitsiExternalApi(jitsiSessionConfig.jitsiDomain);
+                if (!mounted || !jitsiRootRef.current || !window.JitsiMeetExternalAPI) {
+                    return;
+                }
+
+                jitsiRootRef.current.innerHTML = "";
+
+                jitsiApi = new window.JitsiMeetExternalAPI(jitsiSessionConfig.jitsiDomain, {
+                    roomName: jitsiSessionConfig.roomPath,
+                    parentNode: jitsiRootRef.current,
+                    width: "100%",
+                    height: "100%",
+                    userInfo: {
+                        displayName: jitsiSessionConfig.userName,
+                        email: jitsiSessionConfig.userEmail || undefined,
+                    },
+                    configOverwrite: {
+                        disableDeepLinking: true,
+                        disableInitialGUM: jitsiSessionConfig.joinWithoutInitialMedia,
                         prejoinPageEnabled: false,
                         prejoinConfig: {
                             enabled: false,
                         },
-                        disableInitialGUM: false,
-                        startWithAudioMuted: !isTeacher,
-                        startWithVideoMuted: !isTeacher,
-                        disableModeratorIndicator: !isTeacher,
-                        toolbarButtons: isTeacher ? TEACHER_TOOLBAR_BUTTONS : STUDENT_TOOLBAR_BUTTONS,
-                    }}
-                    interfaceConfigOverwrite={{
-                        DISABLE_JOIN_LEAVE_NOTIFICATIONS: true,
-                    }}
-                    onApiReady={(externalApi) => {
-                        const iframe = typeof externalApi?.getIFrame === "function"
-                            ? externalApi.getIFrame()
-                            : null;
-                        applyIframePermissions(iframe instanceof HTMLIFrameElement ? iframe : null);
-                    }}
-                    getIFrameRef={(parentNode: HTMLDivElement) => {
-                        parentNode.style.height = "100%";
-                        parentNode.style.width = "100%";
-                        parentNode.style.display = "block";
+                        startWithAudioMuted: true,
+                        startWithVideoMuted: true,
+                        startAudioOnly: false,
+                    },
+                    interfaceConfigOverwrite: {
+                        MOBILE_APP_PROMO: false,
+                    },
+                });
 
-                        const applyCurrentFrame = () => {
-                            const iframe = parentNode.querySelector("iframe");
-                            applyIframePermissions(iframe instanceof HTMLIFrameElement ? iframe : null);
-                        };
+                const jitsiIframe = jitsiApi.getIFrame?.();
+                if (jitsiIframe) {
+                    jitsiIframe.allow = "camera; microphone; fullscreen; display-capture; autoplay; clipboard-write";
+                    jitsiIframe.setAttribute("allow", "camera; microphone; fullscreen; display-capture; autoplay; clipboard-write");
+                    jitsiIframe.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+                }
 
-                        applyCurrentFrame();
+                const refreshMediaNotice = async () => {
+                    if (!mounted || !jitsiApi) return;
 
-                        if (!parentNode.querySelector("iframe")) {
-                            const observer = new MutationObserver(() => {
-                                applyCurrentFrame();
-                                if (parentNode.querySelector("iframe")) {
-                                    observer.disconnect();
-                                }
-                            });
-                            observer.observe(parentNode, { childList: true, subtree: true });
+                    try {
+                        const [
+                            audioAvailable,
+                            videoAvailable,
+                        ] = await Promise.all([
+                            jitsiApi.isAudioAvailable?.() ?? Promise.resolve(false),
+                            jitsiApi.isVideoAvailable?.() ?? Promise.resolve(false),
+                        ]);
+
+                        if (!audioAvailable && !videoAvailable) return;
+                        setMediaNotice("");
+                    } catch {
+                        setMediaNotice("");
+                    }
+                };
+
+                const ensureMediaEnabled = async () => {
+                    if (!mounted || !jitsiApi || autoMediaEnabled || mediaEnableAttempts >= 3) return;
+                    autoMediaEnabled = true;
+                    mediaEnableAttempts += 1;
+
+                    try {
+                        const [
+                            audioAvailable,
+                            videoAvailable,
+                            audioMuted,
+                            videoMuted,
+                        ] = await Promise.all([
+                            jitsiApi.isAudioAvailable?.() ?? Promise.resolve(false),
+                            jitsiApi.isVideoAvailable?.() ?? Promise.resolve(false),
+                            jitsiApi.isAudioMuted?.() ?? Promise.resolve(true),
+                            jitsiApi.isVideoMuted?.() ?? Promise.resolve(true),
+                        ]);
+
+                        jitsiApi.executeCommand?.("displayName", jitsiSessionConfig.userName);
+
+                        if (audioAvailable && audioMuted) {
+                            jitsiApi.executeCommand?.("toggleAudio");
                         }
+
+                        if (videoAvailable && videoMuted) {
+                            jitsiApi.executeCommand?.("toggleVideo");
+                        }
+
+                        window.setTimeout(() => {
+                            void refreshMediaNotice();
+                        }, 700);
+
+                        window.setTimeout(async () => {
+                            if (!mounted || !jitsiApi) return;
+
+                            try {
+                                const [
+                                    latestAudioAvailable,
+                                    latestVideoAvailable,
+                                    latestAudioMuted,
+                                    latestVideoMuted,
+                                ] = await Promise.all([
+                                    jitsiApi.isAudioAvailable?.() ?? Promise.resolve(false),
+                                    jitsiApi.isVideoAvailable?.() ?? Promise.resolve(false),
+                                    jitsiApi.isAudioMuted?.() ?? Promise.resolve(true),
+                                    jitsiApi.isVideoMuted?.() ?? Promise.resolve(true),
+                                ]);
+
+                                autoMediaEnabled = false;
+
+                                if (
+                                    (latestAudioAvailable && latestAudioMuted) ||
+                                    (latestVideoAvailable && latestVideoMuted)
+                                ) {
+                                    void ensureMediaEnabled();
+                                }
+                            } catch {
+                                autoMediaEnabled = false;
+                            }
+                        }, 1500);
+                    } catch {
+                        autoMediaEnabled = false;
+                    }
+                };
+
+                jitsiApi.addEventListener?.("videoConferenceJoined", () => {
+                    if (!mounted) return;
+                    setHasJoined(true);
+                    setIsLoading(false);
+                    setMediaNotice("");
+                });
+
+                jitsiApi.addEventListener?.("videoConferenceLeft", () => {
+                    if (!mounted) return;
+                    setHasJoined(false);
+                });
+
+                jitsiApi.addEventListener?.("audioAvailabilityChanged", () => {
+                    void refreshMediaNotice();
+                });
+
+                jitsiApi.addEventListener?.("videoAvailabilityChanged", () => {
+                    void refreshMediaNotice();
+                });
+
+                jitsiApi.addEventListener?.("audioMuteStatusChanged", () => {
+                    void refreshMediaNotice();
+                });
+
+                jitsiApi.addEventListener?.("videoMuteStatusChanged", () => {
+                    void refreshMediaNotice();
+                });
+
+                jitsiApi.addEventListener?.("cameraError", () => {
+                    if (!mounted) return;
+                    setMediaNotice("Camera access is blocked or unavailable. Allow camera permission in your browser if you want to turn video on.");
+                });
+
+                jitsiApi.addEventListener?.("micError", () => {
+                    if (!mounted) return;
+                    setMediaNotice("Microphone access is blocked or unavailable. Allow mic permission in your browser if you want to speak.");
+                });
+
+                if (mounted) {
+                    setIsLoading(false);
+                }
+            } catch (err) {
+                if (mounted) {
+                    setError(err instanceof Error ? err.message : "Unable to load Jitsi meeting");
+                    setIsLoading(false);
+                    reconnectTimer = window.setTimeout(() => {
+                        if (!mounted) return;
+                        setError("");
+                        setRetryNonce((current) => current + 1);
+                    }, 2000);
+                }
+            }
+        };
+
+        void initJitsi();
+
+        return () => {
+            mounted = false;
+            if (reconnectTimer) {
+                window.clearTimeout(reconnectTimer);
+            }
+            jitsiApi?.dispose?.();
+        };
+    }, [jitsiSessionConfig, retryNonce, roomName]);
+
+    if (error) {
+        return (
+            <div className={styles.actionCard} data-testid="jitsi-live-room-error">
+                <div className={styles.actionTitle}>Jitsi embed unavailable</div>
+                <div className={styles.actionBody}>{error}</div>
+                <button
+                    type="button"
+                    className={styles.primaryAction}
+                    onClick={() => {
+                        setError("");
+                        setRetryNonce((current) => current + 1);
                     }}
-                />
+                >
+                    Retry Jitsi Join
+                </button>
+                {fallbackMeetingLink ? (
+                    <a href={fallbackMeetingLink} target="_blank" rel="noreferrer" className={styles.primaryAction}>
+                        Open Jitsi Link
+                    </a>
+                ) : null}
             </div>
+        );
+    }
+
+    return (
+        <div
+            className={styles.zoomRoomCard}
+            data-testid="jitsi-live-room"
+            data-joined={hasJoined ? "true" : "false"}
+            data-automation-mode={isAutomationMode ? "true" : "false"}
+        >
+            <div className={styles.zoomRoomHeader}>
+                <div className={styles.zoomRoomTitle}>{title}</div>
+                <div className={styles.zoomRoomSub}>{subtitle}</div>
+            </div>
+            {mediaNotice ? (
+                <div className={styles.mediaNotice} data-testid="jitsi-media-notice">{mediaNotice}</div>
+            ) : null}
+            {isLoading ? (
+                <div className={styles.zoomLoading} data-testid="jitsi-loading">Loading Jitsi meeting...</div>
+            ) : null}
+            <div
+                ref={jitsiRootRef}
+                className={`${styles.jitsiEmbedRoot} ${hasJoined ? styles.jitsiEmbedRootJoined : styles.jitsiEmbedRootPrejoin}`}
+                data-testid="jitsi-embed-root"
+            />
         </div>
     );
 }

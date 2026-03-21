@@ -17,6 +17,8 @@ import { ensureTestDueAtColumn, ensureTestResultAnalyticsColumns } from './utils
 import { ensureLiveClassJitsiColumns } from './utils/liveClassSchema';
 import { ensureAcademicSchemaCompatibility } from './utils/academicSchema';
 import { ensureUserProfileImageColumn } from './utils/userSchema';
+import { ensurePlacementDueDateColumn } from './utils/placementSchema';
+import { ensureCertificateSignatureColumn } from './utils/certificateSchema';
 import { ensureDemoUsers } from './seedAdmin';
 
 import './models/User';
@@ -76,6 +78,8 @@ const startServer = async () => {
         await syncDatabase();
         await ensureUserProfileImageColumn();
         await ensureAcademicSchemaCompatibility();
+        await ensurePlacementDueDateColumn();
+        await ensureCertificateSignatureColumn();
         await ensureDemoUsers();
         await ensureTestDueAtColumn();
         await ensureTestResultAnalyticsColumns();

@@ -13,11 +13,12 @@ interface CertificateAttributes {
     duration: string;
     signatoryName: string;
     signatoryTitle?: string;
+    signatorySignature?: string | null;
     issueDate: Date;
     createdBy: string;
 }
 
-interface CertificateCreationAttributes extends Optional<CertificateAttributes, 'id' | 'batchId' | 'signatoryTitle' | 'issueDate'> { }
+interface CertificateCreationAttributes extends Optional<CertificateAttributes, 'id' | 'batchId' | 'signatoryTitle' | 'signatorySignature' | 'issueDate'> { }
 
 class Certificate extends Model<CertificateAttributes, CertificateCreationAttributes> implements CertificateAttributes {
     public id!: string;
@@ -28,6 +29,7 @@ class Certificate extends Model<CertificateAttributes, CertificateCreationAttrib
     public duration!: string;
     public signatoryName!: string;
     public signatoryTitle?: string;
+    public signatorySignature?: string | null;
     public issueDate!: Date;
     public createdBy!: string;
 
@@ -71,6 +73,10 @@ Certificate.init(
             allowNull: false,
         },
         signatoryTitle: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        signatorySignature: {
             type: DataTypes.STRING,
             allowNull: true,
         },

@@ -8,8 +8,6 @@ import { API_ORIGIN, ENDPOINTS } from "@/config/api";
 import styles from "./placements.module.css";
 import {
     Briefcase,
-    CalendarDots,
-    CurrencyCircleDollar,
     ArrowSquareOut,
     Tray,
     Trophy,
@@ -24,6 +22,8 @@ type PlacementRecord = {
     passoutYears: string;
     applyLink: string;
     companyLogo?: string;
+    dueDate?: string | null;
+    isExpired?: boolean;
     createdAt: string;
 };
 
@@ -35,11 +35,17 @@ const resolveLogoUrl = (value?: string) => {
     return `${API_ORIGIN}${value}`;
 };
 
-const formatDate = (value: string) => new Date(value).toLocaleDateString("en-IN", {
+const formatDate = (value?: string | null) => {
+    if (!value) return "Not set";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Not set";
+
+    return date.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
     year: "numeric",
-});
+    });
+};
 
 interface StudentPlacementsPageProps {
     searchParams: Promise<{
@@ -109,6 +115,14 @@ export default function StudentPlacementsPage({ searchParams }: StudentPlacement
         () => placements.find((placement) => placement.id === highlightedPlacementId) || null,
         [highlightedPlacementId, placements],
     );
+    const openPlacementsCount = useMemo(
+        () => placements.filter((placement) => !placement.isExpired && placement.applyLink).length,
+        [placements],
+    );
+    const expiredPlacementsCount = useMemo(
+        () => placements.filter((placement) => placement.isExpired).length,
+        [placements],
+    );
 
     if (isLoading || !user) return null;
 
@@ -125,12 +139,12 @@ export default function StudentPlacementsPage({ searchParams }: StudentPlacement
 
                 <div className={styles.summaryRow}>
                     <div className={styles.summaryCard}>
-                        <span className={styles.summaryValue}>{loadingData ? "-" : placements.length}</span>
+                        <span className={styles.summaryValue}>{loadingData ? "-" : openPlacementsCount}</span>
                         <span className={styles.summaryLabel}>Open Opportunities</span>
                     </div>
                     <div className={styles.summaryCard}>
-                        <span className={styles.summaryValue}>{featuredPlacement ? featuredPlacement.companyName : "All"}</span>
-                        <span className={styles.summaryLabel}>{featuredPlacement ? "Highlighted Company" : "Current View"}</span>
+                        <span className={styles.summaryValue}>{loadingData ? "-" : expiredPlacementsCount}</span>
+                        <span className={styles.summaryLabel}>Expired Opportunities</span>
                     </div>
                 </div>
 
@@ -141,6 +155,7 @@ export default function StudentPlacementsPage({ searchParams }: StudentPlacement
                 {featuredPlacement ? (
                     <div className={styles.highlightNote}>
                         Viewing the placement shared in your notification: <strong>{featuredPlacement.companyName}</strong>
+                        {featuredPlacement.isExpired ? " (deadline passed)" : ""}
                     </div>
                 ) : null}
 
@@ -165,7 +180,8 @@ export default function StudentPlacementsPage({ searchParams }: StudentPlacement
                                         <th>Salary</th>
                                         <th>Passout Year</th>
                                         <th>Description</th>
-                                        <th>Posted</th>
+                                        <th>Due Date</th>
+                                        <th>Status</th>
                                         <th>Apply</th>
                                     </tr>
                                 </thead>
@@ -173,6 +189,7 @@ export default function StudentPlacementsPage({ searchParams }: StudentPlacement
                                     {placements.map((placement) => {
                                         const logoUrl = resolveLogoUrl(placement.companyLogo);
                                         const isHighlighted = placement.id === highlightedPlacementId;
+                                        const canApply = Boolean(placement.applyLink) && !placement.isExpired;
 
                                         return (
                                             <tr
@@ -217,18 +234,29 @@ export default function StudentPlacementsPage({ searchParams }: StudentPlacement
                                                     <div className={styles.tableDescription}>{placement.jobDescription}</div>
                                                 </td>
                                                 <td>
-                                                    <span className={styles.dateBadge}>{formatDate(placement.createdAt)}</span>
+                                                    <span className={styles.dateBadge}>{formatDate(placement.dueDate)}</span>
+                                                </td>
+                                                <td>
+                                                    <span className={`${styles.statusBadge} ${placement.isExpired ? styles.statusExpired : styles.statusOpen}`}>
+                                                        {placement.isExpired ? "Expired" : "Open"}
+                                                    </span>
                                                 </td>
                                                 <td className={styles.actionCell}>
-                                                    <a
-                                                        href={placement.applyLink}
-                                                        target="_blank"
-                                                        rel="noreferrer"
-                                                        className={styles.applyBtn}
-                                                    >
-                                                        Apply
-                                                        <ArrowSquareOut size={16} weight="bold" />
-                                                    </a>
+                                                    {canApply ? (
+                                                        <a
+                                                            href={placement.applyLink}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                            className={styles.applyBtn}
+                                                        >
+                                                            Apply
+                                                            <ArrowSquareOut size={16} weight="bold" />
+                                                        </a>
+                                                    ) : (
+                                                        <span className={`${styles.applyBtn} ${styles.applyBtnDisabled}`}>
+                                                            Expired
+                                                        </span>
+                                                    )}
                                                 </td>
                                             </tr>
                                         );

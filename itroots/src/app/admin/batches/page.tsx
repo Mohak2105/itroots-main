@@ -44,6 +44,7 @@ const EMPTY_BATCH = {
     startDate: "",
     endDate: "",
 };
+const isBrowser = typeof window !== "undefined";
 
 const formatDate = (value?: string) => {
     if (!value) return "";
@@ -248,7 +249,7 @@ function TimePicker({
                         padding: "0.75rem",
                         display: "flex",
                         gap: "0.5rem",
-                        width: "260px",
+                        width: "min(260px, calc(100vw - 2.5rem))",
                     }}
                 >
                     {/* Hour column */}
@@ -355,7 +356,7 @@ export default function AdminBatchesPage() {
             setFetchError(
                 err instanceof Error
                     ? err.message
-                    : "Backend API is not reachable. Please make sure the backend server is running on port 5000."
+                    : "Backend API is not reachable. Please check the configured backend connection."
             );
         } finally {
             setIsFetching(false);
@@ -373,6 +374,8 @@ export default function AdminBatchesPage() {
     }, [fetchData]);
 
     if (isLoading || !user) return null;
+
+    const compactModalLayout = isBrowser && window.innerWidth <= 640;
 
     const openCreateModal = () => {
         setBatchForm({
@@ -474,8 +477,10 @@ export default function AdminBatchesPage() {
                         <p>Manage session schedules and cohort timelines.</p>
                     </div>
                     <button
+                        type="button"
+                        className={styles.heroButton}
                         onClick={openCreateModal}
-                        style={{ padding: "0.75rem 1.5rem", background: "rgba(255, 255, 255, 0.15)", backdropFilter: "blur(8px)", color: "#fff", border: "1px solid rgba(255, 255, 255, 0.25)", borderRadius: "12px", fontWeight: 700, cursor: "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    >
                         <Plus size={16} weight="bold" /> Create New Batch
                     </button>
                 </div>
@@ -493,7 +498,7 @@ export default function AdminBatchesPage() {
                     </div>
                 ) : null}
 
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(350px, 1fr))", gap: "1.5rem" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 350px), 1fr))", gap: "1.5rem" }}>
                     {isFetching ? (
                         <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "3rem", background: "#fff", borderRadius: "20px", border: "1px dashed #cbd5e1", color: "#64748b" }}>
                             Loading batches...
@@ -554,7 +559,7 @@ export default function AdminBatchesPage() {
 
                 {isModalOpen ? (
                     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
-                        <div style={{ background: "#fff", padding: "2rem", borderRadius: "20px", width: "100%", maxWidth: "720px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", position: "relative", maxHeight: "90vh", overflowY: "auto" }}>
+                        <div style={{ background: "#fff", padding: compactModalLayout ? "1.15rem" : "2rem", borderRadius: compactModalLayout ? "16px" : "20px", width: "100%", maxWidth: "720px", boxShadow: "0 20px 60px rgba(0,0,0,0.3)", position: "relative", maxHeight: "90vh", overflowY: "auto" }}>
                             <button onClick={closeModal} style={{ position: "absolute", top: "1.5rem", right: "1.5rem", background: "none", border: "none", cursor: "pointer", color: "#64748b" }}>
                                 <X size={24} weight="bold" />
                             </button>
@@ -613,13 +618,13 @@ export default function AdminBatchesPage() {
                                 {/* Time Slot */}
                                 <div>
                                     <label style={{ display: "block", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.5rem", color: "#334155" }}>Time Slot</label>
-                                    <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
+                                    <div style={{ display: "flex", gap: "0.75rem", alignItems: compactModalLayout ? "stretch" : "center", flexDirection: compactModalLayout ? "column" : "row" }}>
                                         <TimePicker
                                             subLabel="From"
                                             value={batchForm.timeFrom}
                                             onChange={(val) => setBatchForm({ ...batchForm, timeFrom: val })}
                                         />
-                                        <span style={{ color: "#94a3b8", fontWeight: 700, fontSize: "0.85rem", marginTop: "1.4rem" }}>–</span>
+                                        <span style={{ color: "#94a3b8", fontWeight: 700, fontSize: "0.85rem", marginTop: compactModalLayout ? "0" : "1.4rem" }}>to</span>
                                         <TimePicker
                                             subLabel="To"
                                             value={batchForm.timeTo}
@@ -629,7 +634,7 @@ export default function AdminBatchesPage() {
                                 </div>
 
                                 {/* Start Date & End Date with react-calendar */}
-                                <div style={{ display: "flex", gap: "1rem" }}>
+                                <div style={{ display: "flex", gap: "1rem", flexDirection: compactModalLayout ? "column" : "row" }}>
                                     <CalendarPicker
                                         label="Start Date"
                                         value={batchForm.startDate}

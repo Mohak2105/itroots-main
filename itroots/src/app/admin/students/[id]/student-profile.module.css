@@ -264,3 +264,30 @@
         padding: 2rem 1.5rem;
     }
 }
+
+@media (max-width: 560px) {
+    .hero {
+        padding: 1.6rem 1.1rem;
+        border-radius: 22px;
+    }
+
+    .hero h1 {
+        font-size: 1.45rem;
+    }
+
+    .hero p {
+        font-size: 0.88rem;
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .panelBody {
+        padding: 1rem;
+    }
+
+    .table {
+        min-width: 520px;
+    }
+}

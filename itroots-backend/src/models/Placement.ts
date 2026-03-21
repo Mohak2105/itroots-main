@@ -10,6 +10,7 @@ interface PlacementAttributes {
     passoutYears: string;
     applyLink: string;
     companyLogo?: string;
+    dueDate?: Date | null;
 }
 
 class Placement extends Model<PlacementAttributes> implements PlacementAttributes {
@@ -21,6 +22,7 @@ class Placement extends Model<PlacementAttributes> implements PlacementAttribute
     public passoutYears!: string;
     public applyLink!: string;
     public companyLogo!: string;
+    public dueDate!: Date | null;
 
     public readonly createdAt!: Date;
     public readonly updatedAt!: Date;
@@ -59,6 +61,10 @@ Placement.init(
         },
         companyLogo: {
             type: DataTypes.STRING,
+            allowNull: true,
+        },
+        dueDate: {
+            type: DataTypes.DATE,
             allowNull: true,
         },
     },

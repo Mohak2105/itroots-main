@@ -5,7 +5,7 @@ import Batch from './Batch';
 import User from './User';
 
 export type LiveClassStatus = 'SCHEDULED' | 'CANCELLED' | 'COMPLETED';
-export type LiveClassProvider = 'JITSI' | 'EXTERNAL';
+export type LiveClassProvider = 'JITSI' | 'ZOOM' | 'EXTERNAL';
 
 interface LiveClassAttributes {
     id: string;
@@ -16,14 +16,15 @@ interface LiveClassAttributes {
     scheduledAt: Date;
     meetingLink: string;
     provider: LiveClassProvider;
-    roomName?: string | null;
-    jitsiDomain?: string | null;
+    zoomMeetingNumber?: string | null;
+    zoomPasscode?: string | null;
+    jitsiRoomName?: string | null;
     joinPath?: string | null;
     description?: string;
     status: LiveClassStatus;
 }
 
-interface LiveClassCreationAttributes extends Optional<LiveClassAttributes, 'id' | 'description' | 'status' | 'provider' | 'roomName' | 'jitsiDomain' | 'joinPath'> { }
+interface LiveClassCreationAttributes extends Optional<LiveClassAttributes, 'id' | 'description' | 'status' | 'provider' | 'zoomMeetingNumber' | 'zoomPasscode' | 'jitsiRoomName' | 'joinPath'> { }
 
 class LiveClass extends Model<LiveClassAttributes, LiveClassCreationAttributes> implements LiveClassAttributes {
     public id!: string;
@@ -34,8 +35,9 @@ class LiveClass extends Model<LiveClassAttributes, LiveClassCreationAttributes> 
     public scheduledAt!: Date;
     public meetingLink!: string;
     public provider!: LiveClassProvider;
-    public roomName?: string | null;
-    public jitsiDomain?: string | null;
+    public zoomMeetingNumber?: string | null;
+    public zoomPasscode?: string | null;
+    public jitsiRoomName?: string | null;
     public joinPath?: string | null;
     public description?: string;
     public status!: LiveClassStatus;
@@ -80,15 +82,19 @@ LiveClass.init(
             allowNull: false,
         },
         provider: {
-            type: DataTypes.ENUM('JITSI', 'EXTERNAL'),
+            type: DataTypes.STRING,
             allowNull: false,
             defaultValue: 'EXTERNAL',
         },
-        roomName: {
+        zoomMeetingNumber: {
             type: DataTypes.STRING,
             allowNull: true,
         },
-        jitsiDomain: {
+        zoomPasscode: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        jitsiRoomName: {
             type: DataTypes.STRING,
             allowNull: true,
         },

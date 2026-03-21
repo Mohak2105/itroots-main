@@ -280,7 +280,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
 
             <div className={styles.main}>
                 <header className={styles.topBar}>
-                    <div style={{ display: "flex", alignItems: "center" }}>
+                    <div className={styles.topBarLeft}>
                         <button className={styles.hamburger} onClick={() => setSidebarOpen(!sidebarOpen)}>
                             <List size={24} />
                         </button>
@@ -291,25 +291,13 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                         </h1>
                     </div>
 
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                    <div className={styles.topBarActions}>
                         {user?.role === "STUDENT" && (
                             <Link
                                 href={buildPortalPath(portal, "/announcements")}
-                                style={{
-                                    width: "36px",
-                                    height: "36px",
-                                    borderRadius: "50%",
-                                    border: "1px solid #e5e7eb",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    background: "#f8fafc",
-                                    color: "#6b7280",
-                                    cursor: "pointer",
-                                    textDecoration: "none",
-                                    transition: "all 0.15s",
-                                }}
+                                className={styles.topBarNotificationLink}
                                 title="Notifications"
+                                aria-label="Notifications"
                             >
                                 <Bell size={18} weight="regular" />
                             </Link>

@@ -24,7 +24,7 @@ import {
     PencilSimple,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
-import { resolveLiveClassJoinTarget } from "@/utils/liveClasses";
+import { getLiveClassAccessState, getLiveClassProviderLabel, resolveLiveClassJoinTarget } from "@/utils/liveClasses";
 import styles from "./batch-management.module.css";
 
 const EMPTY_LIVE_CLASS_FORM = {
@@ -34,8 +34,8 @@ const EMPTY_LIVE_CLASS_FORM = {
     batchId: "",
     scheduledAt: "",
     provider: "JITSI",
-    roomName: "",
     meetingLink: "",
+    passcode: "",
     description: "",
 };
 
@@ -491,7 +491,7 @@ export default function BatchManagementPage() {
     const openCreateLiveClass = () => {
         const batch = actualData.batch;
         const now = new Date();
-        now.setMinutes(0, 0, 0);
+        now.setSeconds(0, 0);
         setLiveClassForm({
             ...EMPTY_LIVE_CLASS_FORM,
             courseId: batch?.course?.id || batch?.courseId || "",
@@ -509,9 +509,9 @@ export default function BatchManagementPage() {
             courseId: liveClass.courseId,
             batchId: liveClass.batchId,
             scheduledAt: toInputDateTime(liveClass.scheduledAt),
-            provider: liveClass.provider || (liveClass.roomName ? "JITSI" : "EXTERNAL"),
-            roomName: liveClass.roomName || "",
-            meetingLink: (liveClass.provider || (liveClass.roomName ? "JITSI" : "EXTERNAL")) === "EXTERNAL" ? liveClass.meetingLink : "",
+            provider: liveClass.provider || "EXTERNAL",
+            meetingLink: liveClass.meetingLink || "",
+            passcode: liveClass.zoomPasscode || "",
             description: liveClass.description || "",
         });
         setIsLiveClassModal(true);
@@ -531,8 +531,8 @@ export default function BatchManagementPage() {
             const method = liveClassForm.id ? "PUT" : "POST";
             const payload = {
                 ...liveClassForm,
-                meetingLink: liveClassForm.provider === "EXTERNAL" ? liveClassForm.meetingLink : "",
-                roomName: liveClassForm.provider === "JITSI" ? liveClassForm.roomName : "",
+                meetingLink: liveClassForm.provider === "JITSI" ? "" : liveClassForm.meetingLink,
+                passcode: liveClassForm.provider === "ZOOM" ? liveClassForm.passcode : "",
             };
             const res = await fetch(url, {
                 method,
@@ -609,6 +609,16 @@ export default function BatchManagementPage() {
                                     <div key={liveClass.id} className={styles.contentItem}>
                                         {(() => {
                                         const joinTarget = resolveLiveClassJoinTarget(liveClass, "TEACHER");
+                                        const accessState = getLiveClassAccessState(liveClass);
+                                        const joinDisabledLabel = accessState === "NOT_STARTED"
+                                            ? "Starts at Scheduled Time"
+                                            : accessState === "EXPIRED"
+                                                ? "Session Expired"
+                                                : accessState === "COMPLETED"
+                                                    ? "Class Ended"
+                                                    : liveClass.status === "CANCELLED"
+                                                        ? "Class Cancelled"
+                                                        : "Join Unavailable";
                                             return (
                                                 <>
                                         <div className={styles.contentIcon} style={{ background: liveClass.status === "CANCELLED" ? "#fef2f2" : "#f5f3ff", color: liveClass.status === "CANCELLED" ? "#dc2626" : "#7c3aed" }}>
@@ -620,16 +630,19 @@ export default function BatchManagementPage() {
                                                 {new Date(liveClass.scheduledAt).toLocaleString("en-IN", { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" })}
                                                 {" | "}{liveClass.status}
                                             </p>
+                                            <p>{getLiveClassProviderLabel(liveClass.provider)}</p>
                                             {liveClass.description ? <p>{liveClass.description}</p> : null}
                                         </div>
                                         <div className={styles.liveClassActions}>
-                                            {liveClass.status !== "CANCELLED" && joinTarget.href ? (
+                                            {accessState === "AVAILABLE" && joinTarget.href ? (
                                                 joinTarget.external ? (
                                                     <a href={joinTarget.href} target="_blank" rel="noreferrer" className={styles.actionBtn}>Join</a>
                                                 ) : (
                                                     <Link href={joinTarget.href} className={styles.actionBtn}>Join</Link>
                                                 )
-                                            ) : null}
+                                            ) : (
+                                                <span className={styles.inlineBtn}>{joinDisabledLabel}</span>
+                                            )}
                                             <button type="button" className={styles.inlineBtn} onClick={() => openEditLiveClass(liveClass)}>
                                                 <PencilSimple size={14} /> Edit
                                             </button>
@@ -770,22 +783,31 @@ export default function BatchManagementPage() {
                                     value={liveClassForm.provider}
                                     onChange={(value) => setLiveClassForm({ ...liveClassForm, provider: value })}
                                     options={[
-                                        { value: "JITSI", label: "Jitsi (Recommended)" },
+                                        { value: "JITSI", label: "Jitsi Meeting" },
+                                        { value: "ZOOM", label: "Zoom Meeting" },
                                         { value: "EXTERNAL", label: "External Link" },
                                     ]}
                                 />
                             </div>
                             {liveClassForm.provider === "JITSI" ? (
                                 <div className={styles.formGroup}>
-                                    <label>Room Label (Optional)</label>
-                                    <input value={liveClassForm.roomName} onChange={(e) => setLiveClassForm({ ...liveClassForm, roomName: e.target.value })} placeholder="Auto-generated if left blank" />
+                                    <label>Auto-created Jitsi Room</label>
+                                    <div style={{ border: "1px solid #dbeafe", background: "#eff6ff", color: "#1d4ed8", borderRadius: "14px", padding: "0.9rem 1rem", lineHeight: 1.6 }}>
+                                        The Jitsi meeting room will be created automatically inside LMS. Teachers and students will join from the live class page at the scheduled time.
+                                    </div>
                                 </div>
                             ) : (
                                 <div className={styles.formGroup}>
-                                    <label>Meeting Link</label>
-                                    <input required value={liveClassForm.meetingLink} onChange={(e) => setLiveClassForm({ ...liveClassForm, meetingLink: e.target.value })} placeholder="https://meet.google.com/..." />
+                                    <label>{liveClassForm.provider === "ZOOM" ? "Zoom Join Link" : "Meeting Link"}</label>
+                                    <input required value={liveClassForm.meetingLink} onChange={(e) => setLiveClassForm({ ...liveClassForm, meetingLink: e.target.value })} placeholder={liveClassForm.provider === "ZOOM" ? "https://us06web.zoom.us/j/..." : "https://meet.google.com/..."} />
                                 </div>
                             )}
+                            {liveClassForm.provider === "ZOOM" ? (
+                                <div className={styles.formGroup}>
+                                    <label>Passcode</label>
+                                    <input value={liveClassForm.passcode} onChange={(e) => setLiveClassForm({ ...liveClassForm, passcode: e.target.value })} placeholder="Optional if your Zoom link already includes it" />
+                                </div>
+                            ) : null}
                             <div className={styles.formGroup}>
                                 <label>Description / Agenda</label>
                                 <textarea value={liveClassForm.description} onChange={(e) => setLiveClassForm({ ...liveClassForm, description: e.target.value })} rows={4} placeholder="Topics to be covered in this session" />

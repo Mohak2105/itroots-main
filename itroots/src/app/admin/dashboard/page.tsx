@@ -9,7 +9,6 @@ import {
     Users,
     Chalkboard,
     Calendar,
-    CaretDown,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./admin-dashboard.module.css";
@@ -69,13 +68,6 @@ const formatDate = (value?: string) => {
     });
 };
 
-const getStatusClass = (status?: string) => {
-    const normalized = (status || "DRAFT").toUpperCase();
-    if (normalized === "ACTIVE") return `${styles.statusBadge} ${styles.statusActive}`;
-    if (normalized === "ARCHIVED") return `${styles.statusBadge} ${styles.statusArchived}`;
-    return `${styles.statusBadge} ${styles.statusDraft}`;
-};
-
 export default function AdminDashboard() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
@@ -129,8 +121,10 @@ export default function AdminDashboard() {
                 </div>
 
                 <section className={styles.statsGrid}>
-                    
-                    
+                    <div className={styles.statCard}>
+                        <span className={styles.statLabel}>Active Students</span>
+                        <span className={styles.statValue}>{dashboard.students}</span>
+                    </div>
                     <div className={styles.statCard}>
                         <span className={styles.statLabel}>Active Faculty</span>
                         <span className={styles.statValue}>{dashboard.Faculty}</span>
@@ -146,28 +140,27 @@ export default function AdminDashboard() {
                 </section>
 
                 <div className={styles.mainGrid}>
-                    <div className={styles.section} style={{ gridColumn: "1 / -1" }}>
-
-                        <div className={styles.controlsGrid} style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.5rem", padding: "1.5rem" }}>
-                            <Link href="/admin/students" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
+                    <div className={`${styles.section} ${styles.fullWidthSection}`}>
+                        <div className={styles.controlsGrid}>
+                            <Link href="/admin/students" className={styles.controlCard}>
                                 <Users size={48} color="#0881ec" />
-                                <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Student Records</span>
+                                <span className={styles.controlCardLabel}>Student Records</span>
                             </Link>
-                            <Link href="/admin/teachers" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
+                            <Link href="/admin/teachers" className={styles.controlCard}>
                                 <Chalkboard size={48} color="#0881ec" />
-                                <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Faculty Management</span>
+                                <span className={styles.controlCardLabel}>Faculty Management</span>
                             </Link>
-                            <Link href="/admin/batches" className={styles.controlCard} style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem", padding: "2rem", background: "#f8fafc", borderRadius: "16px", textDecoration: "none" }}>
+                            <Link href="/admin/batches" className={styles.controlCard}>
                                 <Calendar size={48} color="#0881ec" />
-                                <span style={{ fontSize: "0.9rem", fontWeight: 800, color: "#0f172a" }}>Batch Scheduling</span>
+                                <span className={styles.controlCardLabel}>Batch Scheduling</span>
                             </Link>
                         </div>
                     </div>
 
-                    <div className={styles.section} style={{ gridColumn: "1 / -1" }}>
+                    <div className={`${styles.section} ${styles.fullWidthSection}`}>
                         <div className={styles.sectionHeader}>
                             <span>Batch Schedule</span>
-                            <Link href="/admin/batches" style={{ color: "#0881ec", textDecoration: "none", fontSize: "0.85rem", fontWeight: 700 }}>
+                            <Link href="/admin/batches" className={styles.sectionLink}>
                                 Open All Batches
                             </Link>
                         </div>
@@ -184,7 +177,7 @@ export default function AdminDashboard() {
                                 <tbody>
                                     {dashboard.allBatches.length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className={styles.emptyTableCell}>No batches available yet.</td>
+                                            <td colSpan={4} className={styles.emptyTableCell}>No batches available yet.</td>
                                         </tr>
                                     ) : (
                                         dashboard.allBatches.map((batch) => (
@@ -204,22 +197,22 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    <div className={styles.section} style={{ gridColumn: "1 / -1" }}>
+                    <div className={`${styles.section} ${styles.fullWidthSection}`}>
                         <div className={styles.sectionHeader}>Recent Student Registrations</div>
-                        <div style={{ padding: "1.5rem", display: "grid", gap: "0.75rem" }}>
+                        <div className={styles.recentStudentsList}>
                             {dashboard.recentStudents.length === 0 ? (
-                                <div style={{ color: "#64748b" }}>No student registrations found yet.</div>
+                                <div className={styles.emptyStateText}>No student registrations found yet.</div>
                             ) : (
                                 dashboard.recentStudents.map((student) => (
-                                    <div key={student.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.9rem 1rem", border: "1px solid #e2e8f0", borderRadius: "12px", background: "#fff" }}>
-                                        <div>
-                                            <div style={{ fontWeight: 700, color: "#0f172a" }}>{student.name}</div>
-                                            <div style={{ color: "#64748b", fontSize: "0.85rem" }}>{student.email}</div>
+                                    <div key={student.id} className={styles.recentStudentRow}>
+                                        <div className={styles.recentStudentInfo}>
+                                            <div className={styles.recentStudentName}>{student.name}</div>
+                                            <div className={styles.recentStudentEmail}>{student.email}</div>
                                         </div>
-                                        <div style={{ textAlign: "right" }}>
-                                            <div style={{ color: "#475569", fontSize: "0.85rem" }}>{new Date(student.createdAt).toLocaleDateString("en-IN")}</div>
+                                        <div className={styles.recentStudentMeta}>
+                                            <div className={styles.recentStudentDate}>{formatDate(student.createdAt)}</div>
                                             {student.isActive ? (
-                                                <div style={{ color: "#059669", fontSize: "0.8rem", fontWeight: 700 }}>
+                                                <div className={styles.recentStudentStatus}>
                                                     Active
                                                 </div>
                                             ) : null}

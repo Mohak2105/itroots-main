@@ -28,6 +28,7 @@ interface CustomSelectProps {
     name?: string;
     required?: boolean;
     disabled?: boolean;
+    testId?: string;
 }
 
 const MENU_OFFSET = 8;
@@ -42,6 +43,7 @@ export default function CustomSelect({
     name,
     required,
     disabled = false,
+    testId,
 }: CustomSelectProps) {
     const menuId = useId();
     const wrapperRef = useRef<HTMLDivElement>(null);
@@ -224,6 +226,7 @@ export default function CustomSelect({
                 aria-expanded={isOpen}
                 aria-controls={menuId}
                 disabled={disabled}
+                data-testid={testId ? `${testId}-trigger` : undefined}
             >
                 <span className={selectedOption ? styles.selectedText : styles.placeholderText}>
                     <span className={styles.optionContent}>
@@ -253,6 +256,7 @@ export default function CustomSelect({
                         role="listbox"
                         tabIndex={-1}
                         onKeyDown={handleKeyDown}
+                        data-testid={testId ? `${testId}-menu` : undefined}
                     >
                         {options.map((option, index) => (
                             <li
@@ -266,6 +270,7 @@ export default function CustomSelect({
                                     event.preventDefault();
                                     selectOption(option.value);
                                 }}
+                                data-testid={testId ? `${testId}-option-${option.value}` : undefined}
                             >
                                 <span className={styles.optionContent}>
                                     <span className={styles.optionLabelText}>{option.label}</span>

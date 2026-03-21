@@ -17,6 +17,7 @@ type ReactDateTimePickerProps = {
     required?: boolean;
     disabled?: boolean;
     variant?: "default" | "soft";
+    testId?: string;
 };
 
 const HOUR_OPTIONS = Array.from({ length: 12 }, (_, index) => {
@@ -89,6 +90,7 @@ export default function ReactDateTimePicker({
     required = false,
     disabled = false,
     variant = "default",
+    testId,
 }: ReactDateTimePickerProps) {
     const wrapperRef = useRef<HTMLDivElement>(null);
     const parsedValue = useMemo(() => parseDateTimeValue(value), [value]);
@@ -167,6 +169,7 @@ export default function ReactDateTimePicker({
                 className={triggerClassName}
                 onClick={() => !disabled && setIsOpen((current) => !current)}
                 disabled={disabled}
+                data-testid={testId ? `${testId}-trigger` : undefined}
             >
                 <span className={styles.triggerValue}>
                     <CalendarDots size={18} />
@@ -192,7 +195,7 @@ export default function ReactDateTimePicker({
             ) : null}
 
             {isOpen ? (
-                <div className={styles.panel}>
+                <div className={styles.panel} data-testid={testId ? `${testId}-panel` : undefined}>
                     <div className={styles.calendarSection}>
                         <div className={styles.selectionSummary}>
                             <span className={styles.selectionEyebrow}>Selected schedule</span>
@@ -223,6 +226,7 @@ export default function ReactDateTimePicker({
                                     value={String(getHour12(activeDate))}
                                     onChange={(next) => updateTime({ hour12: Number(next) })}
                                     options={HOUR_OPTIONS}
+                                    testId={testId ? `${testId}-hour` : undefined}
                                 />
                             </div>
 
@@ -232,6 +236,7 @@ export default function ReactDateTimePicker({
                                     value={String(activeDate.getMinutes())}
                                     onChange={(next) => updateTime({ minute: Number(next) })}
                                     options={MINUTE_OPTIONS}
+                                    testId={testId ? `${testId}-minute` : undefined}
                                 />
                             </div>
 
@@ -241,15 +246,26 @@ export default function ReactDateTimePicker({
                                     value={getPeriod(activeDate)}
                                     onChange={(next) => updateTime({ period: next as "AM" | "PM" })}
                                     options={PERIOD_OPTIONS}
+                                    testId={testId ? `${testId}-period` : undefined}
                                 />
                             </div>
                         </div>
 
                         <div className={styles.footer}>
-                            <button type="button" className={styles.secondaryBtn} onClick={useCurrentTime}>
+                            <button
+                                type="button"
+                                className={styles.secondaryBtn}
+                                onClick={useCurrentTime}
+                                data-testid={testId ? `${testId}-use-current-time` : undefined}
+                            >
                                 Use current time
                             </button>
-                            <button type="button" className={styles.primaryBtn} onClick={() => setIsOpen(false)}>
+                            <button
+                                type="button"
+                                className={styles.primaryBtn}
+                                onClick={() => setIsOpen(false)}
+                                data-testid={testId ? `${testId}-done` : undefined}
+                            >
                                 Done
                             </button>
                         </div>

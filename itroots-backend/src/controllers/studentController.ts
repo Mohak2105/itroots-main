@@ -21,6 +21,7 @@ import Placement from '../models/Placement';
 import { isLiveClassTableReady } from '../utils/liveClassSchema';
 import { streamCertificatePdf } from '../utils/certificatePdf';
 import { getStudyMaterialType } from '../utils/studyMaterial';
+import { sanitizePlacementForStudent } from '../utils/placements';
 
 const DEFAULT_PROGRESS_PERCENT = 0;
 const ALLOWED_FORCE_SUBMIT_REASONS = new Set(['TIME_EXPIRED', 'TAB_SWITCH', 'WINDOW_BLUR']);
@@ -237,7 +238,7 @@ export const getStudentPlacements = async (req: any, res: Response) => {
             order: [['createdAt', 'DESC']],
         });
 
-        res.json(placements);
+        res.json(placements.map((placement: any) => sanitizePlacementForStudent(placement)));
     } catch (error) {
         console.error('Fetch student placements error:', error);
         res.status(500).json({ message: 'Error fetching placements' });

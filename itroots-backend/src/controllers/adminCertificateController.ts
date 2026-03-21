@@ -8,6 +8,7 @@ import Enrollment from '../models/Enrollment';
 import Notification from '../models/Notification';
 import NotificationRecipient from '../models/NotificationRecipient';
 import { streamCertificatePdf } from '../utils/certificatePdf';
+import { saveCertificateSignature } from '../utils/certificateSignature';
 
 const certificateInclude = [
     { model: User, as: 'student', attributes: ['id', 'name', 'email'] },
@@ -34,6 +35,27 @@ const generateSequentialCertificateNumber = async () => {
 const getCertificateRecord = async (certificateId: string) => Certificate.findByPk(certificateId, {
     include: certificateInclude,
 });
+
+const normalizeSignatorySignature = (signatureInput: any, fileName?: string) => {
+    if (typeof signatureInput !== 'string') {
+        return undefined;
+    }
+
+    const trimmedSignature = signatureInput.trim();
+    if (!trimmedSignature) {
+        return null;
+    }
+
+    if (trimmedSignature.startsWith('data:image/')) {
+        return saveCertificateSignature(trimmedSignature, fileName);
+    }
+
+    if (trimmedSignature.startsWith('/uploads/certificate-signatures/')) {
+        return trimmedSignature;
+    }
+
+    throw new Error('Invalid signatory signature');
+};
 
 const ensureStudentCourseAccess = async (studentId: string, courseId: string) => {
     const student = await User.findByPk(studentId);
@@ -117,7 +139,16 @@ export const getCertificates = async (req: any, res: Response) => {
 export const createCertificate = async (req: any, res: Response) => {
     try {
         const adminId = req.user.id;
-        const { studentId, courseId, duration, signatoryName, signatoryTitle, issueDate } = req.body;
+        const {
+            studentId,
+            courseId,
+            duration,
+            signatoryName,
+            signatoryTitle,
+            signatorySignature,
+            signatorySignatureFileName,
+            issueDate,
+        } = req.body;
 
         if (!studentId || !courseId || !duration || !signatoryName) {
             return res.status(400).json({ message: 'studentId, courseId, duration and signatoryName are required' });
@@ -125,18 +156,24 @@ export const createCertificate = async (req: any, res: Response) => {
 
         const { batchId } = await ensureStudentCourseAccess(studentId, courseId);
         const normalizedIssueDate = issueDate || new Date().toISOString().slice(0, 10);
+        const normalizedSignatorySignature = normalizeSignatorySignature(signatorySignature, signatorySignatureFileName);
+        const certificatePayload: any = {
+            batchId,
+            duration,
+            signatoryName,
+            signatoryTitle,
+            issueDate: normalizedIssueDate,
+            createdBy: adminId,
+        };
+
+        if (normalizedSignatorySignature !== undefined) {
+            certificatePayload.signatorySignature = normalizedSignatorySignature;
+        }
 
         let certificate = await Certificate.findOne({ where: { studentId, courseId } });
 
         if (certificate) {
-            await certificate.update({
-                batchId,
-                duration,
-                signatoryName,
-                signatoryTitle,
-                issueDate: normalizedIssueDate,
-                createdBy: adminId,
-            });
+            await certificate.update(certificatePayload);
         } else {
             let certificateNumber = await generateSequentialCertificateNumber();
             while (await Certificate.findOne({ where: { certificateNumber } })) {
@@ -149,12 +186,7 @@ export const createCertificate = async (req: any, res: Response) => {
                 certificateNumber,
                 studentId,
                 courseId,
-                batchId,
-                duration,
-                signatoryName,
-                signatoryTitle,
-                issueDate: normalizedIssueDate,
-                createdBy: adminId,
+                ...certificatePayload,
             });
         }
 

@@ -11,8 +11,20 @@ import Placement from '../models/Placement';
 import sequelize from '../config/database';
 import { sendNotificationEmail } from '../services/mailer';
 import { getNotificationWriteErrorMessage } from '../utils/notificationErrors';
+import { isPlacementExpired } from '../utils/placements';
 
 const ACTIVE_USER_FILTER = { isActive: true };
+const formatPlacementDueDate = (value?: Date | string | null) => {
+    if (!value) return '';
+    const dueDate = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(dueDate.getTime())) return '';
+
+    return dueDate.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    });
+};
 
 const dedupeUsers = (users: any[]) => {
     const seen = new Map<string, any>();
@@ -332,6 +344,11 @@ export const sendPlacementNotification = async (req: any, res: Response) => {
             return res.status(404).json({ message: 'Placement not found' });
         }
 
+        if (isPlacementExpired(placement)) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'This placement has expired and can no longer be sent to students' });
+        }
+
         const recipients = await User.findAll({
             where: {
                 role: 'STUDENT',
@@ -355,8 +372,9 @@ export const sendPlacementNotification = async (req: any, res: Response) => {
                 `Role: ${placement.designation}`,
                 `Salary: ${placement.salaryRange}`,
                 `Eligible Passout Years: ${placement.passoutYears}`,
+                placement.dueDate ? `Apply Before: ${formatPlacementDueDate(placement.dueDate)}` : null,
                 `View in LMS: ${placementPath}`,
-            ].join('\n'),
+            ].filter(Boolean).join('\n'),
             type: 'PLACEMENT',
             audienceType: 'ALL_STUDENTS',
             sendEmail: false,

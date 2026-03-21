@@ -5,18 +5,24 @@
 }
 
 .heroButton {
-    padding: 0.75rem 1.5rem;
+    min-width: 220px;
+    min-height: 58px;
+    max-width: 100%;
+    padding: 0 1.5rem;
     background: rgba(255, 255, 255, 0.15);
     backdrop-filter: blur(8px);
     color: #fff;
     border: 1px solid rgba(255, 255, 255, 0.25);
-    border-radius: 12px;
+    border-radius: 16px;
     font-weight: 700;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 0.95rem;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
+    white-space: nowrap;
+    flex-shrink: 0;
 }
 
 .cardGrid {
@@ -97,7 +103,7 @@
 
 .statsGrid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 1.25rem;
     margin-bottom: 0;
 }
@@ -180,6 +186,10 @@
     gap: 2rem;
 }
 
+.fullWidthSection {
+    grid-column: 1 / -1;
+}
+
 .section {
     background: #ffffff;
     border-radius: 12px;
@@ -226,26 +236,39 @@
 
 .controlsGrid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
-    padding: 1.25rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.5rem;
+    padding: 1.5rem;
 }
 
 .controlCard {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    padding: 1.5rem;
+    justify-content: center;
+    gap: 1rem;
+    min-height: 170px;
+    padding: 2rem 1.5rem;
     background: #f9fafb;
-    border-radius: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
     text-decoration: none;
     color: #374151;
-    transition: background 0.2s;
+    text-align: center;
+    transition: background 0.2s, transform 0.2s, border-color 0.2s;
 }
 
 .controlCard:hover {
-    background: #f3f4f6;
+    background: #f3f8ff;
+    border-color: #bfdbfe;
+    transform: translateY(-1px);
+}
+
+.controlCardLabel {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.4;
 }
 
 .ctaSection {
@@ -363,6 +386,10 @@
     .courseLibraryGrid {
         grid-template-columns: 1fr;
     }
+
+    .controlsGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 768px) {
@@ -391,8 +418,18 @@
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .controlsGrid {
-        grid-template-columns: 1fr 1fr;
+    .sectionHeader {
+        flex-wrap: wrap;
+        align-items: flex-start;
+    }
+
+    .recentStudentRow {
+        align-items: flex-start;
+    }
+
+    .recentStudentMeta {
+        align-items: flex-start;
+        text-align: left;
     }
 
     .courseCard {
@@ -405,15 +442,69 @@
     }
 }
 
-@media (max-width: 480px) {
+@media (max-width: 640px) {
     .controlsGrid {
         grid-template-columns: 1fr;
+    }
+
+    .recentStudentRow {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .welcome {
+        padding: 1.6rem 1.1rem;
+    }
+
+    .welcome h2 {
+        font-size: 1.45rem;
+    }
+
+    .welcome p {
+        font-size: 0.88rem;
+    }
+
+    .statsGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .controlsGrid {
+        gap: 1rem;
+        padding: 1rem;
+    }
+
+    .controlCard {
+        min-height: 150px;
+        padding: 1.5rem 1.1rem;
+    }
+
+    .sectionHeader {
+        padding: 1rem;
+    }
+
+    .table th,
+    .table td {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .recentStudentsList {
+        padding: 1rem;
     }
 }
 
 .tableWrapper {
     width: 100%;
     overflow-x: auto;
+}
+
+.sectionLink {
+    color: #0881ec;
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
 }
 
 .tableLink {
@@ -468,4 +559,82 @@
     padding: 1.5rem;
     color: #64748b;
     text-align: center;
+}
+
+.recentStudentsList {
+    padding: 1.5rem;
+    display: grid;
+    gap: 0.75rem;
+}
+
+.recentStudentRow {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.recentStudentInfo {
+    min-width: 0;
+}
+
+.recentStudentName {
+    font-weight: 700;
+    color: #0f172a;
+}
+
+.recentStudentEmail {
+    color: #64748b;
+    font-size: 0.85rem;
+    word-break: break-word;
+}
+
+.recentStudentMeta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.25rem;
+    text-align: right;
+}
+
+.recentStudentDate {
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+.recentStudentStatus {
+    color: #059669;
+    font-size: 0.8rem;
+    font-weight: 700;
+}
+
+.emptyStateText {
+    color: #64748b;
+}
+
+@media (max-width: 768px) {
+    .recentStudentRow {
+        align-items: flex-start;
+    }
+
+    .recentStudentMeta {
+        align-items: flex-start;
+        text-align: left;
+    }
+}
+
+@media (max-width: 640px) {
+    .recentStudentRow {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .recentStudentsList {
+        padding: 1rem;
+    }
 }

@@ -10,36 +10,33 @@ import Enrollment from '../models/Enrollment';
 import Notification from '../models/Notification';
 import NotificationRecipient from '../models/NotificationRecipient';
 import { isLiveClassTableReady } from '../utils/liveClassSchema';
-
-const DEFAULT_JITSI_DOMAIN = String(process.env.JITSI_DOMAIN || 'meet.jit.si').trim();
+import { createZoomMeetingSignature, parseZoomMeetingDetails } from '../utils/zoom';
 
 const asTrimmedString = (value: any) => String(value ?? '').trim();
 
-const resolveLiveClassProvider = (value: any, fallback: 'JITSI' | 'EXTERNAL' = 'JITSI') => {
+const resolveLiveClassProvider = (value: any) => {
     const normalized = asTrimmedString(value).toUpperCase();
-    if (normalized === 'EXTERNAL') return 'EXTERNAL';
-    if (normalized === 'JITSI') return 'JITSI';
-    return fallback;
+    if (normalized === 'ZOOM') return 'ZOOM' as const;
+    if (normalized === 'JITSI') return 'JITSI' as const;
+    return 'EXTERNAL' as const;
 };
 
-const sanitizeRoomName = (value: any) => asTrimmedString(value)
-    .replace(/^https?:\/\/[^/]+\//i, '')
-    .toLowerCase()
-    .replace(/[^a-z0-9-_]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-
-const normalizeJitsiDomain = (value?: any) => asTrimmedString(value || DEFAULT_JITSI_DOMAIN)
-    .replace(/^https?:\/\//i, '')
-    .replace(/\/+$/g, '') || DEFAULT_JITSI_DOMAIN;
-
-const buildGeneratedRoomName = (batchId: string) => {
-    const batchToken = sanitizeRoomName(batchId).slice(0, 8) || 'batch';
-    return `itroots-${batchToken}-${Date.now()}`;
-};
-
-const buildJitsiMeetingLink = (domain: string, roomName: string) => `https://${domain}/${roomName}`;
 const buildLiveClassJoinPath = (liveClassId: string) => `/lms/student/live-classes/${liveClassId}`;
+const isEmbeddedLiveClassProvider = (provider: string) => provider === 'ZOOM' || provider === 'JITSI';
+const LIVE_CLASS_SESSION_WINDOW_MS = 120 * 60 * 1000;
+
+const getJitsiRoomPrefix = () => {
+    const normalized = asTrimmedString(process.env.JITSI_ROOM_PREFIX)
+        .toLowerCase()
+        .replace(/[^a-z0-9-]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+    return normalized || 'itroots-live';
+};
+
+const buildJitsiRoomName = (liveClassId: string) => (
+    `${getJitsiRoomPrefix()}-${liveClassId.replace(/[^a-z0-9]/gi, '').toLowerCase()}`
+);
 
 const parseScheduledAt = (value: any) => {
     const normalized = asTrimmedString(value);
@@ -47,6 +44,32 @@ const parseScheduledAt = (value: any) => {
     const date = new Date(normalized);
     if (Number.isNaN(date.getTime())) return null;
     return date;
+};
+
+const ensureLiveClassJoinWindow = (liveClass: any) => {
+    const status = asTrimmedString(liveClass?.status).toUpperCase();
+    if (status === 'CANCELLED') {
+        throw new Error('This live class has been cancelled');
+    }
+
+    if (status === 'COMPLETED') {
+        throw new Error('This live class has ended');
+    }
+
+    const scheduledAt = parseScheduledAt(liveClass?.scheduledAt);
+    if (!scheduledAt) {
+        throw new Error('This live class schedule is invalid');
+    }
+
+    const scheduledTime = scheduledAt.getTime();
+    const now = Date.now();
+    if (now < scheduledTime) {
+        throw new Error('Class has not started yet');
+    }
+
+    if (now > scheduledTime + LIVE_CLASS_SESSION_WINDOW_MS) {
+        throw new Error('Class session expired');
+    }
 };
 
 const liveClassInclude = [
@@ -112,7 +135,7 @@ const createStudentNotification = async ({
         ? 'Status: Cancelled'
         : action === 'completed'
             ? 'Status: Completed'
-        : liveClass.provider === 'JITSI' && liveClass.joinPath
+        : isEmbeddedLiveClassProvider(String(liveClass.provider || '').toUpperCase()) && liveClass.joinPath
             ? `Join in LMS: ${liveClass.joinPath}`
             : `Meeting Link: ${liveClass.meetingLink}`;
     const message = [
@@ -171,34 +194,29 @@ export const createLiveClass = async (req: any, res: Response) => {
         }
 
         const FacultyId = req.user.id;
-        const { title, courseId, batchId, scheduledAt, meetingLink, description, provider, roomName, jitsiDomain } = req.body;
+        const { title, courseId, batchId, scheduledAt, meetingLink, description, provider, passcode } = req.body;
         const normalizedTitle = asTrimmedString(title);
         const normalizedDescription = asTrimmedString(description) || null;
         const normalizedScheduledAt = parseScheduledAt(scheduledAt);
-        const normalizedProvider = resolveLiveClassProvider(provider, 'JITSI');
+        const normalizedProvider = resolveLiveClassProvider(provider);
+        const resolvedMeetingLink = normalizedProvider === 'JITSI'
+            ? ''
+            : asTrimmedString(meetingLink);
         if (!normalizedTitle || !courseId || !batchId || !normalizedScheduledAt) {
             await transaction.rollback();
             return res.status(400).json({ message: 'title, courseId, batchId and a valid scheduledAt are required' });
+        }
+        if (normalizedProvider !== 'JITSI' && !resolvedMeetingLink) {
+            await transaction.rollback();
+            return res.status(400).json({ message: 'meetingLink is required for Zoom and external live classes' });
         }
 
         await ensureFacultyBatchAccess(FacultyId, batchId, courseId);
 
         const liveClassId = randomUUID();
-        const joinPath = normalizedProvider === 'JITSI' ? buildLiveClassJoinPath(liveClassId) : null;
-        const resolvedRoomName = normalizedProvider === 'JITSI'
-            ? (sanitizeRoomName(roomName) || buildGeneratedRoomName(batchId))
+        const zoomDetails = normalizedProvider === 'ZOOM'
+            ? parseZoomMeetingDetails(resolvedMeetingLink, passcode)
             : null;
-        const resolvedJitsiDomain = normalizedProvider === 'JITSI'
-            ? normalizeJitsiDomain(jitsiDomain)
-            : null;
-        const resolvedMeetingLink = normalizedProvider === 'JITSI'
-            ? buildJitsiMeetingLink(resolvedJitsiDomain!, resolvedRoomName!)
-            : asTrimmedString(meetingLink);
-
-        if (normalizedProvider === 'EXTERNAL' && !resolvedMeetingLink) {
-            await transaction.rollback();
-            return res.status(400).json({ message: 'meetingLink is required for external live classes' });
-        }
 
         const liveClass = await LiveClass.create({
             id: liveClassId,
@@ -209,9 +227,10 @@ export const createLiveClass = async (req: any, res: Response) => {
             scheduledAt: normalizedScheduledAt,
             meetingLink: resolvedMeetingLink,
             provider: normalizedProvider,
-            roomName: resolvedRoomName,
-            jitsiDomain: resolvedJitsiDomain,
-            joinPath,
+            zoomMeetingNumber: zoomDetails?.meetingNumber || null,
+            zoomPasscode: zoomDetails?.passcode || null,
+            jitsiRoomName: normalizedProvider === 'JITSI' ? buildJitsiRoomName(liveClassId) : null,
+            joinPath: isEmbeddedLiveClassProvider(normalizedProvider) ? buildLiveClassJoinPath(liveClassId) : null,
             description: normalizedDescription || undefined,
             status: 'SCHEDULED',
         }, { transaction });
@@ -243,9 +262,8 @@ export const updateLiveClass = async (req: any, res: Response) => {
         const nextBatchId = req.body.batchId || liveClass.batchId;
         await ensureFacultyBatchAccess(FacultyId, nextBatchId, nextCourseId);
 
-        const normalizedProvider = req.body.provider !== undefined
-            ? resolveLiveClassProvider(req.body.provider, liveClass.provider || 'JITSI')
-            : (liveClass.provider || 'JITSI');
+        const normalizedProvider = resolveLiveClassProvider(req.body.provider ?? liveClass.provider);
+        const currentProvider = resolveLiveClassProvider(liveClass.provider);
         const normalizedScheduledAt = req.body.scheduledAt !== undefined
             ? parseScheduledAt(req.body.scheduledAt)
             : undefined;
@@ -259,6 +277,18 @@ export const updateLiveClass = async (req: any, res: Response) => {
             return res.status(400).json({ message: 'scheduledAt must be a valid date-time' });
         }
 
+        const resolvedMeetingLink = req.body.meetingLink !== undefined
+            ? asTrimmedString(req.body.meetingLink)
+            : asTrimmedString(liveClass.meetingLink);
+        const finalMeetingLink = normalizedProvider === 'JITSI' ? '' : resolvedMeetingLink;
+        const zoomDetails = normalizedProvider === 'ZOOM'
+            ? parseZoomMeetingDetails(finalMeetingLink, req.body.passcode ?? (liveClass as any).zoomPasscode)
+            : null;
+        const existingJitsiRoomName = asTrimmedString((liveClass as any).jitsiRoomName);
+        const nextJitsiRoomName = normalizedProvider === 'JITSI'
+            ? (currentProvider === 'JITSI' && existingJitsiRoomName ? existingJitsiRoomName : buildJitsiRoomName(liveClass.id))
+            : null;
+
         const updates: any = {
             title: normalizedUpdatedTitle,
             courseId: req.body.courseId,
@@ -267,28 +297,14 @@ export const updateLiveClass = async (req: any, res: Response) => {
             description: req.body.description !== undefined ? (asTrimmedString(req.body.description) || null) : undefined,
             status: req.body.status,
             provider: normalizedProvider,
+            meetingLink: finalMeetingLink,
+            zoomMeetingNumber: zoomDetails?.meetingNumber || null,
+            zoomPasscode: zoomDetails?.passcode || null,
+            jitsiRoomName: nextJitsiRoomName,
+            joinPath: isEmbeddedLiveClassProvider(normalizedProvider) ? (liveClass.joinPath || buildLiveClassJoinPath(liveClass.id)) : null,
         };
-
-        if (normalizedProvider === 'JITSI') {
-            const resolvedRoomName = sanitizeRoomName(req.body.roomName) || liveClass.roomName || buildGeneratedRoomName(nextBatchId);
-            const resolvedJitsiDomain = normalizeJitsiDomain(req.body.jitsiDomain || liveClass.jitsiDomain || DEFAULT_JITSI_DOMAIN);
-            updates.roomName = resolvedRoomName;
-            updates.jitsiDomain = resolvedJitsiDomain;
-            updates.joinPath = liveClass.joinPath || buildLiveClassJoinPath(liveClass.id);
-            updates.meetingLink = buildJitsiMeetingLink(resolvedJitsiDomain, resolvedRoomName);
-        } else {
-            const resolvedMeetingLink = req.body.meetingLink !== undefined
-                ? asTrimmedString(req.body.meetingLink)
-                : asTrimmedString(liveClass.meetingLink);
-
-            if (!resolvedMeetingLink) {
-                return res.status(400).json({ message: 'meetingLink is required for external live classes' });
-            }
-
-            updates.meetingLink = resolvedMeetingLink;
-            updates.roomName = null;
-            updates.jitsiDomain = null;
-            updates.joinPath = null;
+        if (normalizedProvider !== 'JITSI' && !updates.meetingLink) {
+            return res.status(400).json({ message: 'meetingLink is required for Zoom and external live classes' });
         }
 
         Object.keys(updates).forEach((key) => updates[key] === undefined && delete updates[key]);
@@ -423,5 +439,73 @@ export const getStudentLiveClassById = async (req: any, res: Response) => {
     } catch (error) {
         console.error('Fetch student live class detail error:', error);
         res.status(500).json({ message: 'Error fetching live class' });
+    }
+};
+
+const buildZoomSignatureResponse = (liveClass: any) => {
+    if (!liveClass) {
+        throw new Error('Live class not found');
+    }
+
+    if (String(liveClass.provider || '').toUpperCase() !== 'ZOOM') {
+        throw new Error('Zoom signature is only available for Zoom live classes');
+    }
+
+    ensureLiveClassJoinWindow(liveClass);
+
+    const meetingNumber = asTrimmedString((liveClass as any).zoomMeetingNumber);
+    if (!meetingNumber) {
+        throw new Error('Zoom meeting number is missing for this live class');
+    }
+
+    const { sdkKey, signature } = createZoomMeetingSignature({
+        meetingNumber,
+        role: 0,
+    });
+
+    return {
+        sdkKey,
+        signature,
+        meetingNumber,
+        password: asTrimmedString((liveClass as any).zoomPasscode),
+        meetingLink: asTrimmedString(liveClass.meetingLink),
+    };
+};
+
+export const getFacultyLiveClassZoomSignature = async (req: any, res: Response) => {
+    try {
+        const FacultyId = req.user.id;
+        const liveClass = await LiveClass.findOne({ where: { id: req.params.liveClassId, FacultyId } });
+        if (!liveClass) {
+            return res.status(404).json({ message: 'Live class not found' });
+        }
+
+        res.json(buildZoomSignatureResponse(liveClass));
+    } catch (error: any) {
+        res.status(400).json({ message: error.message || 'Unable to create Zoom signature' });
+    }
+};
+
+export const getStudentLiveClassZoomSignature = async (req: any, res: Response) => {
+    try {
+        const studentId = req.user.id;
+        const liveClass = await LiveClass.findByPk(req.params.liveClassId);
+
+        if (!liveClass) {
+            return res.status(404).json({ message: 'Live class not found' });
+        }
+
+        const enrollment = await Enrollment.findOne({
+            where: { studentId, batchId: (liveClass as any).batchId },
+            attributes: ['id'],
+        });
+
+        if (!enrollment) {
+            return res.status(403).json({ message: 'You do not have access to this live class' });
+        }
+
+        res.json(buildZoomSignatureResponse(liveClass));
+    } catch (error: any) {
+        res.status(400).json({ message: error.message || 'Unable to create Zoom signature' });
     }
 };

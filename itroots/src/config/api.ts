@@ -5,16 +5,29 @@ function trimTrailingSlash(value: string) {
     return value.replace(/\/+$/, "");
 }
 
+function isLocalHostname(hostname: string) {
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
 function getRuntimeApiBaseUrl() {
     if (typeof window === "undefined") {
+        const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+        if (siteUrl) {
+            return `${trimTrailingSlash(siteUrl)}/api/v1`;
+        }
+
         return LOCAL_API_BASE_URL;
     }
 
-    const apiPort = process.env.NEXT_PUBLIC_API_PORT?.trim() || "5000";
-    const protocol = window.location.protocol === "https:" ? "https:" : "http:";
-    const hostname = window.location.hostname;
+    if (isLocalHostname(window.location.hostname)) {
+        const apiPort = process.env.NEXT_PUBLIC_API_PORT?.trim() || "5000";
+        const protocol = window.location.protocol === "https:" ? "https:" : "http:";
+        const hostname = window.location.hostname;
 
-    return `${protocol}//${hostname}:${apiPort}/api/v1`;
+        return `${protocol}//${hostname}:${apiPort}/api/v1`;
+    }
+
+    return `${window.location.origin}/api/v1`;
 }
 
 function normalizeApiBaseUrl(value?: string) {
@@ -110,6 +123,7 @@ export const ENDPOINTS = {
         get ANNOUNCEMENTS() { return withApiBase("/Faculty/announcements"); },
         get LIVE_CLASSES() { return withApiBase("/Faculty/live-classes"); },
         LIVE_CLASS: (liveClassId: string) => withApiBase(`/Faculty/live-classes/${liveClassId}`),
+        ZOOM_SIGNATURE: (liveClassId: string) => withApiBase(`/Faculty/live-classes/${liveClassId}/zoom-signature`),
         CANCEL_LIVE_CLASS: (liveClassId: string) => withApiBase(`/Faculty/live-classes/${liveClassId}/cancel`),
         COMPLETE_LIVE_CLASS: (liveClassId: string) => withApiBase(`/Faculty/live-classes/${liveClassId}/complete`),
         get NOTIFICATIONS() { return withApiBase("/Faculty/notifications"); },
@@ -134,6 +148,7 @@ export const ENDPOINTS = {
         MARK_NOTIFICATION_READ: (notificationId: string) => withApiBase(`/student/notifications/${notificationId}/read`),
         get LIVE_CLASSES() { return withApiBase("/student/live-classes"); },
         LIVE_CLASS: (liveClassId: string) => withApiBase(`/student/live-classes/${liveClassId}`),
+        ZOOM_SIGNATURE: (liveClassId: string) => withApiBase(`/student/live-classes/${liveClassId}/zoom-signature`),
         get PLACEMENTS() { return withApiBase("/student/placements"); },
         get CERTIFICATES() { return withApiBase("/student/certificates"); },
         CERTIFICATE_DOWNLOAD: (certificateId: string) => withApiBase(`/student/certificates/${certificateId}/download`),

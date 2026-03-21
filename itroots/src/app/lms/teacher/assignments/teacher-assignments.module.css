@@ -55,7 +55,8 @@
     justify-content: center;
     gap: 0.55rem;
     min-width: 220px;
-    padding: 0.95rem 1.35rem;
+    min-height: 58px;
+    padding: 0 1.5rem;
     border: 1px solid rgba(255, 255, 255, 0.22);
     border-radius: 16px;
     background: rgba(255, 255, 255, 0.18);
@@ -64,6 +65,7 @@
     font-weight: 700;
     cursor: pointer;
     backdrop-filter: blur(6px);
+    white-space: nowrap;
 }
 
 .statsGrid {

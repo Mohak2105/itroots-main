@@ -9,7 +9,7 @@ import ReactDateTimePicker from "@/components/lms/ReactDateTimePicker";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import { CaretLeft, CaretRight, CalendarDots, Plus, Clock, BookOpen, Link as LinkIcon, PencilSimple, X } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
-import { resolveLiveClassJoinTarget } from "@/utils/liveClasses";
+import { getLiveClassAccessState, getLiveClassProviderLabel, resolveLiveClassJoinTarget } from "@/utils/liveClasses";
 import styles from "./calendar.module.css";
 
 const MONTH_NAMES = [
@@ -18,6 +18,7 @@ const MONTH_NAMES = [
 ];
 const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const BATCH_COLORS = ["#0881ec", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
+const isBrowser = typeof window !== "undefined";
 
 const emptyForm = {
     id: "",
@@ -26,8 +27,8 @@ const emptyForm = {
     batchId: "",
     scheduledAt: "",
     provider: "JITSI",
-    roomName: "",
     meetingLink: "",
+    passcode: "",
     description: "",
 };
 
@@ -37,6 +38,13 @@ const toInputDateTime = (value?: string) => {
     const offset = date.getTimezoneOffset();
     const local = new Date(date.getTime() - offset * 60000);
     return local.toISOString().slice(0, 16);
+};
+
+const buildDefaultScheduledAt = (selectedDate: Date) => {
+    const nextDate = new Date(selectedDate);
+    const now = new Date();
+    nextDate.setHours(now.getHours(), now.getMinutes(), 0, 0);
+    return toInputDateTime(nextDate.toISOString());
 };
 
 const sameDate = (date: Date, value: string) => {
@@ -139,13 +147,11 @@ export default function FacultyCalendarPage() {
 
     const openCreateModal = () => {
         const defaultBatch = batches[0];
-        const selectedDateSeed = new Date(selectedDate);
-        selectedDateSeed.setHours(10, 0, 0, 0);
         setFormData({
             ...emptyForm,
             courseId: defaultBatch?.courseId || "",
             batchId: defaultBatch?.id || "",
-            scheduledAt: toInputDateTime(selectedDateSeed.toISOString()),
+            scheduledAt: buildDefaultScheduledAt(selectedDate),
             provider: "JITSI",
         });
         setShowModal(true);
@@ -158,9 +164,9 @@ export default function FacultyCalendarPage() {
             courseId: event.courseId,
             batchId: event.batchId,
             scheduledAt: toInputDateTime(event.scheduledAt),
-            provider: event.provider || (event.roomName ? "JITSI" : "EXTERNAL"),
-            roomName: event.roomName || "",
-            meetingLink: (event.provider || (event.roomName ? "JITSI" : "EXTERNAL")) === "EXTERNAL" ? event.meetingLink : "",
+            provider: event.provider || "EXTERNAL",
+            meetingLink: event.meetingLink || "",
+            passcode: event.zoomPasscode || "",
             description: event.description || "",
         });
         setShowModal(true);
@@ -178,8 +184,8 @@ export default function FacultyCalendarPage() {
             const method = formData.id ? "PUT" : "POST";
             const payload = {
                 ...formData,
-                meetingLink: formData.provider === "EXTERNAL" ? formData.meetingLink : "",
-                roomName: formData.provider === "JITSI" ? formData.roomName : "",
+                meetingLink: formData.provider === "JITSI" ? "" : formData.meetingLink,
+                passcode: formData.provider === "ZOOM" ? formData.passcode : "",
             };
             const res = await fetch(endpoint, {
                 method,
@@ -215,6 +221,8 @@ export default function FacultyCalendarPage() {
             console.error(error);
         }
     };
+
+    const compactModalLayout = isBrowser && window.innerWidth <= 640;
 
     return (
         <LMSShell pageTitle="Event Calendar">
@@ -297,7 +305,7 @@ export default function FacultyCalendarPage() {
                                 <div className={styles.eventsPanelDay}>{selectedDate.toLocaleDateString("en-IN", { weekday: "long" })}</div>
                                 <div className={styles.eventsPanelDate}>{selectedDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
                             </div>
-                            <button className={styles.addEventBtn} onClick={openCreateModal}>
+                            <button className={styles.addEventBtn} onClick={openCreateModal} data-testid="open-live-class-modal">
                                 <Plus size={14} weight="bold" /> Add
                             </button>
                         </div>
@@ -316,21 +324,28 @@ export default function FacultyCalendarPage() {
                                             <div className={styles.eventInfo} style={{ width: "100%" }}>
                                                 {(() => {
                                                     const joinTarget = resolveLiveClassJoinTarget(event, "TEACHER");
+                                                    const accessState = getLiveClassAccessState(event);
+                                                    const joinDisabledLabel = accessState === "NOT_STARTED"
+                                                        ? "Starts at Scheduled Time"
+                                                        : accessState === "EXPIRED"
+                                                            ? "Session Expired"
+                                                            : accessState === "COMPLETED"
+                                                                ? "Class Ended"
+                                                                : event.status === "CANCELLED"
+                                                                    ? "Class Cancelled"
+                                                                    : "Join Unavailable";
                                                     return (
                                                         <>
-                                                <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "flex-start" }}>
+                                                <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "flex-start", flexWrap: "wrap" }}>
                                                     <div className={styles.eventTitle}>{event.title}</div>
                                                     <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "0.25rem 0.5rem", borderRadius: "999px", background: event.status === "CANCELLED" ? "#fee2e2" : "#dcfce7", color: event.status === "CANCELLED" ? "#b91c1c" : "#166534" }}>{event.status}</span>
                                                 </div>
                                                 <div className={styles.eventMeta}><BookOpen size={12} /><span>{event.course?.title} / {event.batch?.name}</span></div>
                                                 <div className={styles.eventMeta}><Clock size={12} /><span>{event.time}</span></div>
-                                                <div className={styles.eventMeta}><LinkIcon size={12} /><span>{event.provider === "JITSI" ? "Jitsi Meeting" : "External Meeting Link"}</span></div>
-                                                {event.provider === "JITSI" && event.roomName ? (
-                                                    <div className={styles.eventMeta}><span>Room: {event.roomName}</span></div>
-                                                ) : null}
+                                                <div className={styles.eventMeta}><LinkIcon size={12} /><span>{getLiveClassProviderLabel(event.provider)}</span></div>
                                                 {event.description ? <div className={styles.eventMeta}><span>{event.description}</span></div> : null}
-                                                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.65rem" }}>
-                                                    {event.status !== "CANCELLED" && joinTarget.href ? (
+                                                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.65rem", flexWrap: "wrap" }}>
+                                                    {accessState === "AVAILABLE" && joinTarget.href ? (
                                                         joinTarget.external ? (
                                                             <a href={joinTarget.href} target="_blank" rel="noreferrer" style={{ border: "1px solid #bfdbfe", background: "#eff6ff", color: "#2563eb", borderRadius: "8px", padding: "0.4rem 0.7rem", fontWeight: 600, fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem", cursor: "pointer", textDecoration: "none" }}>
                                                                 <LinkIcon size={14} /> Join Class
@@ -340,7 +355,11 @@ export default function FacultyCalendarPage() {
                                                                 <LinkIcon size={14} /> Join in LMS
                                                             </Link>
                                                         )
-                                                    ) : null}
+                                                    ) : (
+                                                        <span style={{ border: "1px solid #e2e8f0", background: "#f8fafc", color: "#64748b", borderRadius: "8px", padding: "0.4rem 0.7rem", fontWeight: 600, fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                                                            <LinkIcon size={14} /> {joinDisabledLabel}
+                                                        </span>
+                                                    )}
                                                     <button onClick={() => openEditModal(event)} style={{ border: "1px solid #bfdbfe", background: "#eff6ff", color: "#2563eb", borderRadius: "8px", padding: "0.4rem 0.7rem", fontWeight: 600, fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem", cursor: "pointer" }}>
                                                         <PencilSimple size={14} /> Edit
                                                     </button>
@@ -365,7 +384,7 @@ export default function FacultyCalendarPage() {
 
             {showModal ? (
                 <div style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
-                    <div style={{ width: "100%", maxWidth: "560px", background: "#fff", borderRadius: "22px", padding: "2rem", position: "relative", boxShadow: "0 20px 50px rgba(15, 23, 42, 0.25)" }}>
+                    <div data-testid="live-class-form-modal" style={{ width: "100%", maxWidth: "560px", background: "#fff", borderRadius: compactModalLayout ? "16px" : "22px", padding: compactModalLayout ? "1.15rem" : "2rem", position: "relative", boxShadow: "0 20px 50px rgba(15, 23, 42, 0.25)", maxHeight: "90vh", overflowY: "auto" }}>
                         <button onClick={closeModal} style={{ position: "absolute", top: "1.25rem", right: "1.25rem", border: "none", background: "#f8fafc", width: "38px", height: "38px", borderRadius: "999px", cursor: "pointer", color: "#64748b" }}>
                             <X size={20} />
                         </button>
@@ -373,9 +392,9 @@ export default function FacultyCalendarPage() {
                         <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
                             <div>
                                 <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Class Title</label>
-                                <input required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1" }} />
+                                <input data-testid="live-class-title-input" required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1" }} />
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                            <div style={{ display: "grid", gridTemplateColumns: compactModalLayout ? "1fr" : "1fr 1fr", gap: "1rem" }}>
                                 <div>
                                     <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Select Course</label>
                                     <CustomSelect
@@ -383,6 +402,7 @@ export default function FacultyCalendarPage() {
                                         onChange={(value) => setFormData({ ...formData, courseId: value, batchId: "" })}
                                         placeholder="Select course"
                                         required
+                                        testId="live-class-course"
                                         options={[
                                             { value: "", label: "Select course" },
                                             ...courses.map((course: any) => ({ value: course.id, label: course.title })),
@@ -396,6 +416,7 @@ export default function FacultyCalendarPage() {
                                         onChange={(value) => setFormData({ ...formData, batchId: value })}
                                         placeholder="Select batch"
                                         required
+                                        testId="live-class-batch"
                                         options={[
                                             { value: "", label: "Select batch" },
                                             ...filteredBatches.map((batch: any) => ({ value: batch.id, label: batch.name })),
@@ -408,34 +429,42 @@ export default function FacultyCalendarPage() {
                                 required
                                 value={formData.scheduledAt}
                                 onChange={(value) => setFormData({ ...formData, scheduledAt: value })}
+                                testId="live-class-scheduled-at"
                             />
                             <div>
                                 <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Meeting Provider</label>
                                 <CustomSelect
                                     value={formData.provider}
                                     onChange={(value) => setFormData({ ...formData, provider: value })}
+                                    testId="live-class-provider"
                                     options={[
-                                        { value: "JITSI", label: "Jitsi (Recommended)" },
+                                        { value: "JITSI", label: "Jitsi Meeting" },
+                                        { value: "ZOOM", label: "Zoom Meeting" },
                                         { value: "EXTERNAL", label: "External Link" },
                                     ]}
                                 />
                             </div>
                             {formData.provider === "JITSI" ? (
-                                <div>
-                                    <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Room Label (Optional)</label>
-                                    <input value={formData.roomName} onChange={(e) => setFormData({ ...formData, roomName: e.target.value })} placeholder="Auto-generated if left blank" style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1" }} />
+                                <div style={{ border: "1px solid #dbeafe", background: "#eff6ff", color: "#1d4ed8", borderRadius: "14px", padding: "0.9rem 1rem", fontSize: "0.9rem", lineHeight: 1.6 }}>
+                                    A secure Jitsi room will be created automatically inside the LMS. Teachers and students will join from the live class page at the scheduled time.
                                 </div>
                             ) : (
                                 <div>
-                                    <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Meeting Link</label>
-                                    <input required value={formData.meetingLink} onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })} placeholder="https://meet.google.com/..." style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1" }} />
+                                    <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>{formData.provider === "ZOOM" ? "Zoom Join Link" : "Meeting Link"}</label>
+                                    <input data-testid="live-class-meeting-link-input" required value={formData.meetingLink} onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })} placeholder={formData.provider === "ZOOM" ? "https://us06web.zoom.us/j/..." : "https://meet.google.com/..."} style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1" }} />
                                 </div>
                             )}
+                            {formData.provider === "ZOOM" ? (
+                                <div>
+                                    <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Passcode</label>
+                                    <input data-testid="live-class-passcode-input" value={formData.passcode} onChange={(e) => setFormData({ ...formData, passcode: e.target.value })} placeholder="Optional if your Zoom link already includes it" style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1" }} />
+                                </div>
+                            ) : null}
                             <div>
                                 <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Description / Agenda</label>
-                                <textarea value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1", resize: "vertical" }} />
+                                <textarea data-testid="live-class-description-input" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1", resize: "vertical" }} />
                             </div>
-                            <button type="submit" style={{ marginTop: "0.5rem", border: "none", background: "linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%)", color: "#fff", borderRadius: "999px", padding: "0.95rem", fontWeight: 700, cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", transition: "transform 0.2s ease, box-shadow 0.2s ease" }}>
+                            <button data-testid="save-live-class" type="submit" style={{ marginTop: "0.5rem", border: "none", background: "linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%)", color: "#fff", borderRadius: "999px", padding: "0.95rem", fontWeight: 700, cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", transition: "transform 0.2s ease, box-shadow 0.2s ease" }}>
                                 {formData.id ? "Save Live Class" : "Create Live Class"}
                             </button>
                         </form>

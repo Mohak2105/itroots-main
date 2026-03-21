@@ -24,6 +24,7 @@ import {
     updateLiveClass,
     cancelLiveClass,
     completeLiveClass,
+    getFacultyLiveClassZoomSignature,
 } from '../controllers/liveClassController';
 import { markAttendance, getBatchAttendance } from '../controllers/attendanceController';
 import { createAnnouncement, getBatchAnnouncements } from '../controllers/announcementController';
@@ -56,6 +57,7 @@ router.post('/announcements', createAnnouncement);
 router.get('/announcements/:batchId', getBatchAnnouncements);
 router.get('/live-classes', getFacultyLiveClasses);
 router.get('/live-classes/:liveClassId', getFacultyLiveClassById);
+router.post('/live-classes/:liveClassId/zoom-signature', getFacultyLiveClassZoomSignature);
 router.post('/live-classes', createLiveClass);
 router.put('/live-classes/:liveClassId', updateLiveClass);
 router.patch('/live-classes/:liveClassId/cancel', cancelLiveClass);

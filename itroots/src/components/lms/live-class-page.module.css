@@ -127,9 +127,88 @@
     font-weight: 700;
 }
 
+.zoomRoomCard {
+    background: #fff;
+    border: 1px solid #dbe4ee;
+    border-radius: 22px;
+    padding: 1rem;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+}
+
+.zoomRoomHeader {
+    margin-bottom: 0.75rem;
+}
+
+.zoomRoomTitle {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.zoomRoomSub {
+    margin-top: 0.25rem;
+    color: #64748b;
+    font-size: 0.88rem;
+}
+
+.zoomLoading {
+    padding: 0.85rem 0;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.mediaNotice {
+    margin-bottom: 0.85rem;
+    padding: 0.85rem 1rem;
+    border-radius: 14px;
+    border: 1px solid #dbeafe;
+    background: #eff6ff;
+    color: #1d4ed8;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.zoomEmbedRoot {
+    min-height: 640px;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #0f172a;
+}
+
+.jitsiEmbedRoot {
+    width: 100%;
+    border-radius: 18px;
+    overflow: hidden;
+    background: #0f172a;
+}
+
+.jitsiEmbedRootPrejoin {
+    min-height: 520px;
+    height: 520px;
+}
+
+.jitsiEmbedRootJoined {
+    min-height: 680px;
+    height: min(78vh, 760px);
+}
+
 @media (max-width: 768px) {
     .hero {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .zoomEmbedRoot {
+        min-height: 480px;
+    }
+
+    .jitsiEmbedRootPrejoin {
+        min-height: 420px;
+        height: 420px;
+    }
+
+    .jitsiEmbedRootJoined {
+        min-height: 520px;
+        height: min(72vh, 620px);
     }
 }

@@ -4,7 +4,33 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 const databaseUrl = process.env.DATABASE_URL;
-const dialect = (process.env.DB_DIALECT || 'mysql') as 'mysql' | 'postgres';
+const resolveDialect = () => {
+    const explicitDialect = process.env.DB_DIALECT?.trim().toLowerCase();
+    if (explicitDialect === 'mysql' || explicitDialect === 'postgres') {
+        return explicitDialect;
+    }
+
+    if (databaseUrl) {
+        try {
+            const parsed = new URL(databaseUrl);
+            const protocol = parsed.protocol.replace(':', '').toLowerCase();
+
+            if (protocol === 'postgres' || protocol === 'postgresql') {
+                return 'postgres';
+            }
+
+            if (protocol === 'mysql') {
+                return 'mysql';
+            }
+        } catch {
+            // Fall back to mysql for backward compatibility if DATABASE_URL is malformed.
+        }
+    }
+
+    return 'mysql';
+};
+
+const dialect = resolveDialect() as 'mysql' | 'postgres';
 const defaultPort = dialect === 'mysql' ? '3306' : '5432';
 const defaultDatabaseName = process.env.DB_NAME || 'itroots_db';
 

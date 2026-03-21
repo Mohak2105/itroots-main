@@ -7,7 +7,7 @@ import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
 import { BookOpen, CalendarDots, Clock, Link as LinkIcon, VideoCamera } from "@phosphor-icons/react";
-import { resolveLiveClassJoinTarget } from "@/utils/liveClasses";
+import { getLiveClassAccessState, getLiveClassProviderLabel, resolveLiveClassJoinTarget } from "@/utils/liveClasses";
 import styles from "./calendar.module.css";
 
 type LiveClassItem = {
@@ -18,8 +18,8 @@ type LiveClassItem = {
     title: string;
     meetingLink?: string;
     provider?: string;
+    zoomMeetingNumber?: string | null;
     joinPath?: string | null;
-    roomName?: string | null;
     description?: string;
     course?: { title?: string };
     batch?: { name?: string };
@@ -88,7 +88,10 @@ export default function StudentCalendarPage() {
         [visibleClasses],
     );
 
-    const upcomingClasses = sortedClasses.filter((item) => item.status === "SCHEDULED");
+    const availableClasses = useMemo(
+        () => sortedClasses.filter((item) => getLiveClassAccessState(item) === "AVAILABLE"),
+        [sortedClasses],
+    );
 
     if (isLoading || !user) return null;
 
@@ -105,7 +108,7 @@ export default function StudentCalendarPage() {
 
                 <div className={styles.summaryGrid}>
                     <div className={styles.summaryCard}>
-                        <div className={styles.summaryValue}>{upcomingClasses.length}</div>
+                        <div className={styles.summaryValue}>{availableClasses.length}</div>
                         <div className={styles.summaryLabel}>Available To Join</div>
                     </div>
                     <div className={styles.summaryCard}>
@@ -120,7 +123,7 @@ export default function StudentCalendarPage() {
                     <div className={styles.sectionHeader}>
                         <div>
                             <h2>Join Live Classes</h2>
-                            <p>Join scheduled classes inside LMS when Jitsi is enabled, with external-link fallback for older classes.</p>
+                            <p>Open the scheduled meeting links for your upcoming live classes.</p>
                         </div>
                     </div>
 
@@ -135,6 +138,17 @@ export default function StudentCalendarPage() {
                                 const scheduledDate = new Date(event.scheduledAt);
                                 const isCancelled = event.status === "CANCELLED";
                                 const joinTarget = resolveLiveClassJoinTarget(event, "STUDENT");
+                                const accessState = getLiveClassAccessState(event);
+                                const joinDisabledLabel = accessState === "NOT_STARTED"
+                                    ? "Starts at Scheduled Time"
+                                    : accessState === "EXPIRED"
+                                        ? "Session Expired"
+                                        : accessState === "COMPLETED"
+                                            ? "Class Ended"
+                                            : isCancelled
+                                                ? "Class Cancelled"
+                                                : "Join Unavailable";
+
                                 return (
                                     <article key={event.id} className={styles.liveClassCard}>
                                         <div className={styles.liveClassTop}>
@@ -153,15 +167,22 @@ export default function StudentCalendarPage() {
                                                     <span className={styles.metaItem}><CalendarDots size={14} />{event.batch?.name || "Batch"}</span>
                                                     <span className={styles.metaItem}><Clock size={14} />{scheduledDate.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })} · {scheduledDate.toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" })}</span>
                                                 </div>
-                                                {event.provider === "JITSI" && event.roomName ? <p className={styles.liveClassDesc}>Jitsi room: {event.roomName}</p> : null}
+                                                <p className={styles.liveClassDesc}>{getLiveClassProviderLabel(event.provider)}</p>
+                                                {event.provider === "ZOOM"
+                                                    ? <p className={styles.liveClassDesc}>Zoom session available inside the LMS.</p>
+                                                    : event.provider === "JITSI"
+                                                        ? <p className={styles.liveClassDesc}>Jitsi session available inside the LMS.</p>
+                                                        : event.meetingLink
+                                                            ? <p className={styles.liveClassDesc}>Meeting link available for this session.</p>
+                                                            : null}
                                                 {event.description ? <p className={styles.liveClassDesc}>{event.description}</p> : null}
                                             </div>
                                         </div>
                                         <div className={styles.liveClassActions}>
-                                            {isCancelled || !joinTarget.href ? (
+                                            {accessState !== "AVAILABLE" || !joinTarget.href ? (
                                                 <span className={`${styles.joinButton} ${styles.joinButtonDisabled}`}>
                                                     <LinkIcon size={16} />
-                                                    {isCancelled ? "Class Cancelled" : "Join Unavailable"}
+                                                    {joinDisabledLabel}
                                                 </span>
                                             ) : joinTarget.external ? (
                                                 <a

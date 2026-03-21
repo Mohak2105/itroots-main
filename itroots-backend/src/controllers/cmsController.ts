@@ -7,6 +7,7 @@ import Placement from '../models/Placement';
 import Batch from '../models/Batch';
 import sequelize from '../config/database';
 import slugify from 'slugify';
+import { parsePlacementDueDate } from '../utils/placements';
 
 const COMPANY_LOGO_DIR = path.join(__dirname, '..', '..', 'uploads', 'company-logos');
 
@@ -147,11 +148,17 @@ export const getAllPlacements = async (req: Request, res: Response) => {
 export const createPlacement = async (req: Request, res: Response) => {
     try {
         const data = { ...req.body };
+        const parsedDueDate = parsePlacementDueDate(data.dueDate);
+
+        if (!parsedDueDate) {
+            return res.status(400).json({ message: 'A valid dueDate is required for placements' });
+        }
 
         if (data.companyLogo && data.companyLogo.startsWith('data:image/')) {
             data.companyLogo = saveCompanyLogo(data.companyLogo);
         }
 
+        data.dueDate = parsedDueDate;
         const placement = await Placement.create(data);
         res.status(201).json(placement);
     } catch (error) {

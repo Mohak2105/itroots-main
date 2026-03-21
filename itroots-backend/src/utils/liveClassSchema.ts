@@ -42,8 +42,9 @@ export const getLiveClassReadableAttributes = async () => {
     if (columns.has('scheduledAt')) attributes.push('scheduledAt');
     if (columns.has('meetingLink')) attributes.push('meetingLink');
     if (columns.has('provider')) attributes.push('provider');
-    if (columns.has('roomName')) attributes.push('roomName');
-    if (columns.has('jitsiDomain')) attributes.push('jitsiDomain');
+    if (columns.has('zoomMeetingNumber')) attributes.push('zoomMeetingNumber');
+    if (columns.has('zoomPasscode')) attributes.push('zoomPasscode');
+    if (columns.has('jitsiRoomName')) attributes.push('jitsiRoomName');
     if (columns.has('joinPath')) attributes.push('joinPath');
     if (columns.has('description')) attributes.push('description');
     if (columns.has('status')) attributes.push('status');
@@ -63,27 +64,33 @@ export const ensureLiveClassJitsiColumns = async () => {
 
     if (!availableColumns.has('provider')) {
         await queryInterface.addColumn('live_classes', 'provider', {
-            type: DataTypes.ENUM('JITSI', 'EXTERNAL'),
+            type: DataTypes.STRING,
             allowNull: false,
             defaultValue: 'EXTERNAL',
         });
         nextColumns.add('provider');
+    } else {
+        await queryInterface.changeColumn('live_classes', 'provider', {
+            type: DataTypes.STRING,
+            allowNull: false,
+            defaultValue: 'EXTERNAL',
+        });
     }
 
-    if (!availableColumns.has('roomName')) {
-        await queryInterface.addColumn('live_classes', 'roomName', {
+    if (!availableColumns.has('zoomMeetingNumber')) {
+        await queryInterface.addColumn('live_classes', 'zoomMeetingNumber', {
             type: DataTypes.STRING,
             allowNull: true,
         });
-        nextColumns.add('roomName');
+        nextColumns.add('zoomMeetingNumber');
     }
 
-    if (!availableColumns.has('jitsiDomain')) {
-        await queryInterface.addColumn('live_classes', 'jitsiDomain', {
+    if (!availableColumns.has('zoomPasscode')) {
+        await queryInterface.addColumn('live_classes', 'zoomPasscode', {
             type: DataTypes.STRING,
             allowNull: true,
         });
-        nextColumns.add('jitsiDomain');
+        nextColumns.add('zoomPasscode');
     }
 
     if (!availableColumns.has('joinPath')) {
@@ -92,6 +99,14 @@ export const ensureLiveClassJitsiColumns = async () => {
             allowNull: true,
         });
         nextColumns.add('joinPath');
+    }
+
+    if (!availableColumns.has('jitsiRoomName')) {
+        await queryInterface.addColumn('live_classes', 'jitsiRoomName', {
+            type: DataTypes.STRING,
+            allowNull: true,
+        });
+        nextColumns.add('jitsiRoomName');
     }
 
     liveClassColumnsPromise = Promise.resolve(nextColumns);

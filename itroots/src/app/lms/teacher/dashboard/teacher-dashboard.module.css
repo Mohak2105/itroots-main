@@ -26,6 +26,7 @@
     justify-content: space-between;
     gap: 1.5rem;
     width: 100%;
+    min-width: 0;
     position: relative;
     z-index: 1;
 }
@@ -36,7 +37,7 @@
     justify-content: flex-end;
     position: relative;
     z-index: 1;
-    min-width: 250px;
+    min-width: min(250px, 100%);
 }
 
 .bannerBatchSelectWrap > div {
@@ -102,6 +103,7 @@
     display: flex;
     align-items: center;
     gap: 1rem;
+    min-width: 0;
 }
 
 .statIcon {
@@ -137,6 +139,7 @@
 .statInfo {
     display: flex;
     flex-direction: column;
+    min-width: 0;
 }
 
 .statValue {
@@ -450,10 +453,14 @@
     color: #64748b;
     background: #ffffff;
     border: 1px dashed #cbd5e1;
-    border-radius: 1px;
+    border-radius: 18px;
 }
 
 @media (max-width: 768px) {
+    .page {
+        gap: 1.5rem;
+    }
+
     .banner {
         flex-direction: column;
         align-items: flex-start;
@@ -468,6 +475,10 @@
     .bannerBatchSelectWrap {
         width: 100%;
         justify-content: stretch;
+    }
+
+    .bannerIconWrap {
+        align-self: flex-end;
     }
 
     .bannerBatchSelectWrap > div { width: 100%; }
@@ -488,5 +499,28 @@
     .videoSectionHeader {
         flex-direction: column;
         align-items: flex-start;
+    }
+}
+
+@media (max-width: 480px) {
+    .page {
+        gap: 1.25rem;
+    }
+
+    .banner {
+        padding: 1.6rem 1.1rem;
+    }
+
+    .bannerTitle {
+        font-size: 1.45rem;
+    }
+
+    .bannerSub {
+        font-size: 0.88rem;
+    }
+
+    .bannerIconWrap svg {
+        width: 48px;
+        height: 48px;
     }
 }
