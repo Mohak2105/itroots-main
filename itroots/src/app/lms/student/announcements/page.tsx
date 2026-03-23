@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { Megaphone, Link as LinkIcon, CheckCircle } from "@phosphor-icons/react";
+import { Megaphone, Link as LinkIcon, CheckCircle } from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import {
     buildStudentActionHref,

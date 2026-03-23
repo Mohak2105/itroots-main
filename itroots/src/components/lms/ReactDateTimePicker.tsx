@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { CalendarDots, CaretDown, Clock } from "@phosphor-icons/react";
+import { CalendarDots, CaretDown, Clock } from "@/components/icons/lucide-phosphor";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import styles from "./react-date-time-picker.module.css";
 

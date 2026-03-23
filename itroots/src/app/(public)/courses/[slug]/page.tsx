@@ -42,7 +42,7 @@ import {
     Wrench as PhWrench,
     Monitor as PhMonitor,
     DownloadSimple as PhDownload
-} from '@phosphor-icons/react/dist/ssr';
+} from '@/components/icons/lucide-phosphor';
 import { courses, getCourseBySlug } from '@/data/courses';
 import { testimonials } from '@/data/testimonials';
 import { ToolsSlider } from '@/components/courses/ToolsSlider';

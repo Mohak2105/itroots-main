@@ -7,7 +7,7 @@ import LMSShell from "@/components/lms/LMSShell";
 import CertificatePreview, { type CertificatePreviewRecord } from "@/components/certificates/CertificatePreview";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./certificates.module.css";
-import { DownloadSimple, Scroll, SealCheck } from "@phosphor-icons/react";
+import { DownloadSimple, Scroll, SealCheck } from "@/components/icons/lucide-phosphor";
 
 type CertificateRecord = CertificatePreviewRecord & {
     id: string;

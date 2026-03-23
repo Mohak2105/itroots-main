@@ -12,7 +12,7 @@ import {
     UsersThree,
     MagnifyingGlass,
     ArrowRight
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./available-batches.module.css";
 import Link from "next/link";

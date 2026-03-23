@@ -16,7 +16,7 @@ import {
     CaretRight,
     MonitorPlay,
     PlayCircle,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 type EnrollmentRecord = {
     id: string;

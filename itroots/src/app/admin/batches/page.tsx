@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { Calendar as CalendarIcon, X, Plus, Trash, PencilSimple, UsersThree, Clock } from "@phosphor-icons/react";
+import { Calendar as CalendarIcon, X, Plus, Trash, PencilSimple, UsersThree, Clock } from "@/components/icons/lucide-phosphor";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import { ENDPOINTS } from "@/config/api";
 import styles from "../dashboard/admin-dashboard.module.css";
@@ -328,12 +328,12 @@ const batchCardIconWrapStyle = {
     width: "52px",
     height: "52px",
     borderRadius: "16px",
-    background: "linear-gradient(145deg, rgba(8,129,236,0.16) 0%, rgba(59,130,246,0.12) 35%, rgba(16,185,129,0.14) 70%, rgba(245,158,11,0.16) 100%)",
-    border: "1px solid rgba(8,129,236,0.14)",
+    background: "linear-gradient(145deg, #ecfeff 0%, #d7f8ff 52%, #dcfce7 100%)",
+    border: "1px solid rgba(6,182,212,0.18)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)",
+    boxShadow: "0 10px 24px rgba(6,182,212,0.14), inset 0 1px 0 rgba(255,255,255,0.92)",
 };
 
 export default function AdminBatchesPage() {
@@ -539,7 +539,7 @@ export default function AdminBatchesPage() {
                                             <h3 style={batchCardTitleStyle}>{batch.name}</h3>
                                         </div>
                                         <div style={batchCardIconWrapStyle}>
-                                            <CalendarIcon size={26} weight="duotone" color="#0881ec" />
+                                            <CalendarIcon size={26} weight="duotone" color="#06b6d4" />
                                         </div>
                                     </div>
 

@@ -14,7 +14,7 @@ import {
     Megaphone,
     ShieldCheck,
     VideoCamera,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 type PreviewStudent = {
     id: string;

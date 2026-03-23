@@ -22,7 +22,7 @@ import {
     Megaphone,
     PlayCircle,
     VideoCamera,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 type DashboardData = {
     summary: {

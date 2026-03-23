@@ -9,8 +9,12 @@ import {
     Users,
     Chalkboard,
     Calendar,
-} from "@phosphor-icons/react";
-import { ENDPOINTS } from "@/config/api";
+    Student,
+    ChalkboardTeacher,
+    BookOpenText,
+    CalendarDots,
+} from "@/components/icons/lucide-phosphor";
+import { API_ORIGIN, ENDPOINTS } from "@/config/api";
 import { createImpersonationTransfer } from "@/utils/impersonation";
 import styles from "./admin-dashboard.module.css";
 import toast from "react-hot-toast";
@@ -26,6 +30,7 @@ type DashboardData = {
         id: string;
         name: string;
         email: string;
+        profileImage?: string | null;
         createdAt: string;
         isActive: boolean;
     }>;
@@ -68,6 +73,27 @@ const formatDate = (value?: string) => {
         month: "short",
         year: "numeric",
     });
+};
+
+const getInitials = (name: string) =>
+    name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0])
+        .join("")
+        .toUpperCase();
+
+const resolveProfileImageUrl = (filePath?: string | null) => {
+    if (!filePath) {
+        return "";
+    }
+
+    if (filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("data:")) {
+        return filePath;
+    }
+
+    return `${API_ORIGIN}${filePath}`;
 };
 
 export default function AdminDashboard() {
@@ -113,11 +139,13 @@ export default function AdminDashboard() {
     const handleImpersonate = async (id: string, targetPath: string) => {
         if (!token) return;
 
-        const shouldOpenNewTab = targetPath.startsWith("/student/");
+        const shouldOpenNewTab = targetPath.startsWith("/student/") || targetPath.startsWith("/faculty/");
+        const isFacultyDashboard = targetPath.startsWith("/faculty/");
+        const loadingLabel = isFacultyDashboard ? "faculty dashboard" : "student dashboard";
         const targetTab = shouldOpenNewTab && typeof window !== "undefined" ? window.open("", "_blank") : null;
 
         if (targetTab) {
-            targetTab.document.write("<title>Opening student dashboard...</title><p style=\"font-family: sans-serif; padding: 24px;\">Opening student dashboard...</p>");
+            targetTab.document.write(`<title>Opening ${loadingLabel}...</title><p style="font-family: sans-serif; padding: 24px;">Opening ${loadingLabel}...</p>`);
         }
 
         try {
@@ -133,7 +161,7 @@ export default function AdminDashboard() {
             if (shouldOpenNewTab) {
                 const bridgeKey = createImpersonationTransfer(data.user, data.token);
                 if (!bridgeKey) {
-                    throw new Error("Unable to open student dashboard");
+                    throw new Error(`Unable to open ${loadingLabel}`);
                 }
 
                 const targetUrl = `${targetPath}?impersonationKey=${encodeURIComponent(bridgeKey)}`;
@@ -173,18 +201,30 @@ export default function AdminDashboard() {
 
                 <section className={styles.statsGrid}>
                     <div className={styles.statCard}>
+                        <span className={`${styles.statIconWrap} ${styles.statIconStudents}`}>
+                            <Student size={28} weight="duotone" />
+                        </span>
                         <span className={styles.statLabel}>Active Students</span>
                         <span className={styles.statValue}>{dashboard.students}</span>
                     </div>
                     <div className={styles.statCard}>
+                        <span className={`${styles.statIconWrap} ${styles.statIconFaculty}`}>
+                            <ChalkboardTeacher size={28} weight="duotone" />
+                        </span>
                         <span className={styles.statLabel}>Active Faculty</span>
                         <span className={styles.statValue}>{dashboard.Faculty}</span>
                     </div>
                     <div className={styles.statCard}>
+                        <span className={`${styles.statIconWrap} ${styles.statIconCourses}`}>
+                            <BookOpenText size={28} weight="duotone" />
+                        </span>
                         <span className={styles.statLabel}>Active Courses</span>
                         <span className={styles.statValue}>{dashboard.courses}</span>
                     </div>
                     <div className={styles.statCard}>
+                        <span className={`${styles.statIconWrap} ${styles.statIconBatchesStat}`}>
+                            <CalendarDots size={28} weight="duotone" />
+                        </span>
                         <span className={styles.statLabel}>Active Batches</span>
                         <span className={styles.statValue}>{dashboard.batches}</span>
                     </div>
@@ -194,15 +234,21 @@ export default function AdminDashboard() {
                     <div className={`${styles.section} ${styles.fullWidthSection}`}>
                         <div className={styles.controlsGrid}>
                             <Link href="/admin/students" className={styles.controlCard}>
-                                <Users size={48} color="#0881ec" />
+                                <span className={`${styles.controlIconWrap} ${styles.controlIconStudents}`}>
+                                    <Users size={44} weight="duotone" />
+                                </span>
                                 <span className={styles.controlCardLabel}>Student Records</span>
                             </Link>
                             <Link href="/admin/teachers" className={styles.controlCard}>
-                                <Chalkboard size={48} color="#0881ec" />
+                                <span className={`${styles.controlIconWrap} ${styles.controlIconFaculty}`}>
+                                    <Chalkboard size={44} weight="duotone" />
+                                </span>
                                 <span className={styles.controlCardLabel}>Faculty Management</span>
                             </Link>
                             <Link href="/admin/batches" className={styles.controlCard}>
-                                <Calendar size={48} color="#0881ec" />
+                                <span className={`${styles.controlIconWrap} ${styles.controlIconBatches}`}>
+                                    <Calendar size={44} weight="duotone" />
+                                </span>
                                 <span className={styles.controlCardLabel}>Batch Scheduling</span>
                             </Link>
                         </div>
@@ -270,6 +316,18 @@ export default function AdminDashboard() {
                                 dashboard.recentStudents.map((student) => (
                                     <div key={student.id} className={styles.recentStudentRow}>
                                         <div className={styles.recentStudentInfo}>
+                                            <div className={`${styles.recentStudentAvatar} ${student.profileImage ? styles.recentStudentAvatarPhoto : ""}`}>
+                                                {student.profileImage ? (
+                                                    <img
+                                                        src={resolveProfileImageUrl(student.profileImage)}
+                                                        alt={`${student.name} profile`}
+                                                        className={styles.recentStudentAvatarImage}
+                                                    />
+                                                ) : (
+                                                    getInitials(student.name)
+                                                )}
+                                            </div>
+                                            <div className={styles.recentStudentCopy}>
                                             <a
                                                 href="#"
                                                 className={styles.recentStudentName}
@@ -281,6 +339,7 @@ export default function AdminDashboard() {
                                                 {student.name}
                                             </a>
                                             <div className={styles.recentStudentEmail}>{student.email}</div>
+                                            </div>
                                         </div>
                                         <div className={styles.recentStudentMeta}>
                                             <div className={styles.recentStudentDate}>{formatDate(student.createdAt)}</div>

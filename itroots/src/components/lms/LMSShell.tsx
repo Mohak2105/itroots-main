@@ -33,7 +33,7 @@ import {
     Bell,
     Scroll,
     VideoCamera,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 const ICON_MAP: Record<string, React.ElementType> = {
     "Dashboard": SquaresFour,
@@ -117,7 +117,6 @@ const STUDENT_NAV = [
             { href: "/placements", label: "Placements" },
             { href: "/announcements", label: "Notifications" },
             { href: "/certificates", label: " My Certificates" },
-            { href: "/settings", label: "Profile Settings" },
         ],
     },
 ];
@@ -135,7 +134,6 @@ const Faculty_NAV = [
             { href: "/calendar", label: "Live Classes" },
             { href: "/analytics", label: "Students Overview" },
             { href: "/announcements", label: "Send Notifications" },
-            { href: "/settings", label: "Profile Settings" },
         ],
     },
 ];
@@ -152,7 +150,7 @@ const ADMIN_NAV = [
             { href: "/placements", label: "Placements" },
             { href: "/notifications", label: "Notifications" },
             { href: "/certificates", label: "Certificates" },
-            { href: "/settings", label: "Settings" },
+            
         ],
     },
 ];
@@ -330,7 +328,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                 {currentDateTimeLabel}
                             </div>
                         ) : null}
-                        {user?.role === "STUDENT" && (
+                        {(user?.role === "STUDENT" || user?.role === "FACULTY") && (
                             <Link
                                 href={buildPortalPath(portal, "/announcements")}
                                 className={styles.topBarNotificationLink}
@@ -370,10 +368,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
                                     <div className={styles.dropdownDivider} />
 
                                     <Link
-                                        href={buildPortalPath(
-                                            portal,
-                                            user?.role === "SUPER_ADMIN" ? "/dashboard" : "/settings"
-                                        )}
+                                        href={buildPortalPath(portal, "/settings")}
                                         className={styles.dropdownItem}
                                         onClick={() => setProfileDropdownOpen(false)}
                                     >

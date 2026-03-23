@@ -11,7 +11,7 @@ import {
     ArrowSquareOut,
     Tray,
     Trophy,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 type PlacementRecord = {
     id: string;

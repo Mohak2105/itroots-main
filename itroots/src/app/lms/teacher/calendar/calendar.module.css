@@ -463,46 +463,65 @@
     flex-wrap: wrap;
 }
 
-.joinBtn,
-.disabledJoinBtn,
-.editBtn,
-.cancelBtn {
-    border-radius: 10px;
-    padding: 0.5rem 0.8rem;
-    font-size: 0.78rem;
-    font-weight: 700;
+.actionIconBtn {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
     display: inline-flex;
     align-items: center;
-    gap: 0.35rem;
+    justify-content: center;
     text-decoration: none;
     font-family: inherit;
+    background: #fff;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease, background 0.15s ease;
 }
 
-.joinBtn {
-    border: 1px solid #bfdbfe;
-    background: #eff6ff;
-    color: #2563eb;
+.actionIconBtn:hover {
+    transform: translateY(-1px);
+}
+
+.openBtn {
+    border: 1px solid #d8b4fe;
+    color: #7c3aed;
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.08);
     cursor: pointer;
 }
 
-.disabledJoinBtn {
-    border: 1px solid #e2e8f0;
-    background: #f8fafc;
+.openBtn:hover {
+    background: #faf5ff;
+    box-shadow: 0 10px 20px rgba(124, 58, 237, 0.14);
+}
+
+.disabledActionBtn {
+    border: 1px solid #cbd5e1;
     color: #64748b;
+    background: #f8fafc;
+    box-shadow: none;
+    cursor: not-allowed;
 }
 
 .editBtn {
     border: 1px solid #bfdbfe;
-    background: #eff6ff;
     color: #2563eb;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.08);
     cursor: pointer;
+}
+
+.editBtn:hover {
+    background: #eff6ff;
+    box-shadow: 0 10px 20px rgba(37, 99, 235, 0.14);
 }
 
 .cancelBtn {
     border: 1px solid #fecaca;
-    background: #fef2f2;
-    color: #dc2626;
+    color: #ef4444;
+    box-shadow: 0 6px 16px rgba(239, 68, 68, 0.08);
     cursor: pointer;
+}
+
+.cancelBtn:hover {
+    background: #fef2f2;
+    box-shadow: 0 10px 20px rgba(239, 68, 68, 0.14);
 }
 
 .modalOverlay {

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { CalendarCheck, WarningCircle, CaretLeft, CaretRight } from "@phosphor-icons/react";
+import { CalendarCheck, WarningCircle, CaretLeft, CaretRight } from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./attendance.module.css";
 

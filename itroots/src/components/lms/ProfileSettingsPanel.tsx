@@ -2,7 +2,7 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, CheckCircle, Gear, LockKey, ShieldCheck, User as UserIcon, WarningCircle, X } from "@phosphor-icons/react";
+import { Camera, CheckCircle, Gear, LockKey, ShieldCheck, Trash, User as UserIcon, WarningCircle, X } from "@/components/icons/lucide-phosphor";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { API_ORIGIN, ENDPOINTS } from "@/config/api";
@@ -40,6 +40,7 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
     const [profileMessage, setProfileMessage] = useState<MessageState>(null);
     const [passwordMessage, setPasswordMessage] = useState<MessageState>(null);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
+    const [isDeletingPhoto, setIsDeletingPhoto] = useState(false);
     const [isSavingPassword, setIsSavingPassword] = useState(false);
     const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [selectedFileName, setSelectedFileName] = useState("");
@@ -53,6 +54,8 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
         newPassword: "",
         confirmPassword: "",
     });
+
+    const savedImagePreview = useMemo(() => resolveAssetUrl(user?.profileImage), [user?.profileImage]);
 
     useEffect(() => {
         const loginPath = requiredRole === "ADMIN"
@@ -86,8 +89,8 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
             email: user.email || "",
             phone: user.phone || "",
         }));
-        setImagePreview(resolveAssetUrl(user.profileImage));
-    }, [user]);
+        setImagePreview(savedImagePreview);
+    }, [savedImagePreview, user]);
 
     const userInitials = useMemo(() => {
         if (!user?.name) {
@@ -106,14 +109,23 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
             .toUpperCase();
     }, [requiredRole, user?.name]);
 
-    const usePasswordModal = requiredRole === "STUDENT" || requiredRole === "FACULTY";
-
     if (isLoading || !user) {
         return null;
     }
 
+    const usePasswordModal = true;
+    const hasSavedProfilePhoto = Boolean(savedImagePreview);
+    const hasPendingPhotoSelection = Boolean(profileImagePayload);
+    const isProfileBusy = isSavingProfile || isDeletingPhoto;
+
     const openPasswordModal = () => {
         setPasswordMessage(null);
+        setFormData((prev) => ({
+            ...prev,
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+        }));
         setShowPasswordModal(true);
     };
 
@@ -134,6 +146,7 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
             return;
         }
 
+        setProfileMessage(null);
         setSelectedFileName(file.name);
         const reader = new FileReader();
         reader.onload = () => {
@@ -142,6 +155,65 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
             setImagePreview(result);
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleClearSelectedPhoto = () => {
+        setSelectedFileName("");
+        setProfileImagePayload("");
+        setImagePreview(savedImagePreview);
+        setProfileMessage(null);
+    };
+
+    const handleDeletePhoto = async () => {
+        if (hasPendingPhotoSelection) {
+            handleClearSelectedPhoto();
+            return;
+        }
+
+        if (!hasSavedProfilePhoto) {
+            return;
+        }
+
+        if (!token) {
+            setProfileMessage({ type: "error", text: "Session expired. Please sign in again." });
+            return;
+        }
+
+        setIsDeletingPhoto(true);
+        setProfileMessage(null);
+
+        try {
+            const response = await fetch(ENDPOINTS.AUTH.UPDATE_PROFILE, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({
+                    name: formData.name.trim() || user.name,
+                    phone: formData.phone.trim(),
+                    removeProfileImage: true,
+                }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.message || "Unable to delete profile photo");
+            }
+
+            const refreshedUser = await refreshUser();
+            setSelectedFileName("");
+            setProfileImagePayload("");
+            setImagePreview(resolveAssetUrl(refreshedUser?.profileImage));
+            setProfileMessage({ type: "success", text: "Profile photo deleted successfully." });
+        } catch (error) {
+            setProfileMessage({
+                type: "error",
+                text: error instanceof Error ? error.message : "Unable to delete profile photo",
+            });
+        } finally {
+            setIsDeletingPhoto(false);
+        }
     };
 
     const handleSaveProfile = async (event: FormEvent<HTMLFormElement>) => {
@@ -229,6 +301,12 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
                 confirmPassword: "",
             }));
             setPasswordMessage({ type: "success", text: "Password updated successfully." });
+            if (usePasswordModal) {
+                setTimeout(() => {
+                    setShowPasswordModal(false);
+                    setPasswordMessage(null);
+                }, 900);
+            }
         } catch (error) {
             setPasswordMessage({
                 type: "error",
@@ -259,11 +337,30 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
                                 <div className={styles.avatarCircle}>{userInitials}</div>
                             )}
                         </div>
-                        <label className={styles.uploadButton}>
-                            <Camera size={16} weight="bold" />
-                            Upload Photo
-                            <input type="file" accept="image/*" className={styles.hiddenInput} onChange={handleImageChange} />
-                        </label>
+                        <div className={styles.photoActions}>
+                            <label className={`${styles.uploadButton} ${isProfileBusy ? styles.uploadButtonDisabled : ""}`}>
+                                <Camera size={16} weight="bold" />
+                                Upload Photo
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    className={styles.hiddenInput}
+                                    onChange={handleImageChange}
+                                    disabled={isProfileBusy}
+                                />
+                            </label>
+                            {hasPendingPhotoSelection ? (
+                                <button type="button" className={styles.deletePhotoButton} onClick={handleDeletePhoto} disabled={isProfileBusy}>
+                                    <X size={16} weight="bold" />
+                                    Clear Selection
+                                </button>
+                            ) : hasSavedProfilePhoto ? (
+                                <button type="button" className={styles.deletePhotoButton} onClick={handleDeletePhoto} disabled={isProfileBusy}>
+                                    <Trash size={16} weight="bold" />
+                                    {isDeletingPhoto ? "Deleting..." : "Delete Photo"}
+                                </button>
+                            ) : null}
+                        </div>
                         {selectedFileName && <div className={styles.fileHint}>{selectedFileName}</div>}
                         <div className={styles.profileName}>{user.name}</div>
                         <div className={styles.profileEmail}>{user.email}</div>
@@ -314,80 +411,18 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
                                 )}
 
                                 <div className={styles.formFooter}>
-                                    <button type="submit" className={styles.saveBtn} disabled={isSavingProfile}>
+                                    <button type="submit" className={styles.saveBtn} disabled={isProfileBusy}>
                                         {isSavingProfile ? "Saving..." : "Save Changes"}
                                     </button>
+                                    {usePasswordModal ? (
+                                        <button type="button" className={styles.ghostBtn} onClick={openPasswordModal}>
+                                            Update Password
+                                        </button>
+                                    ) : null}
                                 </div>
                             </form>
                         </div>
 
-                        <div className={styles.section}>
-                            <div className={styles.sectionTitle}>
-                                <LockKey size={20} weight="duotone" color="#8b5cf6" />
-                                Change Password
-                            </div>
-                            {usePasswordModal ? (
-                                <div className={styles.passwordActionWrap}>
-                                    <p className={styles.passwordActionText}>
-                                        Open the password popup to update your current password securely.
-                                    </p>
-                                    <button type="button" className={styles.saveBtnSecondary} onClick={openPasswordModal}>
-                                        Change Password
-                                    </button>
-                                </div>
-                            ) : (
-                                <form onSubmit={handleChangePassword}>
-                                    <div className={styles.formGrid}>
-                                        <div className={styles.formGroup}>
-                                            <label>Current Password</label>
-                                            <input
-                                                type="password"
-                                                className={styles.input}
-                                                value={formData.currentPassword}
-                                                onChange={(event) => setFormData((prev) => ({ ...prev, currentPassword: event.target.value }))}
-                                                placeholder="Enter current password"
-                                                required
-                                            />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label>New Password</label>
-                                            <input
-                                                type="password"
-                                                className={styles.input}
-                                                value={formData.newPassword}
-                                                onChange={(event) => setFormData((prev) => ({ ...prev, newPassword: event.target.value }))}
-                                                placeholder="Enter new password"
-                                                required
-                                            />
-                                        </div>
-                                        <div className={styles.formGroup}>
-                                            <label>Confirm Password</label>
-                                            <input
-                                                type="password"
-                                                className={styles.input}
-                                                value={formData.confirmPassword}
-                                                onChange={(event) => setFormData((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-                                                placeholder="Repeat new password"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {passwordMessage && (
-                                        <div className={`${styles.message} ${passwordMessage.type === "success" ? styles.messageSuccess : styles.messageError}`}>
-                                            {passwordMessage.type === "success" ? <CheckCircle size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}
-                                            {passwordMessage.text}
-                                        </div>
-                                    )}
-
-                                    <div className={styles.formFooter}>
-                                        <button type="submit" className={styles.saveBtnSecondary} disabled={isSavingPassword}>
-                                            {isSavingPassword ? "Updating..." : "Update Password"}
-                                        </button>
-                                    </div>
-                                </form>
-                            )}
-                        </div>
                     </div>
                 </div>
             </div>
@@ -397,8 +432,8 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
                     <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
                         <div className={styles.modalHeader}>
                             <div>
-                                <div className={styles.modalTitle}>Change Password</div>
-                                <div className={styles.modalSubtext}>Enter your current password and choose a new one.</div>
+                                <div className={styles.modalTitle}>Update Password</div>
+                                <div className={styles.modalSubtext}>Enter your current password and choose a new secure one.</div>
                             </div>
                             <button type="button" className={styles.modalCloseButton} onClick={closePasswordModal} aria-label="Close password popup">
                                 <X size={18} weight="bold" />
@@ -450,7 +485,7 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
                             )}
 
                             <div className={styles.modalFooter}>
-                                <button type="button" className={styles.modalSecondaryButton} onClick={closePasswordModal}>
+                                <button type="button" className={styles.ghostBtn} onClick={closePasswordModal}>
                                     Cancel
                                 </button>
                                 <button type="submit" className={styles.saveBtnSecondary} disabled={isSavingPassword}>

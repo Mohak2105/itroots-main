@@ -13,7 +13,7 @@ import {
     CalendarDots,
     Clock,
     VideoCamera,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import { buildStudentContentViewerHref } from "@/utils/studentContentViewer";
 import { resolveLiveClassJoinTarget } from "@/utils/liveClasses";

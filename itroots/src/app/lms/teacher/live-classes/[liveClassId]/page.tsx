@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Power, VideoCamera } from "@phosphor-icons/react";
+import { ArrowLeft, Power, VideoCamera } from "@/components/icons/lucide-phosphor";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import JitsiLiveRoom from "@/components/lms/JitsiLiveRoom";

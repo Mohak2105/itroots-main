@@ -384,7 +384,7 @@ import {
   Code,
   Gear,
   Globe
-} from '@phosphor-icons/react';
+} from '@/components/icons/lucide-phosphor';
 
 export const DSVisual = () => (
   <div className={styles.sphereContainer}>

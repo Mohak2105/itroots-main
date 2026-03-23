@@ -11,7 +11,7 @@ import {
     ShareNetwork,
     BookmarkSimple,
     ArrowRight,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 interface Props {
     params: Promise<{

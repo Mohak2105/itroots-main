@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
-import { UsersThree, ChartBar } from "@phosphor-icons/react";
+import { UsersThree, ChartBar } from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./analytics.module.css";
 

@@ -18,6 +18,8 @@ type MockApiUser = {
     email: string;
     password: string;
     role: string;
+    phone?: string;
+    profileImage?: string;
 };
 
 type MockBatchContent = {
@@ -46,16 +48,44 @@ type MockAssignmentSubmission = {
     submittedAt: string;
 };
 
+type MockNotification = {
+    id: string;
+    title: string;
+    message: string;
+    type: string;
+    audienceType: string;
+    sendEmail: boolean;
+    createdBy: string;
+    batchId?: string;
+    courseId?: string;
+    createdAt: string;
+};
+
+type MockNotificationRecipient = {
+    id: string;
+    notificationId: string;
+    userId: string;
+    emailSent: boolean;
+    emailSentAt?: string | null;
+    readAt?: string | null;
+    createdAt: string;
+};
+
 const MOCK_USERS_KEY = "itroots_mock_users";
 const MOCK_BATCH_CONTENTS_KEY = "itroots_mock_batch_contents";
 const MOCK_SHARED_VIDEO_CONTENTS_COOKIE = "itroots_mock_shared_video_contents";
 const MOCK_ASSIGNMENT_SUBMISSIONS_KEY = "itroots_mock_assignment_submissions";
+const MOCK_NOTIFICATIONS_KEY = "itroots_mock_notifications";
+const MOCK_NOTIFICATION_RECIPIENTS_KEY = "itroots_mock_notification_recipients";
 const SESSION_KEY = "itroots_session";
+const TAB_SESSION_KEY = "itroots_tab_session";
 
 function toPortalRole(role: string) {
-    if (role === "Faculty" || role === "Faculty") return "Faculty";
-    if (role === "SUPER_ADMIN" || role === "admin") return "SUPER_ADMIN";
-    if (role === "CMS_MANAGER" || role === "cms") return "CMS_MANAGER";
+    const normalizedRole = String(role || "").trim().toUpperCase();
+
+    if (normalizedRole === "FACULTY") return "Faculty";
+    if (normalizedRole === "SUPER_ADMIN" || normalizedRole === "ADMIN") return "SUPER_ADMIN";
+    if (normalizedRole === "CMS_MANAGER" || normalizedRole === "CMS") return "CMS_MANAGER";
     return "STUDENT";
 }
 
@@ -72,6 +102,29 @@ function readStoredMockUsers(): MockApiUser[] {
 
 function writeStoredMockUsers(users: MockApiUser[]) {
     localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+}
+
+function getMergedMockUsers() {
+    const merged = new Map<string, MockApiUser>();
+
+    USERS.forEach((user) => {
+        merged.set(user.email.toLowerCase(), {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            password: user.password,
+            role: user.role,
+            phone: user.phone,
+        });
+    });
+
+    readStoredMockUsers().forEach((user) => {
+        const key = user.email.toLowerCase();
+        const existing = merged.get(key);
+        merged.set(key, { ...existing, ...user });
+    });
+
+    return Array.from(merged.values());
 }
 
 function parseStoredCollection<T>(raw: string | null): T[] {
@@ -140,6 +193,80 @@ function readStoredMockAssignmentSubmissions() {
 function writeStoredMockAssignmentSubmissions(submissions: MockAssignmentSubmission[]) {
     if (typeof window === "undefined") return;
     localStorage.setItem(MOCK_ASSIGNMENT_SUBMISSIONS_KEY, JSON.stringify(submissions));
+}
+
+function buildDefaultMockNotificationStore() {
+    const adminUser = USERS.find((user) => toPortalRole(user.role) === "SUPER_ADMIN") || USERS[0];
+    const facultyUsers = USERS.filter((user) => toPortalRole(user.role) === "Faculty");
+    const seededAt = "2026-03-23T09:00:00.000Z";
+    const notificationId = "mock-faculty-notification-welcome";
+
+    const notifications: MockNotification[] = [
+        {
+            id: notificationId,
+            title: "Admin Update: Faculty Notifications",
+            message: "Important admin updates for faculty will appear in this inbox. You can also send notifications to your batch students from the same page.",
+            type: "NOTIFICATION",
+            audienceType: "ALL_Faculty",
+            sendEmail: false,
+            createdBy: adminUser?.id || "a1",
+            createdAt: seededAt,
+        },
+    ];
+
+    const recipients: MockNotificationRecipient[] = facultyUsers.map((user) => ({
+        id: `mock-faculty-recipient-${user.id}`,
+        notificationId,
+        userId: user.id,
+        emailSent: false,
+        emailSentAt: null,
+        readAt: null,
+        createdAt: seededAt,
+    }));
+
+    return { notifications, recipients };
+}
+
+function readStoredMockNotifications() {
+    if (typeof window === "undefined") return [];
+
+    const raw = localStorage.getItem(MOCK_NOTIFICATIONS_KEY);
+    return raw === null
+        ? buildDefaultMockNotificationStore().notifications
+        : parseStoredCollection<MockNotification>(raw);
+}
+
+function writeStoredMockNotifications(notifications: MockNotification[]) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(MOCK_NOTIFICATIONS_KEY, JSON.stringify(notifications));
+}
+
+function readStoredMockNotificationRecipients() {
+    if (typeof window === "undefined") return [];
+
+    const raw = localStorage.getItem(MOCK_NOTIFICATION_RECIPIENTS_KEY);
+    return raw === null
+        ? buildDefaultMockNotificationStore().recipients
+        : parseStoredCollection<MockNotificationRecipient>(raw);
+}
+
+function writeStoredMockNotificationRecipients(recipients: MockNotificationRecipient[]) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(MOCK_NOTIFICATION_RECIPIENTS_KEY, JSON.stringify(recipients));
+}
+
+function seedMockNotificationsIfMissing() {
+    if (typeof window === "undefined") return;
+
+    const defaults = buildDefaultMockNotificationStore();
+
+    if (localStorage.getItem(MOCK_NOTIFICATIONS_KEY) === null) {
+        writeStoredMockNotifications(defaults.notifications);
+    }
+
+    if (localStorage.getItem(MOCK_NOTIFICATION_RECIPIENTS_KEY) === null) {
+        writeStoredMockNotificationRecipients(defaults.recipients);
+    }
 }
 
 function normalizeMockMaxMarks(value: unknown, fallback = 100) {
@@ -225,6 +352,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         if (existingMockContents.length) {
             writeStoredMockBatchContents(existingMockContents);
         }
+        seedMockNotificationsIfMissing();
 
         const makeResponse = (payload: unknown, status = 200) =>
             new Response(JSON.stringify(payload), {
@@ -243,24 +371,26 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
             const method = (init?.method || (typeof input !== "string" && !(input instanceof URL) ? input.method : "GET")).toUpperCase();
             const path = parsedUrl.pathname.replace(apiBasePath, "") || "/";
             const searchParams = parsedUrl.searchParams;
-            const allUsers: MockApiUser[] = [
-                ...USERS.map((u) => ({
-                    id: u.id,
-                    name: u.name,
-                    email: u.email,
-                    password: u.password,
-                    role: u.role,
-                })),
-                ...readStoredMockUsers(),
-            ];
+            const allUsers: MockApiUser[] = getMergedMockUsers();
             const currentUser = (() => {
                 try {
-                    const saved = localStorage.getItem(SESSION_KEY);
+                    const saved = sessionStorage.getItem(TAB_SESSION_KEY) || localStorage.getItem(SESSION_KEY);
                     return saved ? JSON.parse(saved) : null;
                 } catch {
                     return null;
                 }
             })();
+            const writeActiveMockSessionUser = (nextUser: Record<string, unknown>) => {
+                try {
+                    if (sessionStorage.getItem(TAB_SESSION_KEY)) {
+                        sessionStorage.setItem(TAB_SESSION_KEY, JSON.stringify(nextUser));
+                    } else {
+                        localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
+                    }
+                } catch {
+                    // Ignore storage failures in frontend-only mode.
+                }
+            };
 
             let body: Record<string, unknown> = {};
             if (typeof init?.body === "string") {
@@ -270,6 +400,126 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                     body = {};
                 }
             }
+
+            const dedupeMockUsers = (users: Array<MockApiUser | undefined | null>) => {
+                const seen = new Map<string, MockApiUser>();
+                users.forEach((user) => {
+                    if (user?.id && !seen.has(user.id)) {
+                        seen.set(user.id, user);
+                    }
+                });
+                return Array.from(seen.values());
+            };
+
+            const getMockBatchById = (batchId?: string) => {
+                if (!batchId) return null;
+                return BATCHES.find((item) => item.id === batchId) || null;
+            };
+
+            const getMockCourseById = (courseId?: string) => {
+                if (!courseId) return null;
+                return COURSES.find((item) => item.id === courseId) || null;
+            };
+
+            const buildMockNotificationRecipientPayload = (recipient: MockNotificationRecipient) => {
+                const notification = readStoredMockNotifications().find((item) => item.id === recipient.notificationId);
+                if (!notification) return null;
+
+                const batch = getMockBatchById(notification.batchId);
+                const course = getMockCourseById(notification.courseId || batch?.courseId);
+                const creator = getMockUserById(notification.createdBy);
+
+                return {
+                    ...recipient,
+                    notification: {
+                        ...notification,
+                        batch: batch ? { id: batch.id, name: batch.name } : null,
+                        course: course ? { id: course.id, title: course.title } : null,
+                        creator: creator ? {
+                            id: creator.id,
+                            name: creator.name,
+                            email: creator.email,
+                            role: toPortalRole(creator.role),
+                        } : null,
+                    },
+                };
+            };
+
+            const buildMockNotificationPayload = (notification: MockNotification) => {
+                const batch = getMockBatchById(notification.batchId);
+                const course = getMockCourseById(notification.courseId || batch?.courseId);
+                const creator = getMockUserById(notification.createdBy);
+                const recipients = readStoredMockNotificationRecipients()
+                    .filter((item) => item.notificationId === notification.id)
+                    .map((item) => ({
+                        ...item,
+                        user: (() => {
+                            const user = getMockUserById(item.userId);
+                            return user ? {
+                                id: user.id,
+                                name: user.name,
+                                email: user.email,
+                                role: toPortalRole(user.role),
+                            } : null;
+                        })(),
+                    }));
+
+                return {
+                    ...notification,
+                    batch: batch ? { id: batch.id, name: batch.name } : null,
+                    course: course ? { id: course.id, title: course.title } : null,
+                    creator: creator ? {
+                        id: creator.id,
+                        name: creator.name,
+                        email: creator.email,
+                        role: toPortalRole(creator.role),
+                    } : null,
+                    recipients,
+                };
+            };
+
+            const resolveMockUsersForAudience = (audienceType: string, batchId?: string, courseId?: string) => {
+                const normalizedAudience = String(audienceType || "").trim().toUpperCase();
+
+                if (normalizedAudience === "ALL_STUDENTS") {
+                    return allUsers.filter((user) => toPortalRole(user.role) === "STUDENT");
+                }
+
+                if (normalizedAudience === "ALL_FACULTY") {
+                    return allUsers.filter((user) => toPortalRole(user.role) === "Faculty");
+                }
+
+                if (normalizedAudience === "ALL_USERS") {
+                    return allUsers.filter((user) => ["STUDENT", "Faculty", "SUPER_ADMIN", "CMS_MANAGER"].includes(toPortalRole(user.role)));
+                }
+
+                if (normalizedAudience === "SELECTED_BATCH") {
+                    const batch = getMockBatchById(batchId);
+                    if (!batch) return [];
+
+                    const batchStudents = ENROLLMENTS
+                        .filter((item) => item.batchId === batch.id)
+                        .map((item) => getMockUserById(item.studentId));
+                    const batchFaculty = getMockUserById(batch.FacultyId);
+
+                    return dedupeMockUsers([...batchStudents, batchFaculty]);
+                }
+
+                if (normalizedAudience === "SELECTED_COURSE") {
+                    const course = getMockCourseById(courseId);
+                    if (!course) return [];
+
+                    const courseBatches = BATCHES.filter((item) => item.courseId === course.id);
+                    const studentUsers = ENROLLMENTS
+                        .filter((item) => courseBatches.some((batch) => batch.id === item.batchId))
+                        .map((item) => getMockUserById(item.studentId));
+                    const facultyUsers = courseBatches.map((batch) => getMockUserById(batch.FacultyId));
+
+                    return dedupeMockUsers([...studentUsers, ...facultyUsers]);
+                }
+
+                return [];
+            };
 
             if (path === "/public/courses" && method === "GET") {
                 return makeResponse(WEBSITE_COURSES);
@@ -326,6 +576,226 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 });
                 writeStoredMockUsers(stored);
                 return makeResponse({ success: true, message: "Registration successful." });
+            }
+
+            if (path === "/auth/profile" && method === "PUT") {
+                if (!currentUser) {
+                    return makeResponse({ message: "Unauthorized" }, 401);
+                }
+
+                const nextName = String(body.name || currentUser.name || "").trim();
+                if (!nextName) {
+                    return makeResponse({ message: "Name is required" }, 400);
+                }
+
+                const nextPhone = String(body.phone || "").trim();
+                const removeProfileImage = body.removeProfileImage === true;
+                const nextProfileImage = typeof body.fileData === "string" && body.fileData.startsWith("data:image/")
+                    ? body.fileData
+                    : removeProfileImage
+                        ? undefined
+                        : currentUser.profileImage;
+
+                const updatedUser = {
+                    ...currentUser,
+                    name: nextName,
+                    phone: nextPhone,
+                    profileImage: nextProfileImage,
+                };
+
+                writeActiveMockSessionUser(updatedUser);
+
+                const storedUsers = readStoredMockUsers();
+                const existingIndex = storedUsers.findIndex((user) => user.email.toLowerCase() === String(currentUser.email || "").toLowerCase());
+                const fallbackUser = allUsers.find((user) => user.email.toLowerCase() === String(currentUser.email || "").toLowerCase());
+                const updatedStoredUser: MockApiUser = {
+                    id: String(currentUser.id || fallbackUser?.id || `mock-${Date.now()}`),
+                    name: nextName,
+                    email: String(currentUser.email || fallbackUser?.email || ""),
+                    password: String((existingIndex >= 0 ? storedUsers[existingIndex].password : fallbackUser?.password) || ""),
+                    role: String((existingIndex >= 0 ? storedUsers[existingIndex].role : fallbackUser?.role) || currentUser.role || "STUDENT"),
+                    phone: nextPhone,
+                    profileImage: nextProfileImage,
+                };
+
+                if (existingIndex >= 0) {
+                    storedUsers[existingIndex] = updatedStoredUser;
+                } else {
+                    storedUsers.push(updatedStoredUser);
+                }
+
+                writeStoredMockUsers(storedUsers);
+
+                return makeResponse({
+                    message: removeProfileImage ? "Profile photo deleted successfully." : "Profile updated successfully.",
+                    user: updatedUser,
+                });
+            }
+
+            if (path === "/admin/notifications" && method === "GET") {
+                const notifications = readStoredMockNotifications()
+                    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+                    .map(buildMockNotificationPayload);
+                return makeResponse(notifications);
+            }
+
+            if (path === "/admin/notifications" && method === "POST") {
+                const title = String(body.title || "").trim();
+                const message = String(body.message || "").trim();
+                const audienceType = String(body.audienceType || "").trim();
+                const notificationType = String(body.type || "NOTIFICATION").trim().toUpperCase();
+                const batchId = String(body.batchId || "").trim() || undefined;
+                const courseId = String(body.courseId || "").trim() || undefined;
+
+                if (!title || !message || !audienceType) {
+                    return makeResponse({ message: "title, message and audienceType are required" }, 400);
+                }
+
+                const recipientUsers = resolveMockUsersForAudience(audienceType, batchId, courseId);
+                if (!recipientUsers.length) {
+                    return makeResponse({ message: "No recipients found for the selected audience" }, 400);
+                }
+
+                const notificationId = `mock-notification-${Date.now()}`;
+                const createdAt = new Date().toISOString();
+                const nextNotification: MockNotification = {
+                    id: notificationId,
+                    title,
+                    message,
+                    type: notificationType,
+                    audienceType,
+                    sendEmail: false,
+                    createdBy: currentUser?.id || "a1",
+                    batchId,
+                    courseId,
+                    createdAt,
+                };
+
+                writeStoredMockNotifications([...readStoredMockNotifications(), nextNotification]);
+                writeStoredMockNotificationRecipients([
+                    ...readStoredMockNotificationRecipients(),
+                    ...recipientUsers.map((recipient) => ({
+                        id: `mock-notification-recipient-${notificationId}-${recipient.id}`,
+                        notificationId,
+                        userId: recipient.id,
+                        emailSent: false,
+                        emailSentAt: null,
+                        readAt: null,
+                        createdAt,
+                    })),
+                ]);
+
+                return makeResponse({
+                    message: "Notification sent successfully",
+                    recipientCount: recipientUsers.length,
+                    notification: buildMockNotificationPayload(nextNotification),
+                }, 201);
+            }
+
+            if (path.startsWith("/admin/notifications/") && method === "DELETE") {
+                const notificationId = path.replace("/admin/notifications/", "");
+                writeStoredMockNotifications(readStoredMockNotifications().filter((item) => item.id !== notificationId));
+                writeStoredMockNotificationRecipients(readStoredMockNotificationRecipients().filter((item) => item.notificationId !== notificationId));
+                return makeResponse({ message: "Notification deleted successfully" });
+            }
+
+            if (path === "/Faculty/notifications" && method === "GET") {
+                const facultyId = currentUser?.id || "t1";
+                const inbox = readStoredMockNotificationRecipients()
+                    .filter((item) => item.userId === facultyId)
+                    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+                    .map(buildMockNotificationRecipientPayload)
+                    .filter(Boolean);
+                return makeResponse(inbox);
+            }
+
+            if (path === "/Faculty/notifications/sent" && method === "GET") {
+                const facultyId = currentUser?.id || "t1";
+                const notifications = readStoredMockNotifications()
+                    .filter((item) => item.createdBy === facultyId && item.audienceType === "SELECTED_BATCH_STUDENTS")
+                    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+                    .map(buildMockNotificationPayload);
+                return makeResponse(notifications);
+            }
+
+            if (path === "/Faculty/notifications" && method === "POST") {
+                const facultyId = currentUser?.id || "t1";
+                const title = String(body.title || "").trim();
+                const message = String(body.message || "").trim();
+                const batchId = String(body.batchId || "").trim();
+                const notificationType = String(body.type || "ANNOUNCEMENT").trim().toUpperCase();
+
+                if (!title || !message || !batchId) {
+                    return makeResponse({ message: "title, message, and batchId are required" }, 400);
+                }
+
+                const batch = BATCHES.find((item) => item.id === batchId && item.FacultyId === facultyId);
+                if (!batch) {
+                    return makeResponse({ message: "Batch not found or not assigned to this teacher" }, 404);
+                }
+
+                const recipientUsers = dedupeMockUsers(
+                    ENROLLMENTS
+                        .filter((item) => item.batchId === batch.id)
+                        .map((item) => getMockUserById(item.studentId))
+                );
+
+                if (!recipientUsers.length) {
+                    return makeResponse({ message: "No active students are enrolled in this batch" }, 400);
+                }
+
+                const createdAt = new Date().toISOString();
+                const notificationId = `mock-faculty-notification-${Date.now()}`;
+                const nextNotification: MockNotification = {
+                    id: notificationId,
+                    title,
+                    message,
+                    type: notificationType,
+                    audienceType: "SELECTED_BATCH_STUDENTS",
+                    sendEmail: false,
+                    createdBy: facultyId,
+                    batchId: batch.id,
+                    courseId: batch.courseId,
+                    createdAt,
+                };
+
+                writeStoredMockNotifications([...readStoredMockNotifications(), nextNotification]);
+                writeStoredMockNotificationRecipients([
+                    ...readStoredMockNotificationRecipients(),
+                    ...recipientUsers.map((recipient) => ({
+                        id: `mock-notification-recipient-${notificationId}-${recipient.id}`,
+                        notificationId,
+                        userId: recipient.id,
+                        emailSent: false,
+                        emailSentAt: null,
+                        readAt: null,
+                        createdAt,
+                    })),
+                ]);
+
+                return makeResponse({
+                    message: "Notification sent successfully",
+                    recipientCount: recipientUsers.length,
+                    notification: buildMockNotificationPayload(nextNotification),
+                }, 201);
+            }
+
+            if (path.startsWith("/Faculty/notifications/") && path.endsWith("/read") && method === "PATCH") {
+                const notificationId = path.replace("/Faculty/notifications/", "").replace("/read", "");
+                const facultyId = currentUser?.id || "t1";
+                const recipients = readStoredMockNotificationRecipients();
+                const recipientIndex = recipients.findIndex((item) => item.notificationId === notificationId && item.userId === facultyId);
+
+                if (recipientIndex === -1) {
+                    return makeResponse({ message: "Notification not found" }, 404);
+                }
+
+                recipients[recipientIndex] = {
+                    ...recipients[recipientIndex],
+                    readAt: new Date().toISOString(),
+                };
+                writeStoredMockNotificationRecipients(recipients);
+                return makeResponse({ message: "Notification marked as read" });
             }
 
             if (path === "/Faculty/my-batches" && method === "GET") {
@@ -842,6 +1312,34 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
                 const batchIds = ENROLLMENTS.filter((e) => e.studentId === studentId).map((e) => e.batchId);
                 const announcements = ANNOUNCEMENTS.filter((a) => batchIds.includes(a.batchId));
                 return makeResponse({ success: true, data: announcements });
+            }
+
+            if (path === "/student/notifications" && method === "GET") {
+                const studentId = currentUser?.id || "u1";
+                const inbox = readStoredMockNotificationRecipients()
+                    .filter((item) => item.userId === studentId)
+                    .sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime())
+                    .map(buildMockNotificationRecipientPayload)
+                    .filter(Boolean);
+                return makeResponse(inbox);
+            }
+
+            if (path.startsWith("/student/notifications/") && path.endsWith("/read") && method === "PATCH") {
+                const notificationId = path.replace("/student/notifications/", "").replace("/read", "");
+                const studentId = currentUser?.id || "u1";
+                const recipients = readStoredMockNotificationRecipients();
+                const recipientIndex = recipients.findIndex((item) => item.notificationId === notificationId && item.userId === studentId);
+
+                if (recipientIndex === -1) {
+                    return makeResponse({ message: "Notification not found" }, 404);
+                }
+
+                recipients[recipientIndex] = {
+                    ...recipients[recipientIndex],
+                    readAt: new Date().toISOString(),
+                };
+                writeStoredMockNotificationRecipients(recipients);
+                return makeResponse({ message: "Notification marked as read" });
             }
 
             if (path.startsWith("/student/batch-resources") && method === "GET") {

@@ -12,7 +12,7 @@ import {
     CircleNotch,
     Envelope,
     Lock,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import styles from "./teacher-login.module.css";
 
 export default function FacultyLoginPage() {

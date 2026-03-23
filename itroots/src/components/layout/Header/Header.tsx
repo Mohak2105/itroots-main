@@ -1,16 +1,33 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { CSSProperties, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
+    BarChart3,
+    Brain,
+    Briefcase,
+    Code2,
+    Cpu,
     Menu,
     X,
     ChevronDown,
-    Code2,
     GraduationCap,
+    Layers,
+    PieChart,
+    Shield,
+    TestTube2,
+    Users,
+    type LucideIcon,
+} from 'lucide-react';
+import { courses } from '@/data/courses';
+import EnrollModal from '@/components/ui/EnrollModal/EnrollModal';
+import styles from './Header.module.css';
+
+const courseIcons: Record<string, LucideIcon> = {
     Brain,
+    Code2,
     Shield,
     BarChart3,
     Cpu,
@@ -18,23 +35,7 @@ import {
     Briefcase,
     PieChart,
     TestTube2,
-    Users
-} from 'lucide-react';
-import { courses } from '@/data/courses';
-import EnrollModal from '@/components/ui/EnrollModal/EnrollModal';
-import styles from './Header.module.css';
-
-const courseIcons: { [key: string]: React.ReactNode } = {
-    'Brain': <Brain size={18} />,
-    'Code2': <Code2 size={18} />,
-    'Shield': <Shield size={18} />,
-    'BarChart3': <BarChart3 size={18} />,
-    'Cpu': <Cpu size={18} />,
-    'Layers': <Layers size={18} />,
-    'Briefcase': <Briefcase size={18} />,
-    'PieChart': <PieChart size={18} />,
-    'TestTube2': <TestTube2 size={18} />,
-    'Users': <Users size={18} />
+    Users,
 };
 
 export default function Header() {
@@ -180,7 +181,10 @@ export default function Header() {
                                                         className={styles.courseIcon}
                                                         style={{ backgroundColor: `${course.color}15`, color: course.color }}
                                                     >
-                                                        {courseIcons[course.icon]}
+                                                        {(() => {
+                                                            const CourseIcon = courseIcons[course.icon] || GraduationCap;
+                                                            return <CourseIcon aria-hidden="true" className={styles.flaticonGlyph} />;
+                                                        })()}
                                                     </span>
                                                     <div className={styles.courseInfo}>
                                                         <span className={styles.courseName}>{course.shortTitle}</span>
@@ -270,8 +274,20 @@ export default function Header() {
                             key={course.slug}
                             href={`/courses/${course.slug}`}
                             className={styles.secondaryNavLink}
+                            style={
+                                {
+                                    '--secondary-chip-color': course.color,
+                                    '--secondary-chip-bg': `${course.color}20`,
+                                } as CSSProperties
+                            }
                         >
-                            {course.shortTitle}
+                            <span className={styles.secondaryNavIcon}>
+                                {(() => {
+                                    const CourseIcon = courseIcons[course.icon] || GraduationCap;
+                                    return <CourseIcon aria-hidden="true" className={styles.flaticonGlyph} />;
+                                })()}
+                            </span>
+                            <span className={styles.secondaryNavLabel}>{course.shortTitle}</span>
                         </Link>
                     ))}
                 </div>
@@ -357,7 +373,10 @@ export default function Header() {
                                                             className={styles.mobileSubmenuIcon}
                                                             style={{ backgroundColor: `${course.color}15`, color: course.color }}
                                                         >
-                                                            {courseIcons[course.icon]}
+                                                            {(() => {
+                                                                const CourseIcon = courseIcons[course.icon] || GraduationCap;
+                                                                return <CourseIcon aria-hidden="true" className={styles.flaticonGlyph} />;
+                                                            })()}
                                                         </span>
                                                         <span>{course.shortTitle}</span>
                                                     </Link>

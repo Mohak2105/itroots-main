@@ -22,7 +22,11 @@ export const getMyNotifications = async (req: any, res: Response) => {
             order: [['createdAt', 'DESC']],
         });
 
-        const filteredNotifications = await filterCurrentLiveClassNotificationRecipients(notifications as any[]);
+        const normalizedRole = String(req.user?.role || '').trim().toUpperCase();
+        const shouldFilterLiveClassNotifications = normalizedRole === 'STUDENT';
+        const filteredNotifications = shouldFilterLiveClassNotifications
+            ? await filterCurrentLiveClassNotificationRecipients(notifications as any[])
+            : notifications;
 
         res.json(filteredNotifications);
     } catch (error) {

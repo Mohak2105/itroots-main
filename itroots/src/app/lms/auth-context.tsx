@@ -44,6 +44,8 @@ type MockUser = {
     email: string;
     password: string;
     role: string;
+    phone?: string;
+    profileImage?: string;
 };
 
 function toPortalRole(role: string): UserRole {
@@ -63,6 +65,7 @@ function getSeedUsers(): MockUser[] {
         email: u.email,
         password: u.password,
         role: u.role,
+        phone: u.phone,
     }));
 }
 
@@ -81,6 +84,22 @@ function getSavedMockUsers(): MockUser[] {
 function saveMockUsers(users: MockUser[]) {
     if (typeof window === "undefined") return;
     localStorage.setItem(MOCK_USERS_KEY, JSON.stringify(users));
+}
+
+function getMergedMockUsers() {
+    const merged = new Map<string, MockUser>();
+
+    getSeedUsers().forEach((user) => {
+        merged.set(user.email.toLowerCase(), user);
+    });
+
+    getSavedMockUsers().forEach((user) => {
+        const key = user.email.toLowerCase();
+        const existing = merged.get(key);
+        merged.set(key, { ...existing, ...user });
+    });
+
+    return Array.from(merged.values());
 }
 
 export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
@@ -250,7 +269,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
             }
         }
 
-        const mockUsers = [...getSeedUsers(), ...getSavedMockUsers()];
+        const mockUsers = getMergedMockUsers();
         const matchedUser = mockUsers.find(
             (u) => (u.email.toLowerCase() === identifier.toLowerCase() || u.name.toLowerCase() === identifier.toLowerCase()) && u.password === password
         );
@@ -264,6 +283,8 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
             username: matchedUser.email,
             name: matchedUser.name,
             email: matchedUser.email,
+            phone: matchedUser.phone,
+            profileImage: matchedUser.profileImage,
             role: toPortalRole(matchedUser.role),
             isActive: true,
         };
@@ -296,7 +317,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const normalizedEmail = email.trim().toLowerCase();
-        const existingUsers = [...getSeedUsers(), ...getSavedMockUsers()];
+        const existingUsers = getMergedMockUsers();
 
         if (existingUsers.some((u) => u.email.toLowerCase() === normalizedEmail)) {
             return { success: false, message: "Email already registered" };
@@ -318,7 +339,32 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
     }, []);
 
     const refreshUser = useCallback(async () => {
-        if (FRONTEND_ONLY_MODE || !token) {
+        if (FRONTEND_ONLY_MODE) {
+            if (typeof window === "undefined") {
+                return user;
+            }
+
+            try {
+                const tabUser = sessionStorage.getItem(TAB_SESSION_KEY);
+                const savedUser = localStorage.getItem(SESSION_KEY);
+                const activeUser = tabUser || savedUser;
+                const activeScope: AuthStorageScope = tabUser ? "tab" : "local";
+
+                if (!activeUser) {
+                    setUser(null);
+                    return null;
+                }
+
+                const parsedUser = JSON.parse(activeUser) as User;
+                setUser(parsedUser);
+                setAuthScope(activeScope);
+                return parsedUser;
+            } catch {
+                return user;
+            }
+        }
+
+        if (!token) {
             return user;
         }
 

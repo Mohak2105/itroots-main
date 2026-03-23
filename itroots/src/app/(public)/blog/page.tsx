@@ -9,7 +9,7 @@ import {
     Clock,
     MagnifyingGlass,
     Tag,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 export default function BlogListingPage() {
     const [activeCategory, setActiveCategory] = useState("All");

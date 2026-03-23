@@ -16,7 +16,7 @@ import {
     Trash,
     PaperPlaneRight,
     Spinner,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import { API_ORIGIN, ENDPOINTS } from "@/config/api";
 import styles from "../students/admin-students.module.css";
 import toast from "react-hot-toast";

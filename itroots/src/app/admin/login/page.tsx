@@ -11,7 +11,7 @@ import {
     CircleNotch,
     Envelope,
     Lock,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import styles from "./admin-login.module.css";
 
 export default function AdminLoginPage() {

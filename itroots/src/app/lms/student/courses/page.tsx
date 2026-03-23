@@ -13,7 +13,7 @@ import {
     Lock,
     Books,
     BookOpen
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import styles from "./courses.module.css";
 
 const COURSE_ICONS: Record<string, React.ElementType> = {

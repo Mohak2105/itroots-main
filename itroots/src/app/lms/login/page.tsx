@@ -18,7 +18,7 @@ import {
     ArrowRight,
     BookOpen,
     Warning
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import { useLMSAuth } from "../auth-context";
 import styles from "./login.module.css";
 

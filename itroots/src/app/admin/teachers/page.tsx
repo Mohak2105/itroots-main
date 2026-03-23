@@ -11,9 +11,10 @@ import {
     Trash,
     PencilSimple,
     EnvelopeSimple,
-} from "@phosphor-icons/react";
-import { ENDPOINTS } from "@/config/api";
+} from "@/components/icons/lucide-phosphor";
+import { API_ORIGIN, ENDPOINTS } from "@/config/api";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
+import { createImpersonationTransfer } from "@/utils/impersonation";
 import styles from "../students/admin-students.module.css";
 import toast from "react-hot-toast";
 import { showDeleteConfirmation, showStatusConfirmation } from "@/utils/toastUtils";
@@ -39,6 +40,7 @@ interface Faculty {
     name: string;
     email: string;
     phone: string;
+    profileImage?: string | null;
     specialization?: string;
     isActive: boolean;
     createdAt: string;
@@ -109,6 +111,18 @@ const getInitials = (name: string) =>
         .join("")
         .toUpperCase();
 
+const resolveProfileImageUrl = (filePath?: string | null) => {
+    if (!filePath) {
+        return "";
+    }
+
+    if (filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("data:")) {
+        return filePath;
+    }
+
+    return `${API_ORIGIN}${filePath}`;
+};
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const sanitizeFormValues = (values: typeof EMPTY_FORM) => ({
@@ -124,7 +138,7 @@ const sanitizeFormValues = (values: typeof EMPTY_FORM) => ({
 });
 
 export default function AdminFacultyPage() {
-    const { user, isLoading, token, impersonate } = useLMSAuth();
+    const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
     const [Faculty, setFaculty] = useState<Faculty[]>([]);
     const [courses, setCourses] = useState<CourseInfo[]>([]);
@@ -333,6 +347,12 @@ export default function AdminFacultyPage() {
 
     const handleImpersonate = async (faculty: Faculty) => {
         if (!token) return;
+        const targetTab = typeof window !== "undefined" ? window.open("", "_blank") : null;
+
+        if (targetTab) {
+            targetTab.document.write("<title>Opening faculty dashboard...</title><p style=\"font-family: sans-serif; padding: 24px;\">Opening faculty dashboard...</p>");
+        }
+
         try {
             const res = await fetch(ENDPOINTS.ADMIN.IMPERSONATE(faculty.id), {
                 method: "POST",
@@ -342,10 +362,24 @@ export default function AdminFacultyPage() {
             if (!res.ok) {
                 throw new Error(data?.message || "Impersonation failed");
             }
-            impersonate(data.user, data.token);
-            toast.success(`Logged in as ${data.user.name}`);
-            router.push("/faculty/dashboard");
+
+            const bridgeKey = createImpersonationTransfer(data.user, data.token);
+            if (!bridgeKey) {
+                throw new Error("Unable to open faculty dashboard");
+            }
+
+            const targetUrl = `/faculty/dashboard?impersonationKey=${encodeURIComponent(bridgeKey)}`;
+            if (targetTab && !targetTab.closed) {
+                targetTab.location.href = targetUrl;
+            } else if (typeof window !== "undefined") {
+                window.open(targetUrl, "_blank");
+            }
+
+            toast.success(`Opened ${data.user.name}'s dashboard in a new tab`);
         } catch (err) {
+            if (targetTab && !targetTab.closed) {
+                targetTab.close();
+            }
             console.error("Impersonation error:", err);
             toast.error(err instanceof Error ? err.message : "Impersonation failed");
         }
@@ -431,13 +465,21 @@ export default function AdminFacultyPage() {
                         const primaryBatch = faculty.FacultyBatches?.[0];
                         const primaryCourse = faculty.courses?.[0]?.title || primaryBatch?.course?.title || "Not assigned";
                         const extraBatchCount = Math.max((faculty.FacultyBatches?.length || 0) - 1, 0);
+                        const profileImageUrl = resolveProfileImageUrl(faculty.profileImage);
 
                         return (
                             <tr key={faculty.id}>
                                 <td style={{ whiteSpace: "nowrap" }}>
                                     <div className={styles.studentInfo}>
-                                        <div className={styles.avatar} style={{ background: isActiveSection ? "linear-gradient(135deg, #0881ec, #06b6d4)" : "linear-gradient(135deg, #94a3b8, #64748b)" }}>
-                                            {getInitials(faculty.name)}
+                                        <div
+                                            className={`${styles.avatar} ${profileImageUrl ? styles.avatarPhoto : ""}`}
+                                            style={profileImageUrl ? undefined : { background: isActiveSection ? "linear-gradient(135deg, #0881ec, #06b6d4)" : "linear-gradient(135deg, #94a3b8, #64748b)" }}
+                                        >
+                                            {profileImageUrl ? (
+                                                <img src={profileImageUrl} alt={`${faculty.name} profile`} className={styles.avatarImage} />
+                                            ) : (
+                                                getInitials(faculty.name)
+                                            )}
                                         </div>
                                         <div>
                                             <a href="#" onClick={(e) => { e.preventDefault(); handleImpersonate(faculty); }} className={styles.nameLink}>

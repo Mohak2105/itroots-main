@@ -96,6 +96,46 @@
     cursor: pointer;
 }
 
+.uploadButtonDisabled {
+    opacity: 0.7;
+    cursor: wait;
+    pointer-events: none;
+}
+
+.photoActions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.deletePhotoButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 999px;
+    border: 1px solid #fecaca;
+    background: #fff5f5;
+    color: #dc2626;
+    padding: 0.55rem 0.95rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.deletePhotoButton:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 18px rgba(220, 38, 38, 0.12);
+}
+
+.deletePhotoButton:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    transform: none;
+}
+
 .hiddenInput {
     display: none;
 }
@@ -230,27 +270,10 @@
     gap: 0.75rem;
 }
 
-.passwordActionWrap {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    flex-wrap: wrap;
-}
-
-.passwordActionText {
-    margin: 0;
-    color: #64748b;
-    font-size: 0.9rem;
-    line-height: 1.6;
-    max-width: 440px;
-}
-
 .saveBtn,
-.saveBtnSecondary {
+.saveBtnSecondary,
+.ghostBtn {
     padding: 0.75rem 1.7rem;
-    color: #fff;
-    border: none;
     border-radius: 12px;
     font-size: 0.9rem;
     font-weight: 700;
@@ -260,15 +283,26 @@
 }
 
 .saveBtn {
+    color: #fff;
+    border: none;
     background: linear-gradient(135deg, #0c2d4c, #0881ec);
 }
 
 .saveBtnSecondary {
+    color: #fff;
+    border: none;
     background: linear-gradient(135deg, #0c2d4c, #0881ec);
 }
 
+.ghostBtn {
+    color: #0c2d4c;
+    border: 1px solid #cbd5e1;
+    background: #fff;
+}
+
 .saveBtn:hover,
-.saveBtnSecondary:hover {
+.saveBtnSecondary:hover,
+.ghostBtn:hover {
     transform: translateY(-1px);
 }
 
@@ -343,18 +377,6 @@
     flex-wrap: wrap;
 }
 
-.modalSecondaryButton {
-    padding: 0.75rem 1.25rem;
-    border-radius: 12px;
-    border: 1px solid #dbe3ee;
-    background: #fff;
-    color: #475569;
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-    font-family: inherit;
-}
-
 @media (max-width: 900px) {
     .layout {
         grid-template-columns: 1fr;
@@ -365,6 +387,10 @@
         text-align: left;
         justify-content: flex-start;
         flex-wrap: wrap;
+    }
+
+    .photoActions {
+        justify-content: flex-start;
     }
 }
 
@@ -384,7 +410,10 @@
         text-align: center;
     }
 
-    .passwordActionWrap,
+    .photoActions {
+        justify-content: center;
+    }
+
     .modalFooter {
         flex-direction: column;
         align-items: stretch;

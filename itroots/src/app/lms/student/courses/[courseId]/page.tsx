@@ -18,7 +18,7 @@ import {
     Video,
     Timer,
     Circle
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import styles from "./course-detail.module.css";
 
 export default function CourseDetailPage() {

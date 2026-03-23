@@ -8,7 +8,7 @@ import LMSShell from "@/components/lms/LMSShell";
 import ReactDateTimePicker from "@/components/lms/ReactDateTimePicker";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import { ENDPOINTS } from "@/config/api";
-import { Exam, Plus, MagnifyingGlass, ArrowRight, X, Spinner, PencilSimple, Trash } from "@phosphor-icons/react";
+import { Exam, Plus, MagnifyingGlass, ArrowRight, X, Spinner, PencilSimple, Trash } from "@/components/icons/lucide-phosphor";
 import styles from "./tests.module.css";
 
 type Batch = { id: string; name: string };

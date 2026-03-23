@@ -406,25 +406,18 @@
 .studyMaterialPdfPreview::before {
     content: "";
     position: absolute;
-    left: 0;
-    bottom: 0;
-    width: 100%;
-    height: 18px;
-    background: #ffffff;
+    inset: 0;
+    box-shadow: inset 18px 0 0 #ffffff, inset -18px 0 0 #ffffff, inset 0 -18px 0 #ffffff;
     pointer-events: none;
     z-index: 2;
 }
 
-.studyMaterialPdfPreview::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 18px;
-    height: 100%;
+.studyMaterialPdfPreview .studyMaterialFrame {
+    width: calc(100% + 36px);
+    height: calc(100% + 12px);
+    margin-left: -18px;
+    margin-bottom: -12px;
     background: #ffffff;
-    pointer-events: none;
-    z-index: 2;
 }
 
 .studyMaterialFrame {

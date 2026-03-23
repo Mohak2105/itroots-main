@@ -15,7 +15,7 @@ import {
     Paperclip,
     HourglassMedium,
     Link as LinkIcon,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import styles from "./assignments.module.css";
 
 type AssignmentItem = {

@@ -243,6 +243,19 @@
     font-size: 1.05rem;
     flex-shrink: 0;
     text-transform: uppercase;
+    overflow: hidden;
+}
+
+.avatarPhoto {
+    background: #eff6ff;
+    border: 1px solid #dbeafe;
+}
+
+.avatarImage {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .name {

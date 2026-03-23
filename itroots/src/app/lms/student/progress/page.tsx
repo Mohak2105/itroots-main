@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { ChartLineUp, CheckCircle, GraduationCap, CalendarCheck } from "@phosphor-icons/react";
+import { ChartLineUp, CheckCircle, GraduationCap, CalendarCheck } from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./progress.module.css";
 

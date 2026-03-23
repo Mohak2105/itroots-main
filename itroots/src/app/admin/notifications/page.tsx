@@ -6,7 +6,7 @@ import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./notifications.module.css";
-import { BellRinging, PaperPlaneRight, Plus, Trash, X } from "@phosphor-icons/react";
+import { BellRinging, PaperPlaneRight, Plus, Trash, X } from "@/components/icons/lucide-phosphor";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import toast from "react-hot-toast";
 import { showDeleteConfirmation } from "@/utils/toastUtils";

@@ -12,6 +12,14 @@
     flex-wrap: wrap;
 }
 
+.headerActions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
 .backBtn,
 .openBtn {
     display: inline-flex;
@@ -130,6 +138,10 @@
 
     .backBtn,
     .openBtn {
+        width: 100%;
+    }
+
+    .headerActions {
         width: 100%;
     }
 

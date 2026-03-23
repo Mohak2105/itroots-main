@@ -14,7 +14,7 @@ import {
     Spinner,
     WarningCircle,
     X,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import styles from "./assignment-detail.module.css";
 
 type AssignmentSubmissionRow = {

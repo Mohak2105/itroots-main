@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { ChartBar, ArrowLeft, User, Trophy } from "@phosphor-icons/react";
+import { ChartBar, ArrowLeft, User, Trophy } from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./test-results.module.css";
 

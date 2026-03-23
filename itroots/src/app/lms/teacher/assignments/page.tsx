@@ -21,7 +21,7 @@ import {
     Eye,
     UsersThree,
     WarningCircle,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import styles from "./teacher-assignments.module.css";
 
 type Batch = {

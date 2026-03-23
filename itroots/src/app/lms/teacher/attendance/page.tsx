@@ -13,7 +13,7 @@ import {
     CheckCircle,
     MagnifyingGlass,
     WarningCircle,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import styles from "./attendance.module.css";
 
 type AttendanceStatus = "PRESENT" | "ABSENT";
@@ -382,14 +382,6 @@ export default function TeacherAttendancePage() {
                                             <tr key={enrollment.student.id}>
                                                 <td>
                                                     <div className={styles.studentCell}>
-                                                        <div className={styles.avatar}>
-                                                            {(enrollment.student.name || "S")
-                                                                .split(" ")
-                                                                .map((part) => part[0])
-                                                                .join("")
-                                                                .slice(0, 2)
-                                                                .toUpperCase()}
-                                                        </div>
                                                         <div>
                                                             <div className={styles.studentName}>{enrollment.student.name}</div>
                                                             

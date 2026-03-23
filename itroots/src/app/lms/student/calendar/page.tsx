@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
-import { BookOpen, CalendarDots, Clock, Link as LinkIcon, VideoCamera } from "@phosphor-icons/react";
+import { BookOpen, CalendarDots, Clock, Link as LinkIcon, VideoCamera } from "@/components/icons/lucide-phosphor";
 import { getLiveClassAccessState, getLiveClassProviderLabel, resolveLiveClassJoinTarget } from "@/utils/liveClasses";
 import styles from "./calendar.module.css";
 

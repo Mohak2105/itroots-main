@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import { ChartBar } from "@phosphor-icons/react";
+import { ChartBar } from "@/components/icons/lucide-phosphor";
 import styles from "./engagement.module.css";
 
 export default function FacultyEngagementPage() {

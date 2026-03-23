@@ -12,7 +12,7 @@ import {
     UploadSimple,
     FolderOpen, ArrowRight, Plus, X, MagnifyingGlass,
     PlayCircle, FilePdf, FilePpt, Books, File, FileText, ImageSquare, CheckSquare, Spinner, Exam, Megaphone, CalendarCheck, Trash, PencilSimple,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import styles from "./content.module.css";
 
 type Batch = { id: string; name: string; courseId?: string; course?: { id: string; title: string } };
@@ -49,26 +49,8 @@ const STUDY_MATERIAL_META: Record<StudyMaterialType, { label: string; icon: Reac
     DOC: { label: "DOC", icon: FileText, color: "#2563eb", bg: "#eff6ff" },
 };
 
-const STUDY_MATERIAL_OPTIONS: Array<{ value: StudyMaterialType; label: string }> = [
-    { value: "IMAGE", label: "Image" },
-    { value: "PDF", label: "PDF" },
-    { value: "PPT", label: "PPT" },
-    { value: "DOC", label: "DOC" },
-];
-
-const STUDY_MATERIAL_ACCEPT: Record<StudyMaterialType, string> = {
-    IMAGE: ".jpg,.jpeg,.png,.webp,.gif,.bmp",
-    PDF: ".pdf",
-    PPT: ".ppt,.pptx",
-    DOC: ".doc,.docx",
-};
-
-const STUDY_MATERIAL_HELPER_TEXT: Record<StudyMaterialType, string> = {
-    IMAGE: "Upload JPG, JPEG, PNG, WEBP, GIF, or BMP image files only.",
-    PDF: "Upload PDF documents only.",
-    PPT: "Upload PPT or PPTX slide decks only.",
-    DOC: "Upload DOC or DOCX documents only.",
-};
+const STUDY_MATERIAL_ACCEPT = ".jpg,.jpeg,.png,.webp,.gif,.bmp,.pdf,.ppt,.pptx,.doc,.docx";
+const STUDY_MATERIAL_HELPER_TEXT = "Upload image, PDF, PPT, or DOC files only.";
 
 const STUDY_MATERIAL_EXTENSION_MAP: Record<StudyMaterialType, string[]> = {
     IMAGE: [".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp"],
@@ -311,7 +293,6 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
         contentUrl: "",
         batchId: "",
         courseId: "",
-        materialFormat: "PDF" as StudyMaterialType,
     });
     const [testInputMode, setTestInputMode] = useState<TestInputMode>("MANUAL");
     const [bulkQuestionText, setBulkQuestionText] = useState("");
@@ -500,21 +481,6 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
         }
     }
 
-    function handleStudyMaterialFormatChange(value: string) {
-        const nextFormat = value as StudyMaterialType;
-        setForm((current) => ({ ...current, materialFormat: nextFormat }));
-        setUploadError(null);
-
-        if (!file) {
-            return;
-        }
-
-        const detectedType = detectStudyMaterialType(file.name);
-        if (detectedType && detectedType !== nextFormat) {
-            clearSelectedFile();
-        }
-    }
-
     function handleSelectedFileChange(event: ChangeEvent<HTMLInputElement>) {
         const nextFile = event.target.files?.[0] ?? null;
 
@@ -528,12 +494,6 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
 
             if (!detectedType) {
                 setUploadError(STUDY_MATERIAL_UPLOAD_ERROR);
-                clearSelectedFile();
-                return;
-            }
-
-            if (detectedType !== form.materialFormat) {
-                setUploadError(`Selected material type does not match the uploaded file. Detected: ${STUDY_MATERIAL_META[detectedType].label}.`);
                 clearSelectedFile();
                 return;
             }
@@ -558,7 +518,6 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
             contentUrl: "",
             batchId: selectedBatch,
             courseId: defaultBatch?.courseId || defaultBatch?.course?.id || "",
-            materialFormat: "PDF",
         });
         clearSelectedFile();
         setUploadError(null);
@@ -567,7 +526,6 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
 
     function openEditModal(content: Content) {
         const batchMatch = batches.find((batch) => batch.id === content.batchId) || batches.find((batch) => batch.id === selectedBatch);
-        const normalizedFileType = (content.fileType || "").toUpperCase() as StudyMaterialType;
         setEditingContentId(content.id);
         setForm({
             title: content.title || "",
@@ -576,7 +534,6 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
             contentUrl: content.contentUrl || "",
             batchId: content.batchId || selectedBatch,
             courseId: batchMatch?.courseId || batchMatch?.course?.id || "",
-            materialFormat: normalizedFileType in STUDY_MATERIAL_META ? normalizedFileType : "PDF",
         });
         clearSelectedFile();
         setUploadError(null);
@@ -839,13 +796,11 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
             if (form.type === "VIDEO") {
                 body.contentUrl = form.contentUrl;
             } else if (file) {
+                let detectedMaterialType: StudyMaterialType | null = null;
                 if (isStudyMaterialView) {
-                    const detectedType = detectStudyMaterialType(file.name);
-                    if (!detectedType) {
+                    detectedMaterialType = detectStudyMaterialType(file.name);
+                    if (!detectedMaterialType) {
                         throw new Error(STUDY_MATERIAL_UPLOAD_ERROR);
-                    }
-                    if (detectedType !== form.materialFormat) {
-                        throw new Error(`Selected material type does not match the uploaded file. Detected: ${STUDY_MATERIAL_META[detectedType].label}.`);
                     }
                 }
 
@@ -857,8 +812,8 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
                 });
                 body.fileData = base64;
                 body.fileName = file.name;
-                if (isStudyMaterialView) {
-                    body.materialFormat = form.materialFormat;
+                if (isStudyMaterialView && detectedMaterialType) {
+                    body.materialFormat = detectedMaterialType;
                 }
             } else if (isStudyMaterialView) {
                 throw new Error(STUDY_MATERIAL_UPLOAD_ERROR);
@@ -1299,20 +1254,6 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
                                 </>
                             )}
 
-                            {isStudyMaterialView && (
-                                <div>
-                                    <label className={styles.fieldLabel}>Material Type</label>
-                                    <div className={styles.customSelectWrap}>
-                                        <CustomSelect
-                                            value={form.materialFormat}
-                                            onChange={handleStudyMaterialFormatChange}
-                                            options={STUDY_MATERIAL_OPTIONS}
-                                        />
-                                    </div>
-                                    <p className={styles.fieldHint}>{STUDY_MATERIAL_HELPER_TEXT[form.materialFormat]}</p>
-                                </div>
-                            )}
-
                             <label className={styles.fieldLabel}>Description</label>
                             <textarea
                                 className={styles.textarea}
@@ -1353,11 +1294,11 @@ export default function TeacherContent({ searchParams }: TeacherContentPageProps
                                         ref={fileRef}
                                         type="file"
                                         style={{ display: "none" }}
-                                        accept={isStudyMaterialView ? STUDY_MATERIAL_ACCEPT[form.materialFormat] : form.type === "DOCUMENT" ? ".pdf,.doc,.docx,.ppt,.pptx" : "*"}
+                                        accept={isStudyMaterialView ? STUDY_MATERIAL_ACCEPT : form.type === "DOCUMENT" ? ".pdf,.doc,.docx,.ppt,.pptx" : "*"}
                                         onChange={handleSelectedFileChange}
                                     />
                                     {isStudyMaterialView && (
-                                        <p className={styles.fieldHint}>{STUDY_MATERIAL_HELPER_TEXT[form.materialFormat]}</p>
+                                        <p className={styles.fieldHint}>{STUDY_MATERIAL_HELPER_TEXT}</p>
                                     )}
                                 </>
                             )}

@@ -16,7 +16,7 @@ import {
     Exam,
     WarningCircle,
     ShieldCheck,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./tests.module.css";
 

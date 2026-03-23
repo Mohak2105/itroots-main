@@ -11,8 +11,8 @@ import {
     X,
     PencilSimple,
     EnvelopeSimple,
-} from "@phosphor-icons/react";
-import { ENDPOINTS } from "@/config/api";
+} from "@/components/icons/lucide-phosphor";
+import { API_ORIGIN, ENDPOINTS } from "@/config/api";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import { createImpersonationTransfer } from "@/utils/impersonation";
 import styles from "./admin-students.module.css";
@@ -41,6 +41,7 @@ interface Student {
     name: string;
     email: string;
     phone: string;
+    profileImage?: string | null;
     isActive: boolean;
     createdAt: string;
     enrolledBatches: BatchInfo[];
@@ -108,6 +109,18 @@ const getInitials = (name: string) =>
         .map((part) => part[0])
         .join("")
         .toUpperCase();
+
+const resolveProfileImageUrl = (filePath?: string | null) => {
+    if (!filePath) {
+        return "";
+    }
+
+    if (filePath.startsWith("http://") || filePath.startsWith("https://") || filePath.startsWith("data:")) {
+        return filePath;
+    }
+
+    return `${API_ORIGIN}${filePath}`;
+};
 
 export default function AdminStudentsPage() {
     const { user, isLoading, token } = useLMSAuth();
@@ -410,12 +423,19 @@ export default function AdminStudentsPage() {
         return records.map((student) => {
             const primaryBatch = student.enrolledBatches?.[0];
             const extraBatchCount = Math.max((student.enrolledBatches?.length || 0) - 1, 0);
+            const profileImageUrl = resolveProfileImageUrl(student.profileImage);
 
             return (
                 <tr key={student.id}>
                     <td style={{ whiteSpace: "nowrap" }}>
                         <div className={styles.studentInfo}>
-                            <div className={styles.avatar}>{getInitials(student.name)}</div>
+                            <div className={`${styles.avatar} ${profileImageUrl ? styles.avatarPhoto : ""}`}>
+                                {profileImageUrl ? (
+                                    <img src={profileImageUrl} alt={`${student.name} profile`} className={styles.avatarImage} />
+                                ) : (
+                                    getInitials(student.name)
+                                )}
+                            </div>
                             <div>
                                 <a
                                     href="#"

@@ -65,6 +65,28 @@ function saveProfileImage(fileData: string, fileName?: string) {
     return `/uploads/profile-images/${storedFileName}`;
 }
 
+function deleteProfileImage(filePath?: string | null) {
+    if (!filePath || !filePath.startsWith('/uploads/profile-images/')) {
+        return;
+    }
+
+    const fileName = path.basename(filePath);
+    if (!fileName) {
+        return;
+    }
+
+    const absoluteFilePath = path.join(PROFILE_IMAGE_DIR, fileName);
+    if (!fs.existsSync(absoluteFilePath)) {
+        return;
+    }
+
+    try {
+        fs.unlinkSync(absoluteFilePath);
+    } catch (error) {
+        console.warn('Unable to delete profile image:', absoluteFilePath, error);
+    }
+}
+
 export const register = async (req: Request, res: Response) => {
     try {
         const { name, firstName, middleName, lastName, email, password, role, username, phone, specialization } = req.body;
@@ -182,6 +204,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
         const phone = typeof req.body.phone === 'string' ? req.body.phone.trim() : '';
         const fileData = typeof req.body.fileData === 'string' ? req.body.fileData : '';
         const fileName = typeof req.body.fileName === 'string' ? req.body.fileName : undefined;
+        const removeProfileImage = req.body.removeProfileImage === true || req.body.removeProfileImage === 'true';
 
         if (!name && !hasStructuredNameUpdate) {
             return res.status(400).json({ message: 'Name is required' });
@@ -206,7 +229,7 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
             return res.status(400).json({ message: 'Name is required' });
         }
 
-        const updates: Partial<{ firstName: string | null; middleName: string | null; lastName: string | null; name: string; phone: string | null; profileImage: string }> = {
+        const updates: Partial<{ firstName: string | null; middleName: string | null; lastName: string | null; name: string; phone: string | null; profileImage: string | null }> = {
             firstName: resolvedNames.firstName,
             middleName: resolvedNames.middleName,
             lastName: resolvedNames.lastName,
@@ -214,11 +237,22 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
             phone: phone || null,
         };
 
+        const previousProfileImage = req.user.profileImage;
+        let nextProfileImage: string | null = previousProfileImage || null;
+
         if (fileData) {
-            updates.profileImage = saveProfileImage(fileData, fileName);
+            nextProfileImage = saveProfileImage(fileData, fileName);
+            updates.profileImage = nextProfileImage;
+        } else if (removeProfileImage) {
+            nextProfileImage = null;
+            updates.profileImage = null;
         }
 
         await req.user.update(updates);
+
+        if ((removeProfileImage || fileData) && previousProfileImage && previousProfileImage !== nextProfileImage) {
+            deleteProfileImage(previousProfileImage);
+        }
 
         res.json({
             message: 'Profile updated successfully',

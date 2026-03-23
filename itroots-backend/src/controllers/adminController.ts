@@ -20,7 +20,7 @@ export const getAdminDashboard = async (req: Request, res: Response) => {
             Batch.count(),
             User.findAll({
                 where: { role: 'STUDENT' },
-                attributes: ['id', 'username', 'name', 'email', 'createdAt', 'isActive'],
+                attributes: ['id', 'username', 'name', 'email', 'profileImage', 'createdAt', 'isActive'],
                 order: [['createdAt', 'DESC']],
                 limit: 5,
             }),

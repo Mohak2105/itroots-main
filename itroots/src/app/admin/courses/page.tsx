@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import { useRouter } from "next/navigation";
-import { Plus, PencilSimple, Trash, X, FloppyDisk, BookOpen, CurrencyInr } from "@phosphor-icons/react";
+import { Plus, PencilSimple, Trash, X, FloppyDisk, BookOpen, CurrencyInr } from "@/components/icons/lucide-phosphor";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import LMSShell from "@/components/lms/LMSShell";
 import heroStyles from "../dashboard/admin-dashboard.module.css";
@@ -48,12 +48,12 @@ const courseCardIconWrapStyle = {
     width: "52px",
     height: "52px",
     borderRadius: "16px",
-    background: "linear-gradient(145deg, rgba(8,129,236,0.16) 0%, rgba(59,130,246,0.12) 35%, rgba(16,185,129,0.14) 70%, rgba(245,158,11,0.16) 100%)",
-    border: "1px solid rgba(8,129,236,0.14)",
+    background: "linear-gradient(145deg, #fff1df 0%, #ffe3bf 55%, #ffd39a 100%)",
+    border: "1px solid rgba(249,115,22,0.2)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)",
+    boxShadow: "0 10px 22px rgba(249,115,22,0.14), inset 0 1px 0 rgba(255,255,255,0.9)",
 };
 
 export default function AdminCoursesPage() {
@@ -220,7 +220,7 @@ export default function AdminCoursesPage() {
                                         <h3 style={courseCardTitleStyle}>{course.title}</h3>
                                     </div>
                                     <div style={courseCardIconWrapStyle}>
-                                        <BookOpen size={26} weight="duotone" color="#0881ec" />
+                                        <BookOpen size={26} weight="duotone" color="#f97316" />
                                     </div>
                                 </div>
 

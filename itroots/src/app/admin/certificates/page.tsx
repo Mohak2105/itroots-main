@@ -19,7 +19,7 @@ import {
     Plus,
     X,
     EnvelopeSimple,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 const DURATION_OPTIONS = [
     { value: "1 Week", label: "1 Week" },

@@ -22,7 +22,7 @@ import {
     Clock,
     Link as LinkIcon,
     PencilSimple,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import { getLiveClassAccessState, getLiveClassProviderLabel, resolveLiveClassJoinTarget } from "@/utils/liveClasses";
 import styles from "./batch-management.module.css";

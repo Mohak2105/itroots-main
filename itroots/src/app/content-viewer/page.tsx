@@ -4,7 +4,7 @@ import { use, useMemo } from "react";
 import LMSShell from "@/components/lms/LMSShell";
 import { resolveStudentContentUrl } from "@/utils/studentContentViewer";
 import styles from "./viewer.module.css";
-import { ArrowLeft, ArrowsOutSimple, PlayCircle } from "@phosphor-icons/react";
+import { ArrowLeft, DownloadSimple, PlayCircle } from "@/components/icons/lucide-phosphor";
 
 const getYouTubeVideoId = (rawUrl: string) => {
     try {
@@ -70,6 +70,7 @@ export default function ContentViewerPage({ searchParams }: ContentViewerPagePro
     const embedUrl = useMemo(() => getYouTubeEmbedUrl(resolvedUrl), [resolvedUrl]);
     const showDirectVideo = useMemo(() => isDirectVideoUrl(resolvedUrl), [resolvedUrl]);
     const showPdfDocument = useMemo(() => isPdfUrl(resolvedUrl), [resolvedUrl]);
+    const showDownloadAction = useMemo(() => Boolean(resolvedUrl) && !embedUrl, [resolvedUrl, embedUrl]);
     const pdfViewerUrl = useMemo(
         () => (showPdfDocument ? buildInlinePdfUrl(resolvedUrl) : ""),
         [resolvedUrl, showPdfDocument],
@@ -83,7 +84,14 @@ export default function ContentViewerPage({ searchParams }: ContentViewerPagePro
                         <ArrowLeft size={18} />
                         Back
                     </button>
-                    
+                    <div className={styles.headerActions}>
+                        {showDownloadAction ? (
+                            <a href={resolvedUrl} className={styles.openBtn} download target="_blank" rel="noreferrer">
+                                <DownloadSimple size={18} />
+                                Download
+                            </a>
+                        ) : null}
+                    </div>
                 </div>
 
                 <section className={styles.viewerCard}>

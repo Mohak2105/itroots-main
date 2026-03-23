@@ -16,7 +16,7 @@ import {
     Plus,
     Spinner,
     X,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 type NotificationRecipient = {
     id: string;
@@ -87,6 +87,14 @@ const removeMessageTimestamp = (message: string) => message
     .replace(/\s*\|\s*\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?\s*$/i, "")
     .trim();
 
+const parseArrayPayload = <T,>(value: unknown): T[] => {
+    if (Array.isArray(value)) return value;
+    if (Array.isArray((value as any)?.data)) return (value as any).data;
+    if (Array.isArray((value as any)?.notifications)) return (value as any).notifications;
+    if (Array.isArray((value as any)?.batches)) return (value as any).batches;
+    return [];
+};
+
 export default function FacultyAnnouncementsPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
@@ -111,21 +119,43 @@ export default function FacultyAnnouncementsPage() {
         setLoadingData(true);
         try {
             const headers = { Authorization: `Bearer ${token}` };
-            const [notificationsRes, sentRes, batchesRes] = await Promise.all([
-                fetch(ENDPOINTS.Faculty.NOTIFICATIONS, { headers }),
-                fetch(ENDPOINTS.Faculty.SENT_NOTIFICATIONS, { headers }),
-                fetch(ENDPOINTS.Faculty.MY_BATCHES, { headers }),
+            const fetchSection = async (url: string) => {
+                const response = await fetch(url, { headers });
+                const payload = await response.json().catch(() => null);
+
+                if (!response.ok) {
+                    throw new Error((payload as any)?.message || "Request failed");
+                }
+
+                return payload;
+            };
+
+            const [notificationsResult, sentResult, batchesResult] = await Promise.allSettled([
+                fetchSection(ENDPOINTS.Faculty.NOTIFICATIONS),
+                fetchSection(ENDPOINTS.Faculty.SENT_NOTIFICATIONS),
+                fetchSection(ENDPOINTS.Faculty.MY_BATCHES),
             ]);
 
-            const [notificationsData, sentData, batchesData] = await Promise.all([
-                notificationsRes.json(),
-                sentRes.json(),
-                batchesRes.json(),
-            ]);
+            if (notificationsResult.status === "fulfilled") {
+                setNotifications(parseArrayPayload<NotificationRecipient>(notificationsResult.value));
+            } else {
+                setNotifications([]);
+                console.error("Failed to load faculty inbox:", notificationsResult.reason);
+            }
 
-            const batchList = Array.isArray(batchesData) ? batchesData : (batchesData?.batches ?? []);
-            setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
-            setSentNotifications(Array.isArray(sentData) ? sentData : []);
+            if (sentResult.status === "fulfilled") {
+                setSentNotifications(parseArrayPayload<SentNotification>(sentResult.value));
+            } else {
+                setSentNotifications([]);
+                console.error("Failed to load faculty sent notifications:", sentResult.reason);
+            }
+
+            const batchList = batchesResult.status === "fulfilled"
+                ? parseArrayPayload<BatchOption>(batchesResult.value)
+                : [];
+            if (batchesResult.status === "rejected") {
+                console.error("Failed to load faculty batches:", batchesResult.reason);
+            }
             setBatches(batchList);
             setForm((current) => ({
                 ...current,

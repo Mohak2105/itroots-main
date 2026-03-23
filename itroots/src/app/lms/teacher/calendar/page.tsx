@@ -8,7 +8,7 @@ import LMSShell from "@/components/lms/LMSShell";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
-import { Plus, BookOpen, Link as LinkIcon, PencilSimple, X, VideoCamera, Bell, CalendarBlank, CaretDown } from "@phosphor-icons/react";
+import { Plus, BookOpen, Link as LinkIcon, PencilSimple, X, VideoCamera, Bell, CalendarBlank, CaretDown, Trash } from "@/components/icons/lucide-phosphor";
 import { ENDPOINTS } from "@/config/api";
 import { getLiveClassAccessState, getLiveClassProviderLabel, resolveLiveClassJoinTarget } from "@/utils/liveClasses";
 import styles from "./calendar.module.css";
@@ -129,21 +129,6 @@ export default function FacultyCalendarPage() {
         return () => window.clearInterval(intervalId);
     }, []);
 
-    const courses = useMemo(() => {
-        const seen = new Map<string, any>();
-        batches.forEach((batch) => {
-            if (batch.course?.id && !seen.has(batch.course.id)) {
-                seen.set(batch.course.id, batch.course);
-            }
-        });
-        return Array.from(seen.values());
-    }, [batches]);
-
-    const filteredBatches = useMemo(
-        () => batches.filter((batch) => !formData.courseId || batch.courseId === formData.courseId),
-        [batches, formData.courseId],
-    );
-
     const colorByBatchId = useMemo(() => {
         const map = new Map<string, string>();
         batches.forEach((batch, index) => {
@@ -203,13 +188,24 @@ export default function FacultyCalendarPage() {
         setFormData(emptyForm);
     };
 
+    const handleBatchChange = (value: string) => {
+        const selectedBatch = batches.find((batch) => batch.id === value);
+        setFormData((current) => ({
+            ...current,
+            batchId: value,
+            courseId: selectedBatch?.courseId || "",
+        }));
+    };
+
     const handleSave = async (event: React.FormEvent) => {
         event.preventDefault();
         try {
             const endpoint = formData.id ? `${ENDPOINTS.Faculty.LIVE_CLASSES}/${formData.id}` : ENDPOINTS.Faculty.LIVE_CLASSES;
             const method = formData.id ? "PUT" : "POST";
+            const selectedBatch = batches.find((batch) => batch.id === formData.batchId);
             const payload = {
                 ...formData,
+                courseId: selectedBatch?.courseId || formData.courseId,
                 scheduledAt: new Date().toISOString(),
                 meetingLink: formData.provider === "JITSI" ? "" : formData.meetingLink,
                 passcode: formData.provider === "ZOOM" ? formData.passcode : "",
@@ -385,27 +381,53 @@ export default function FacultyCalendarPage() {
                                                         <div className={styles.eventActions}>
                                                             {accessState === "AVAILABLE" && joinTarget.href ? (
                                                                 joinTarget.external ? (
-                                                                    <a href={joinTarget.href} target="_blank" rel="noreferrer" className={styles.joinBtn}>
-                                                                        <LinkIcon size={14} /> Open
+                                                                    <a
+                                                                        href={joinTarget.href}
+                                                                        target="_blank"
+                                                                        rel="noreferrer"
+                                                                        className={`${styles.actionIconBtn} ${styles.openBtn}`}
+                                                                        title="Open Live Class"
+                                                                        aria-label="Open Live Class"
+                                                                    >
+                                                                        <LinkIcon size={18} />
                                                                     </a>
                                                                 ) : (
-                                                                    <Link href={joinTarget.href} className={styles.joinBtn}>
-                                                                        <LinkIcon size={14} /> Open
+                                                                    <Link
+                                                                        href={joinTarget.href}
+                                                                        className={`${styles.actionIconBtn} ${styles.openBtn}`}
+                                                                        title="Open Live Class"
+                                                                        aria-label="Open Live Class"
+                                                                    >
+                                                                        <LinkIcon size={18} />
                                                                     </Link>
                                                                 )
                                                             ) : (
-                                                                <span className={styles.disabledJoinBtn}>
-                                                                    <LinkIcon size={14} /> {joinDisabledLabel}
+                                                                <span
+                                                                    className={`${styles.actionIconBtn} ${styles.disabledActionBtn}`}
+                                                                    title={joinDisabledLabel}
+                                                                    aria-label={joinDisabledLabel}
+                                                                >
+                                                                    <LinkIcon size={18} />
                                                                 </span>
                                                             )}
 
-                                                            <button onClick={() => openEditModal(event)} className={styles.editBtn}>
-                                                                <PencilSimple size={14} /> Edit
+                                                            <button
+                                                                onClick={() => openEditModal(event)}
+                                                                className={`${styles.actionIconBtn} ${styles.editBtn}`}
+                                                                title="Edit Live Class"
+                                                                aria-label="Edit Live Class"
+                                                            >
+                                                                <PencilSimple size={18} />
                                                             </button>
 
                                                             {event.status !== "CANCELLED" ? (
-                                                                <button onClick={() => handleCancelClass(event.id)} className={styles.cancelBtn}>
-                                                                    Cancel
+                                                                <button
+                                                                    onClick={() => handleCancelClass(event.id)}
+                                                                    className={`${styles.actionIconBtn} ${styles.cancelBtn}`}
+                                                                    title="Cancel Live Class"
+                                                                    aria-label="Cancel Live Class"
+                                                                >
+                                                                    <Trash size={18} />
                                                                 </button>
                                                             ) : null}
                                                         </div>
@@ -452,36 +474,19 @@ export default function FacultyCalendarPage() {
                                 />
                             </div>
 
-                            <div className={styles.twoColumnGrid}>
-                                <div>
-                                    <label className={styles.inputLabel}>Select Course</label>
-                                    <CustomSelect
-                                        value={formData.courseId}
-                                        onChange={(value) => setFormData({ ...formData, courseId: value, batchId: "" })}
-                                        placeholder="Select course"
-                                        required
-                                        testId="live-class-course"
-                                        options={[
-                                            { value: "", label: "Select course" },
-                                            ...courses.map((course: any) => ({ value: course.id, label: course.title })),
-                                        ]}
-                                    />
-                                </div>
-
-                                <div>
-                                    <label className={styles.inputLabel}>Select Batch</label>
-                                    <CustomSelect
-                                        value={formData.batchId}
-                                        onChange={(value) => setFormData({ ...formData, batchId: value })}
-                                        placeholder="Select batch"
-                                        required
-                                        testId="live-class-batch"
-                                        options={[
-                                            { value: "", label: "Select batch" },
-                                            ...filteredBatches.map((batch: any) => ({ value: batch.id, label: batch.name })),
-                                        ]}
-                                    />
-                                </div>
+                            <div>
+                                <label className={styles.inputLabel}>Select Batch</label>
+                                <CustomSelect
+                                    value={formData.batchId}
+                                    onChange={handleBatchChange}
+                                    placeholder="Select batch"
+                                    required
+                                    testId="live-class-batch"
+                                    options={[
+                                        { value: "", label: "Select batch" },
+                                        ...batches.map((batch: any) => ({ value: batch.id, label: batch.name })),
+                                    ]}
+                                />
                             </div>
 
                             <div>

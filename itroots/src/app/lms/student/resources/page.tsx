@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { ENDPOINTS } from "@/config/api";
-import { buildStudentContentViewerHref } from "@/utils/studentContentViewer";
+import { buildStudentContentViewerHref, resolveStudentContentUrl } from "@/utils/studentContentViewer";
 import styles from "./resources.module.css";
 import {
     FilePdf,
@@ -14,27 +14,25 @@ import {
     FileText,
     ImageSquare,
     DownloadSimple,
+    Eye,
     Tray,
     Folder,
-} from "@phosphor-icons/react";
+} from "@/components/icons/lucide-phosphor";
 
 const TYPE_TABS = ["All", "Image", "PDF", "PPT", "DOC"];
+type StudyMaterialType = "IMAGE" | "PDF" | "PPT" | "DOC";
 
-const typeIcon = (type: string) => {
-    const normalizedType = type?.toUpperCase();
-    if (normalizedType === "IMAGE") return ImageSquare;
-    if (normalizedType === "PDF") return FilePdf;
-    if (normalizedType === "PPT") return FilePpt;
-    return FileText;
+const TYPE_META: Record<string, { label: string; icon: React.ElementType; color: string; bg: string }> = {
+    IMAGE: { label: "Image", icon: ImageSquare, color: "#16a34a", bg: "#f0fdf4" },
+    PDF: { label: "PDF", icon: FilePdf, color: "#dc2626", bg: "#fef2f2" },
+    PPT: { label: "PPT", icon: FilePpt, color: "#f59e0b", bg: "#fff7ed" },
+    DOC: { label: "DOC", icon: FileText, color: "#2563eb", bg: "#eff6ff" },
+    FILE: { label: "File", icon: FileText, color: "#6b7280", bg: "#f8fafc" },
 };
 
-const typeColor = (type: string) => {
-    const normalizedType = type?.toUpperCase();
-    if (normalizedType === "IMAGE") return { color: "#16a34a", bg: "#dcfce7" };
-    if (normalizedType === "PDF") return { color: "#ef4444", bg: "#fee2e2" };
-    if (normalizedType === "PPT") return { color: "#f59e0b", bg: "#fef3c7" };
-    if (normalizedType === "DOC") return { color: "#2563eb", bg: "#dbeafe" };
-    return { color: "#6b7280", bg: "#f3f4f6" };
+const formatDate = (dateValue?: string) => {
+    if (!dateValue) return "";
+    return new Date(dateValue).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 };
 
 export default function ResourcesPage() {
@@ -116,53 +114,111 @@ export default function ResourcesPage() {
                 ) : (
                     <div className={styles.grid}>
                         {filtered.map((resource: any, index: number) => {
-                            const { color, bg } = typeColor(resource.fileType);
-                            const IconComp = typeIcon(resource.fileType);
-                            const viewerUrl = resource.fileUrl || resource.contentUrl;
+                            const normalizedFileType = resource.fileType?.toUpperCase() as StudyMaterialType | undefined;
+                            const meta = normalizedFileType && normalizedFileType in TYPE_META
+                                ? TYPE_META[normalizedFileType]
+                                : TYPE_META.FILE;
+                            const IconComp = meta.icon;
+                            const rawResourceUrl = resource.fileUrl || resource.contentUrl;
+                            const resolvedUrl = resolveStudentContentUrl(rawResourceUrl);
+                            const viewerHref = rawResourceUrl
+                                ? buildStudentContentViewerHref(rawResourceUrl, resource.title)
+                                : "";
+                            const previewPdfUrl = normalizedFileType === "PDF" && resolvedUrl
+                                ? `${resolvedUrl}${resolvedUrl.includes("#") ? "&" : "#"}toolbar=0&navpanes=0&scrollbar=0`
+                                : "";
+                            const description = resource.description || resource.subject || "";
 
                             return (
-                                <div key={resource.id || index} className={styles.card}>
-                                    <div className={styles.cardTopBar} style={{ background: color }} />
-                                    <div className={styles.cardBody}>
-                                        <div className={styles.cardHead}>
-                                            <div className={styles.fileIcon} style={{ background: bg, color }}>
-                                                <IconComp size={22} weight="duotone" />
+                                <article key={resource.id || index} className={styles.studyMaterialCard}>
+                                    {resolvedUrl ? (
+                                        <Link
+                                            href={viewerHref}
+                                            className={styles.studyMaterialPreviewLink}
+                                            aria-label={`Preview ${resource.title}`}
+                                        >
+                                            <div
+                                                className={`${styles.studyMaterialPreview} ${styles.studyMaterialPreviewClickable} ${normalizedFileType === "PDF" ? styles.studyMaterialPdfPreview : ""}`}
+                                                style={{ background: normalizedFileType === "PDF" || normalizedFileType === "IMAGE" ? "#ffffff" : meta.bg }}
+                                            >
+                                                {normalizedFileType === "PDF" ? (
+                                                    <iframe
+                                                        title={resource.title}
+                                                        src={previewPdfUrl}
+                                                        className={styles.studyMaterialFrame}
+                                                    />
+                                                ) : normalizedFileType === "IMAGE" ? (
+                                                    <img
+                                                        src={resolvedUrl}
+                                                        alt={resource.title}
+                                                        className={styles.studyMaterialImage}
+                                                    />
+                                                ) : (
+                                                    <div className={styles.studyMaterialFallback} style={{ color: meta.color }}>
+                                                        <IconComp size={42} weight="duotone" />
+                                                        <span>{meta.label} Preview</span>
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className={styles.fileMeta}>
-                                                <div className={styles.fileName}>{resource.title}</div>
-                                                <span className={styles.fileType} style={{ background: bg, color }}>
-                                                    {resource.fileType || "FILE"}
-                                                </span>
+                                        </Link>
+                                    ) : (
+                                        <div
+                                            className={`${styles.studyMaterialPreview} ${normalizedFileType === "PDF" ? styles.studyMaterialPdfPreview : ""}`}
+                                            style={{ background: normalizedFileType === "PDF" || normalizedFileType === "IMAGE" ? "#ffffff" : meta.bg }}
+                                        >
+                                            <div className={styles.studyMaterialFallback} style={{ color: meta.color }}>
+                                                <IconComp size={42} weight="duotone" />
+                                                <span>{meta.label} Preview</span>
                                             </div>
                                         </div>
-                                        {resource.subject && (
-                                            <div className={styles.subject}>{resource.subject}</div>
-                                        )}
-                                        {resource.fileSize && (
-                                            <div className={styles.size}>{resource.fileSize}</div>
-                                        )}
-                                        <div className={styles.cardFooter}>
-                                            {resource.uploadedAt && (
-                                                <span className={styles.uploadDate}>
-                                                    {new Date(resource.uploadedAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
-                                                </span>
-                                            )}
-                                            {viewerUrl ? (
-                                                <Link
-                                                    href={buildStudentContentViewerHref(viewerUrl, resource.title)}
-                                                    className={styles.downloadBtn}
-                                                    style={{ background: color }}
-                                                >
-                                                    <DownloadSimple size={15} weight="bold" /> View
+                                    )}
+
+                                    <div className={styles.studyMaterialBody}>
+                                        <div className={styles.studyMaterialTitle}>{resource.title}</div>
+                                        {description ? (
+                                            <div className={styles.studyMaterialDesc}>{description}</div>
+                                        ) : null}
+                                        <div className={styles.studyMaterialMeta}>
+                                            <span className={styles.fileType} style={{ background: meta.bg, color: meta.color }}>
+                                                {meta.label}
+                                            </span>
+                                            {resource.uploadedAt ? (
+                                                <span className={styles.uploadDate}>{formatDate(resource.uploadedAt)}</span>
+                                            ) : null}
+                                        </div>
+                                        <div className={styles.studyMaterialActions}>
+                                            {viewerHref ? (
+                                                <Link href={viewerHref} className={`${styles.actionBtn} ${styles.previewBtn}`}>
+                                                    <Eye size={16} weight="bold" />
+                                                    Preview
                                                 </Link>
                                             ) : (
-                                                <button className={styles.downloadBtn} style={{ background: color }} disabled>
-                                                    <DownloadSimple size={15} weight="bold" /> View
+                                                <button type="button" className={`${styles.actionBtn} ${styles.actionDisabled}`} disabled>
+                                                    <Eye size={16} weight="bold" />
+                                                    Preview
+                                                </button>
+                                            )}
+
+                                            {resolvedUrl ? (
+                                                <a
+                                                    href={resolvedUrl}
+                                                    className={`${styles.actionBtn} ${styles.downloadBtn}`}
+                                                    download
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                >
+                                                    <DownloadSimple size={16} weight="bold" />
+                                                    Download
+                                                </a>
+                                            ) : (
+                                                <button type="button" className={`${styles.actionBtn} ${styles.actionDisabled}`} disabled>
+                                                    <DownloadSimple size={16} weight="bold" />
+                                                    Download
                                                 </button>
                                             )}
                                         </div>
                                     </div>
-                                </div>
+                                </article>
                             );
                         })}
                     </div>
