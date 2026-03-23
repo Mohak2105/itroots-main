@@ -11,7 +11,9 @@ import {
     Calendar,
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
+import { createImpersonationTransfer } from "@/utils/impersonation";
 import styles from "./admin-dashboard.module.css";
+import toast from "react-hot-toast";
 
 type DashboardData = {
     students: number;
@@ -69,7 +71,7 @@ const formatDate = (value?: string) => {
 };
 
 export default function AdminDashboard() {
-    const { user, isLoading, token } = useLMSAuth();
+    const { user, isLoading, token, impersonate } = useLMSAuth();
     const router = useRouter();
     const [dashboard, setDashboard] = useState<DashboardData>({
         students: 0,
@@ -107,6 +109,55 @@ export default function AdminDashboard() {
 
         void fetchDashboard();
     }, [token]);
+
+    const handleImpersonate = async (id: string, targetPath: string) => {
+        if (!token) return;
+
+        const shouldOpenNewTab = targetPath.startsWith("/student/");
+        const targetTab = shouldOpenNewTab && typeof window !== "undefined" ? window.open("", "_blank") : null;
+
+        if (targetTab) {
+            targetTab.document.write("<title>Opening student dashboard...</title><p style=\"font-family: sans-serif; padding: 24px;\">Opening student dashboard...</p>");
+        }
+
+        try {
+            const res = await fetch(ENDPOINTS.ADMIN.IMPERSONATE(id), {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data?.message || "Impersonation failed");
+            }
+
+            if (shouldOpenNewTab) {
+                const bridgeKey = createImpersonationTransfer(data.user, data.token);
+                if (!bridgeKey) {
+                    throw new Error("Unable to open student dashboard");
+                }
+
+                const targetUrl = `${targetPath}?impersonationKey=${encodeURIComponent(bridgeKey)}`;
+                if (targetTab && !targetTab.closed) {
+                    targetTab.location.href = targetUrl;
+                } else if (typeof window !== "undefined") {
+                    window.open(targetUrl, "_blank");
+                }
+
+                toast.success(`Opened ${data.user.name}'s dashboard in a new tab`);
+                return;
+            }
+
+            impersonate(data.user, data.token);
+            toast.success(`Logged in as ${data.user.name}`);
+            router.push(targetPath);
+        } catch (err) {
+            if (targetTab && !targetTab.closed) {
+                targetTab.close();
+            }
+            console.error("Impersonation error:", err);
+            toast.error(err instanceof Error ? err.message : "Impersonation failed");
+        }
+    };
 
     if (isLoading || !user) return null;
 
@@ -186,7 +237,20 @@ export default function AdminDashboard() {
                                                     <Link href="/admin/batches" className={styles.tableLink}>{batch.name}</Link>
                                                 </td>
                                                 <td>{batch.course?.title || "Unassigned"}</td>
-                                                <td>{batch.Faculty?.name || "Unassigned"}</td>
+                                                <td>
+                                                    {batch.Faculty ? (
+                                                        <a
+                                                            href="#"
+                                                            className={styles.tableLink}
+                                                            onClick={(event) => {
+                                                                event.preventDefault();
+                                                                void handleImpersonate(batch.Faculty!.id, "/faculty/dashboard");
+                                                            }}
+                                                        >
+                                                            {batch.Faculty.name}
+                                                        </a>
+                                                    ) : "Unassigned"}
+                                                </td>
                                                 
                                                 <td>{batch.studentCount}</td>
                                             </tr>
@@ -206,7 +270,16 @@ export default function AdminDashboard() {
                                 dashboard.recentStudents.map((student) => (
                                     <div key={student.id} className={styles.recentStudentRow}>
                                         <div className={styles.recentStudentInfo}>
-                                            <div className={styles.recentStudentName}>{student.name}</div>
+                                            <a
+                                                href="#"
+                                                className={styles.recentStudentName}
+                                                onClick={(event) => {
+                                                    event.preventDefault();
+                                                    void handleImpersonate(student.id, "/student/dashboard");
+                                                }}
+                                            >
+                                                {student.name}
+                                            </a>
                                             <div className={styles.recentStudentEmail}>{student.email}</div>
                                         </div>
                                         <div className={styles.recentStudentMeta}>

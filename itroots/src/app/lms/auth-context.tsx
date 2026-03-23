@@ -3,6 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { ENDPOINTS, FRONTEND_ONLY_MODE, getApiOrigin } from "@/config/api";
 import { USERS } from "@/data/lms-data";
+import { consumeImpersonationTransfer, TAB_SESSION_KEY, TAB_TOKEN_KEY } from "@/utils/impersonation";
 
 export type UserRole = "SUPER_ADMIN" | "CMS_MANAGER" | "FACULTY" | "STUDENT";
 
@@ -34,6 +35,8 @@ const AuthContext = createContext<AuthContextType | null>(null);
 const SESSION_KEY = "itroots_session";
 const TOKEN_KEY = "itroots_token";
 const MOCK_USERS_KEY = "itroots_mock_users";
+
+type AuthStorageScope = "local" | "tab";
 
 type MockUser = {
     id: string;
@@ -84,9 +87,26 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
+    const [authScope, setAuthScope] = useState<AuthStorageScope>("local");
 
-    const persistAuthState = useCallback((nextUser: User | null, nextToken?: string | null) => {
+    const clearStoredAuth = useCallback((scope: AuthStorageScope) => {
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        if (scope === "tab") {
+            sessionStorage.removeItem(TAB_SESSION_KEY);
+            sessionStorage.removeItem(TAB_TOKEN_KEY);
+            return;
+        }
+
+        localStorage.removeItem(SESSION_KEY);
+        localStorage.removeItem(TOKEN_KEY);
+    }, []);
+
+    const persistAuthState = useCallback((nextUser: User | null, nextToken?: string | null, scope: AuthStorageScope = "local") => {
         setUser(nextUser);
+        setAuthScope(scope);
 
         if (typeof nextToken !== "undefined") {
             setToken(nextToken);
@@ -95,6 +115,27 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
         if (typeof window === "undefined") {
             return;
         }
+
+        if (scope === "tab") {
+            if (nextUser) {
+                sessionStorage.setItem(TAB_SESSION_KEY, JSON.stringify(nextUser));
+            } else {
+                sessionStorage.removeItem(TAB_SESSION_KEY);
+            }
+
+            if (typeof nextToken !== "undefined") {
+                if (nextToken) {
+                    sessionStorage.setItem(TAB_TOKEN_KEY, nextToken);
+                } else {
+                    sessionStorage.removeItem(TAB_TOKEN_KEY);
+                }
+            }
+
+            return;
+        }
+
+        sessionStorage.removeItem(TAB_SESSION_KEY);
+        sessionStorage.removeItem(TAB_TOKEN_KEY);
 
         if (nextUser) {
             localStorage.setItem(SESSION_KEY, JSON.stringify(nextUser));
@@ -111,7 +152,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, []);
 
-    const fetchCurrentUser = useCallback(async (authToken: string) => {
+    const fetchCurrentUser = useCallback(async (authToken: string, scope: AuthStorageScope = "local") => {
         const response = await fetch(ENDPOINTS.AUTH.ME, {
             headers: {
                 Authorization: `Bearer ${authToken}`,
@@ -123,7 +164,7 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const data = await response.json();
-        persistAuthState(data.user, authToken);
+        persistAuthState(data.user, authToken, scope);
         return data.user as User;
     }, [persistAuthState]);
 
@@ -133,32 +174,55 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
             return;
         }
 
+        const currentUrl = new URL(window.location.href);
+        const bridgeKey = currentUrl.searchParams.get("impersonationKey");
+
+        if (bridgeKey) {
+            const transfer = consumeImpersonationTransfer(bridgeKey);
+            if (transfer?.user && transfer?.token) {
+                sessionStorage.setItem(TAB_SESSION_KEY, JSON.stringify(transfer.user));
+                sessionStorage.setItem(TAB_TOKEN_KEY, transfer.token);
+            }
+
+            currentUrl.searchParams.delete("impersonationKey");
+            const nextUrl = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+            window.history.replaceState({}, "", nextUrl);
+        }
+
+        const tabUser = sessionStorage.getItem(TAB_SESSION_KEY);
+        const tabToken = sessionStorage.getItem(TAB_TOKEN_KEY);
         const savedUser = localStorage.getItem(SESSION_KEY);
         const savedToken = localStorage.getItem(TOKEN_KEY);
+        const activeUser = tabUser || savedUser;
+        const activeToken = tabToken || savedToken;
+        const activeScope: AuthStorageScope = tabToken ? "tab" : "local";
 
-        if (!savedToken) {
+        if (!activeToken) {
             setIsLoading(false);
             return;
         }
 
-        setToken(savedToken);
+        setToken(activeToken);
+        setAuthScope(activeScope);
 
         if (FRONTEND_ONLY_MODE) {
-            if (savedUser) {
-                setUser(JSON.parse(savedUser));
+            if (activeUser) {
+                setUser(JSON.parse(activeUser));
             }
             setIsLoading(false);
             return;
         }
 
-        void fetchCurrentUser(savedToken)
+        void fetchCurrentUser(activeToken, activeScope)
             .catch(() => {
-                persistAuthState(null, null);
+                clearStoredAuth(activeScope);
+                setUser(null);
+                setToken(null);
             })
             .finally(() => {
                 setIsLoading(false);
             });
-    }, [fetchCurrentUser, persistAuthState]);
+    }, [clearStoredAuth, fetchCurrentUser]);
 
     const login = useCallback(async (identifier: string, password: string) => {
         if (!FRONTEND_ONLY_MODE) {
@@ -259,16 +323,20 @@ export function LMSAuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         try {
-            return await fetchCurrentUser(token);
+            return await fetchCurrentUser(token, authScope);
         } catch {
-            persistAuthState(null, null);
+            clearStoredAuth(authScope);
+            setUser(null);
+            setToken(null);
             return null;
         }
-    }, [fetchCurrentUser, persistAuthState, token, user]);
+    }, [authScope, clearStoredAuth, fetchCurrentUser, token, user]);
 
     const logout = useCallback(() => {
-        persistAuthState(null, null);
-    }, [persistAuthState]);
+        clearStoredAuth(authScope);
+        setUser(null);
+        setToken(null);
+    }, [authScope, clearStoredAuth]);
 
     const impersonate = useCallback((newUser: User, newToken: string) => {
         persistAuthState(newUser, newToken);

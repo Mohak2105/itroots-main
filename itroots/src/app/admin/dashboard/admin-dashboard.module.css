@@ -2,6 +2,13 @@
     display: flex;
     flex-direction: column;
     gap: 2rem;
+    font-family: var(--font-portal), "Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+}
+
+.pageStack *,
+.pageStack *::before,
+.pageStack *::after {
+    font-family: var(--font-portal), "Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
 }
 
 .heroButton {
@@ -85,7 +92,6 @@
 }
 
 .welcome h2 {
-    font-family: 'Outfit', sans-serif;
     font-size: 1.8rem;
     font-weight: 800;
     margin: 0 0 0.4rem 0;
@@ -513,6 +519,10 @@
     font-weight: 700;
 }
 
+.tableLink:hover {
+    color: #0881ec;
+}
+
 .tableSubtle {
     color: #64748b;
     font-size: 0.78rem;
@@ -585,6 +595,11 @@
 .recentStudentName {
     font-weight: 700;
     color: #0f172a;
+    text-decoration: none;
+}
+
+.recentStudentName:hover {
+    color: #0881ec;
 }
 
 .recentStudentEmail {

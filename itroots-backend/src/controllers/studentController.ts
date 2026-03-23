@@ -19,6 +19,7 @@ import Certificate from '../models/Certificate';
 import AssignmentSubmission, { getAssignmentSubmissionReadableAttributes } from '../models/AssignmentSubmission';
 import Placement from '../models/Placement';
 import { isLiveClassTableReady } from '../utils/liveClassSchema';
+import { filterCurrentLiveClassNotificationRecipients } from '../utils/liveClassNotifications';
 import { streamCertificatePdf } from '../utils/certificatePdf';
 import { getStudyMaterialType } from '../utils/studyMaterial';
 import { sanitizePlacementForStudent } from '../utils/placements';
@@ -118,111 +119,171 @@ const getStudentPaymentSummary = async (studentId: string) => {
     };
 };
 
+const getStudentUploadedVideos = async (batchIds: string[]) => {
+    if (!batchIds.length) {
+        return [];
+    }
+
+    const batchContentAttributes = await getBatchContentReadableAttributes();
+    const videos = await BatchContent.findAll({
+        where: {
+            batchId: { [Op.in]: batchIds },
+            type: 'VIDEO',
+        },
+        attributes: batchContentAttributes as unknown as string[],
+        include: [{
+            model: Batch,
+            as: 'batch',
+            attributes: ['id', 'name'],
+            include: [{ model: Course, as: 'course', attributes: ['id', 'title'] }],
+        }],
+        order: [['createdAt', 'DESC']],
+        limit: 12,
+    });
+
+    return videos.map((video: any) => {
+        const payload = typeof video.toJSON === 'function' ? video.toJSON() : video;
+        return {
+            id: payload.id,
+            title: payload.title,
+            description: payload.description,
+            subject: payload.batch?.course?.title || payload.batch?.name || 'Course',
+            fileType: 'VIDEO',
+            fileUrl: payload.contentUrl,
+            contentUrl: payload.contentUrl,
+            uploadedAt: payload.createdAt,
+            createdAt: payload.createdAt,
+            batchId: payload.batchId,
+        };
+    });
+};
+
+export const buildStudentDashboardPayload = async (studentId: string) => {
+    const enrollments = await Enrollment.findAll({
+        where: { studentId },
+        include: [{
+            model: Batch,
+            as: 'batch',
+            include: [
+                { model: Course, as: 'course', attributes: ['id', 'title', 'slug', 'price'] },
+                { model: User, as: 'Faculty', attributes: ['id', 'name', 'email'] },
+            ],
+        }],
+        order: [['createdAt', 'DESC']],
+    });
+
+    const batchIds = enrollments.map((enrollment: any) => enrollment.batchId);
+    const liveClassReady = await isLiveClassTableReady();
+
+    const [
+        progressByBatchId,
+        attendanceRecords,
+        announcements,
+        testResults,
+        notifications,
+        paymentSummary,
+        upcomingLiveClasses,
+        upcomingLiveClassCount,
+        certificates,
+        certificateCount,
+        uploadedVideos,
+    ] = await Promise.all([
+        buildBatchProgressMap(studentId, batchIds),
+        Attendance.findAll({ where: { studentId } }),
+        Announcement.findAll({
+            where: { [Op.or]: [{ batchId: null }, ...(batchIds.length ? [{ batchId: batchIds }] : [])] },
+            include: [
+                { model: User, as: 'author', attributes: ['name', 'role'] },
+                { model: Batch, as: 'batch', attributes: ['id', 'name'] },
+            ],
+            order: [['createdAt', 'DESC']],
+            limit: 5,
+        }),
+        TestResult.findAll({
+            where: { studentId },
+            attributes: TEST_RESULT_BASE_ATTRIBUTES as unknown as string[],
+            include: [{ model: Test, as: 'test', attributes: ['totalMarks'] }],
+        }),
+        NotificationRecipient.findAll({
+            where: { userId: studentId },
+            include: [{ model: Notification, as: 'notification', include: [{ model: User, as: 'creator', attributes: ['name', 'role'] }] }],
+            order: [['createdAt', 'DESC']],
+            limit: 20,
+        }),
+        getStudentPaymentSummary(studentId),
+        liveClassReady && batchIds.length ? LiveClass.findAll({
+            where: {
+                batchId: { [Op.in]: batchIds },
+                status: 'SCHEDULED',
+                scheduledAt: { [Op.gte]: new Date() },
+            },
+            include: [
+                { model: Course, as: 'course', attributes: ['id', 'title', 'slug'] },
+                { model: Batch, as: 'batch', attributes: ['id', 'name'] },
+                { model: User, as: 'Faculty', attributes: ['id', 'name', 'email'] },
+            ],
+            order: [['scheduledAt', 'ASC']],
+            limit: 5,
+        }) : [],
+        liveClassReady && batchIds.length ? LiveClass.count({
+            where: {
+                batchId: { [Op.in]: batchIds },
+                status: 'SCHEDULED',
+                scheduledAt: { [Op.gte]: new Date() },
+            },
+        }) : 0,
+        Certificate.findAll({
+            where: { studentId },
+            include: certificateInclude,
+            order: [['issueDate', 'DESC']],
+            limit: 3,
+        }),
+        Certificate.count({ where: { studentId } }),
+        getStudentUploadedVideos(batchIds),
+    ]);
+
+    const filteredNotifications = await filterCurrentLiveClassNotificationRecipients(notifications as any[]);
+
+    const mappedEnrollments = enrollments.map((enrollment: any) => mapEnrollment(enrollment, progressByBatchId));
+
+    const attendancePercentage = attendanceRecords.length
+        ? Math.round((attendanceRecords.filter((record: any) => record.status === 'PRESENT').length / attendanceRecords.length) * 100)
+        : 0;
+
+    const averageTestScore = testResults.length
+        ? Math.round(testResults.reduce((sum: number, result: any) => {
+            if (Number.isFinite(Number(result.percentage))) {
+                return sum + Number(result.percentage);
+            }
+            const totalMarks = Number(result.test?.totalMarks || 0);
+            return sum + calculatePercentage(Number(result.score || 0), totalMarks);
+        }, 0) / testResults.length)
+        : 0;
+
+    return {
+        summary: {
+            enrolledBatches: mappedEnrollments.length,
+            attendancePercentage,
+            averageTestScore,
+            pendingAssignments: 0,
+            pendingFees: paymentSummary.pendingFees,
+            upcomingLiveClasses: upcomingLiveClassCount,
+            totalCertificates: certificateCount,
+        },
+        enrollments: mappedEnrollments,
+        announcements,
+        notifications: filteredNotifications,
+        paymentSummary,
+        liveClasses: upcomingLiveClasses,
+        certificates,
+        uploadedVideos,
+    };
+};
+
 export const getStudentDashboard = async (req: any, res: Response) => {
     try {
-        const studentId = req.user.id;
-        const enrollments = await Enrollment.findAll({
-            where: { studentId },
-            include: [{
-                model: Batch,
-                as: 'batch',
-                include: [
-                    { model: Course, as: 'course', attributes: ['id', 'title', 'slug', 'price'] },
-                    { model: User, as: 'Faculty', attributes: ['id', 'name', 'email'] },
-                ],
-            }],
-            order: [['createdAt', 'DESC']],
-        });
-
-        const batchIds = enrollments.map((enrollment: any) => enrollment.batchId);
-
-        const liveClassReady = await isLiveClassTableReady();
-        const [progressByBatchId, attendanceRecords, announcements, testResults, notifications, paymentSummary, upcomingLiveClasses, upcomingLiveClassCount, certificates, certificateCount] = await Promise.all([
-            buildBatchProgressMap(studentId, batchIds),
-            Attendance.findAll({ where: { studentId } }),
-            Announcement.findAll({
-                where: { [Op.or]: [{ batchId: null }, ...(batchIds.length ? [{ batchId: batchIds }] : [])] },
-                include: [
-                    { model: User, as: 'author', attributes: ['name', 'role'] },
-                    { model: Batch, as: 'batch', attributes: ['id', 'name'] },
-                ],
-                order: [['createdAt', 'DESC']],
-                limit: 5,
-            }),
-            TestResult.findAll({
-                where: { studentId },
-                attributes: TEST_RESULT_BASE_ATTRIBUTES as unknown as string[],
-                include: [{ model: Test, as: 'test', attributes: ['totalMarks'] }],
-            }),
-            NotificationRecipient.findAll({
-                where: { userId: studentId },
-                include: [{ model: Notification, as: 'notification', include: [{ model: User, as: 'creator', attributes: ['name', 'role'] }] }],
-                order: [['createdAt', 'DESC']],
-                limit: 5,
-            }),
-            getStudentPaymentSummary(studentId),
-            liveClassReady && batchIds.length ? LiveClass.findAll({
-                where: {
-                    batchId: { [Op.in]: batchIds },
-                    status: 'SCHEDULED',
-                    scheduledAt: { [Op.gte]: new Date() },
-                },
-                include: [
-                    { model: Course, as: 'course', attributes: ['id', 'title', 'slug'] },
-                    { model: Batch, as: 'batch', attributes: ['id', 'name'] },
-                    { model: User, as: 'Faculty', attributes: ['id', 'name', 'email'] },
-                ],
-                order: [['scheduledAt', 'ASC']],
-                limit: 5,
-            }) : [],
-            liveClassReady && batchIds.length ? LiveClass.count({
-                where: {
-                    batchId: { [Op.in]: batchIds },
-                    status: 'SCHEDULED',
-                    scheduledAt: { [Op.gte]: new Date() },
-                },
-            }) : 0,
-            Certificate.findAll({
-                where: { studentId },
-                include: certificateInclude,
-                order: [['issueDate', 'DESC']],
-                limit: 3,
-            }),
-            Certificate.count({ where: { studentId } }),
-        ]);
-        const mappedEnrollments = enrollments.map((enrollment: any) => mapEnrollment(enrollment, progressByBatchId));
-
-        const attendancePercentage = attendanceRecords.length
-            ? Math.round((attendanceRecords.filter((record: any) => record.status === 'PRESENT').length / attendanceRecords.length) * 100)
-            : 0;
-
-        const averageTestScore = testResults.length
-            ? Math.round(testResults.reduce((sum: number, result: any) => {
-                if (Number.isFinite(Number(result.percentage))) {
-                    return sum + Number(result.percentage);
-                }
-                const totalMarks = Number(result.test?.totalMarks || 0);
-                return sum + calculatePercentage(Number(result.score || 0), totalMarks);
-            }, 0) / testResults.length)
-            : 0;
-
-        res.json({
-            summary: {
-                enrolledBatches: mappedEnrollments.length,
-                attendancePercentage,
-                averageTestScore,
-                pendingAssignments: 0,
-                pendingFees: paymentSummary.pendingFees,
-                upcomingLiveClasses: upcomingLiveClassCount,
-                totalCertificates: certificateCount,
-            },
-            enrollments: mappedEnrollments,
-            announcements,
-            notifications,
-            paymentSummary,
-            liveClasses: upcomingLiveClasses,
-            certificates,
-        });
+        const payload = await buildStudentDashboardPayload(req.user.id);
+        res.json(payload);
     } catch (error: any) {
         console.error('Fetch student dashboard error:', error);
         res.status(500).json({

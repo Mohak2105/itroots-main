@@ -73,7 +73,7 @@ test.describe.serial("Jitsi live class E2E", () => {
             const liveClassTitle = `${fixture.prefix}-JITSI-HAPPY`;
 
             await teacherRolePage.page.goto(teacherCalendarPath, { waitUntil: "domcontentloaded" });
-            await expect(teacherRolePage.page.getByText("Live Class Calendar")).toBeVisible();
+            await expect(teacherRolePage.page.getByText("Live Classes")).toBeVisible();
 
             await createJitsiLiveClassFromTeacherCalendar(teacherRolePage.page, {
                 title: liveClassTitle,

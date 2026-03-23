@@ -16,8 +16,6 @@ import {
     Envelope,
     Lock,
     ArrowRight,
-    Users,
-    Medal,
     BookOpen,
     Warning
 } from "@phosphor-icons/react";
@@ -72,33 +70,33 @@ export default function LMSLoginPage() {
 
     return (
         <div className={styles.loginPage}>
-            <div className={styles.brandPanel}>
-                <div className={styles.wireCircle1} />
-                <div className={styles.wireCircle2} />
-                <div className={styles.wireLine1} />
-                <div className={styles.wireLine2} />
-
+            <section className={styles.brandPanel}>
+                <div className={styles.brandGrid} />
+                <div className={styles.brandOrbPrimary} />
+                <div className={styles.brandOrbSecondary} />
                 <div className={styles.brandContent}>
-                    <div className={styles.brandLogo}>
-                        <Link href="/">
+                    <div className={styles.brandTopBar}>
+                        <Link href="/" className={styles.brandLogo}>
                             <Image
                                 src="/images/logo.png"
                                 alt="ITROOTS"
                                 width={200}
                                 height={65}
-                                style={{ cursor: "pointer" }}
                                 priority
                             />
                         </Link>
+                        
                     </div>
 
-                    <h1 className={styles.brandHeading}>
-                        Your Learning<br />
-                        Journey <span>Starts Here.</span>
-                    </h1>
-                    <p className={styles.brandDescription}>
-                        Access courses, track progress, and build career-ready skills - all in one portal.
-                    </p>
+                    <div className={styles.heroBlock}>
+                       
+                        <h1 className={styles.brandHeading}>
+                            Learn live. Practice daily. <span>Grow with confidence.</span>
+                        </h1>
+                        <p className={styles.brandDescription}>
+                            Your classes, assignments, study material, attendance, and progress reports stay together in one focused workspace.
+                        </p>
+                    </div>
 
                     <div className={styles.featureGrid}>
                         {FEATURES.map((feature) => (
@@ -113,116 +111,104 @@ export default function LMSLoginPage() {
                             </div>
                         ))}
                     </div>
-
-                    <div className={styles.statsRow}>
-                        <div className={styles.statItem}>
-                            <Users size={18} strokeWidth={1.5} />
-                            <span className={styles.statNum}>1000+</span>
-                            <span className={styles.statLabel}>Students</span>
-                        </div>
-                        <div className={styles.statDivider} />
-                        <div className={styles.statItem}>
-                            <Medal size={18} />
-                            <span className={styles.statNum}>95%</span>
-                            <span className={styles.statLabel}>Placement</span>
-                        </div>
-                        <div className={styles.statDivider} />
-                        <div className={styles.statItem}>
-                            <BookOpen size={18} strokeWidth={1.5} />
-                            <span className={styles.statNum}>15+</span>
-                            <span className={styles.statLabel}>Courses</span>
-                        </div>
-                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div className={styles.formPanel}>
-                <div className={styles.formCard}>
-                    <div className={styles.formHeader}>
-                        <div className={styles.studentBadge}>
-                            <GraduationCap size={28} strokeWidth={1.8} />
-                        </div>
-                        <h2 className={styles.formTitle}>Welcome Back</h2>
-                        <p className={styles.formSubtitle}>Sign in to your learning portal</p>
+            <section className={styles.formPanel}>
+                <div className={styles.formShell}>
+                    <div className={styles.formTopBar}>
+                        
+                        <Link href="/" className={styles.homeLink}>
+                            Back to website
+                        </Link>
                     </div>
 
-                    {error && (
-                        <div className={styles.errorBox} role="alert">
-                            <Warning size={18} style={{ flexShrink: 0 }} />
-                            {error}
+                    <div className={styles.formCard}>
+                        <div className={styles.formHeader}>
+                            <div className={styles.studentBadge}>
+                                <GraduationCap size={28} strokeWidth={1.8} />
+                            </div>
+                            <h2 className={styles.formTitle}>Welcome Back</h2>
+                            <p className={styles.formSubtitle}>
+                                Sign in to continue your classes, assignments, attendance, and progress tracking.
+                            </p>
                         </div>
-                    )}
 
-                    <form onSubmit={handleSubmit} noValidate>
-                        <div className={styles.fieldGroup}>
-                            <div>
-                                <label className={styles.fieldLabel} htmlFor="lms-email">Email or Username</label>
-                                <div className={styles.fieldWrapper}>
-                                    <Envelope size={16} className={styles.fieldIconSvg} />
-                                    <input
-                                        id="lms-email"
-                                        type="text"
-                                        className={styles.fieldInput}
-                                        placeholder="Email or Username"
-                                        value={identifier}
-                                        onChange={(e) => setIdentifier(e.target.value)}
-                                        required
-                                        autoComplete="username"
-                                    />
+                        {error && (
+                            <div className={styles.errorBox} role="alert">
+                                <Warning size={18} style={{ flexShrink: 0 }} />
+                                {error}
+                            </div>
+                        )}
+
+                        <form onSubmit={handleSubmit} noValidate>
+                            <div className={styles.fieldGroup}>
+                                <div>
+                                    <label className={styles.fieldLabel} htmlFor="lms-email">Email or Username</label>
+                                    <div className={styles.fieldWrapper}>
+                                        <Envelope size={16} className={styles.fieldIconSvg} />
+                                        <input
+                                            id="lms-email"
+                                            type="text"
+                                            className={styles.fieldInput}
+                                            placeholder="Enter your email or username"
+                                            value={identifier}
+                                            onChange={(e) => setIdentifier(e.target.value)}
+                                            required
+                                            autoComplete="username"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label className={styles.fieldLabel} htmlFor="lms-password">Password</label>
+                                    <div className={styles.fieldWrapper}>
+                                        <Lock size={16} className={styles.fieldIconSvg} />
+                                        <input
+                                            id="lms-password"
+                                            type={showPass ? "text" : "password"}
+                                            className={styles.fieldInput}
+                                            placeholder="Enter your password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                            autoComplete="current-password"
+                                        />
+                                        <button
+                                            type="button"
+                                            className={styles.passwordToggle}
+                                            onClick={() => setShowPass(!showPass)}
+                                            aria-label={showPass ? "Hide password" : "Show password"}
+                                        >
+                                            {showPass ? <EyeSlash size={16} /> : <Eye size={16} />}
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div>
-                                <label className={styles.fieldLabel} htmlFor="lms-password">Password</label>
-                                <div className={styles.fieldWrapper}>
-                                    <Lock size={16} className={styles.fieldIconSvg} />
-                                    <input
-                                        id="lms-password"
-                                        type={showPass ? "text" : "password"}
-                                        className={styles.fieldInput}
-                                        placeholder="********"
-                                        value={password}
-                                        onChange={(e) => setPassword(e.target.value)}
-                                        required
-                                        autoComplete="current-password"
-                                    />
-                                    <button
-                                        type="button"
-                                        className={styles.passwordToggle}
-                                        onClick={() => setShowPass(!showPass)}
-                                    >
-                                        {showPass ? <EyeSlash size={16} /> : <Eye size={16} />}
-                                    </button>
-                                </div>
+                            <div className={styles.formHint}>
+                                Use the email or username shared by your admin.
                             </div>
+
+                            <button
+                                id="lms-login-btn"
+                                type="submit"
+                                className={styles.submitBtn}
+                                disabled={isLoading}
+                            >
+                                {isLoading ? <>Signing In...</> : <>Sign In <ArrowRight size={18} /></>}
+                            </button>
+                        </form>
+
+                        <div className={styles.adminNote}>
+                            Student accounts are created by admin only.
                         </div>
-
-                        <button
-                            id="lms-login-btn"
-                            type="submit"
-                            className={styles.submitBtn}
-                            disabled={isLoading}
-                        >
-                            {isLoading ? <>Signing In...</> : <>Sign In <ArrowRight size={18} /></>}
-                        </button>
-                    </form>
-
-                    <div style={{ textAlign: "center", marginTop: "24px", fontSize: "14px", color: "#64748b" }}>
-                        Student accounts are created by admin only.
                     </div>
-                </div>
 
-                <div className={styles.studentIllustration}>
-                    <Image
-                        src="/images/student-login-art.png.png"
-                        alt="Students Illustration"
-                        width={350}
-                        height={250}
-                        style={{ width: "100%", height: "auto", objectFit: "contain" }}
-                        priority
-                    />
+                    
+                    
                 </div>
-            </div>
+            </section>
         </div>
     );
 }

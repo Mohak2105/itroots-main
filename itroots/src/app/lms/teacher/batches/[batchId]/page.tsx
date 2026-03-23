@@ -196,6 +196,7 @@ export default function BatchManagementPage() {
     const [attendanceDate, setAttendanceDate] = useState(new Date().toISOString().split("T")[0]);
     const [attendanceRecords, setAttendanceRecords] = useState<Record<string, string>>({});
     const [liveClassForm, setLiveClassForm] = useState(EMPTY_LIVE_CLASS_FORM);
+    const [nowTick, setNowTick] = useState(() => Date.now());
     const bulkPreview = useMemo(() => {
         if (!bulkQuestionText.trim()) {
             return { count: 0, error: "" };
@@ -285,6 +286,14 @@ export default function BatchManagementPage() {
             void loadAttendanceForDate(attendanceDate);
         }
     }, [isAttendanceModal, attendanceDate, loadAttendanceForDate]);
+
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            setNowTick(Date.now());
+        }, 1000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
 
     const resetContentForm = () => {
         setContentForm({ title: "", description: "", type: "VIDEO", contentUrl: "", uploadMode: "URL", fileData: "", fileName: "" });
@@ -609,7 +618,7 @@ export default function BatchManagementPage() {
                                     <div key={liveClass.id} className={styles.contentItem}>
                                         {(() => {
                                         const joinTarget = resolveLiveClassJoinTarget(liveClass, "TEACHER");
-                                        const accessState = getLiveClassAccessState(liveClass);
+                                        const accessState = getLiveClassAccessState(liveClass, nowTick);
                                         const joinDisabledLabel = accessState === "NOT_STARTED"
                                             ? "Starts at Scheduled Time"
                                             : accessState === "EXPIRED"
@@ -634,7 +643,18 @@ export default function BatchManagementPage() {
                                             {liveClass.description ? <p>{liveClass.description}</p> : null}
                                         </div>
                                         <div className={styles.liveClassActions}>
-                                            {accessState === "AVAILABLE" && joinTarget.href ? (
+                                            <button type="button" className={styles.inlineBtn} onClick={() => openEditLiveClass(liveClass)}>
+                                                <PencilSimple size={14} /> Edit
+                                            </button>
+                                            {liveClass.status !== "CANCELLED" ? (
+                                                <button type="button" className={styles.inlineDangerBtn} onClick={() => handleCancelLiveClass(liveClass.id)}>
+                                                    Cancel
+                                                </button>
+                                            
+                                            
+                                            ) : null}
+                                        </div>
+                                        {accessState === "AVAILABLE" && joinTarget.href ? (
                                                 joinTarget.external ? (
                                                     <a href={joinTarget.href} target="_blank" rel="noreferrer" className={styles.actionBtn}>Join</a>
                                                 ) : (
@@ -643,15 +663,6 @@ export default function BatchManagementPage() {
                                             ) : (
                                                 <span className={styles.inlineBtn}>{joinDisabledLabel}</span>
                                             )}
-                                            <button type="button" className={styles.inlineBtn} onClick={() => openEditLiveClass(liveClass)}>
-                                                <PencilSimple size={14} /> Edit
-                                            </button>
-                                            {liveClass.status !== "CANCELLED" ? (
-                                                <button type="button" className={styles.inlineDangerBtn} onClick={() => handleCancelLiveClass(liveClass.id)}>
-                                                    Cancel
-                                                </button>
-                                            ) : null}
-                                        </div>
                                                 </>
                                             );
                                         })()}

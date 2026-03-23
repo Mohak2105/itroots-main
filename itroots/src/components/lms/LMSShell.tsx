@@ -163,6 +163,7 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
     const [currentSearch, setCurrentSearch] = useState("");
+    const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
     const profileDropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -180,6 +181,13 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
             setCurrentSearch(window.location.search);
         }
     }, [pathname]);
+
+    useEffect(() => {
+        const updateCurrentDateTime = () => setCurrentDateTime(new Date());
+        updateCurrentDateTime();
+        const timer = window.setInterval(updateCurrentDateTime, 30000);
+        return () => window.clearInterval(timer);
+    }, []);
 
     if (isLoading) return null;
 
@@ -211,6 +219,28 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
         : "";
 
     const normalizedPathname = stripPortalPathPrefix(pathname);
+    const welcomeTitle =
+        (user?.role === "SUPER_ADMIN" || user?.role === "CMS_MANAGER")
+            ? "Welcome Admin!"
+            : `Welcome ${user?.name?.split(" ")[0] || "User"}!`;
+    const currentDateLabel = currentDateTime
+        ? currentDateTime.toLocaleDateString("en-IN", {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+        })
+        : "";
+    const currentTimeLabel = currentDateTime
+        ? currentDateTime.toLocaleTimeString("en-IN", {
+            hour: "numeric",
+            minute: "2-digit",
+        })
+        : "";
+    const currentDateTimeLabel =
+        currentDateLabel && currentTimeLabel
+            ? `${currentDateLabel} | ${currentTimeLabel}`
+            : "";
+    const showRightDateTime = Boolean(currentDateTimeLabel);
 
     const isNavItemActive = (href: string) => {
         const [itemPath, queryString] = href.split("?");
@@ -279,19 +309,27 @@ export default function LMSShell({ children, pageTitle }: { children: React.Reac
             </aside>
 
             <div className={styles.main}>
-                <header className={styles.topBar}>
+                <header className={`${styles.topBar} ${showRightDateTime ? styles.topBarWithRightMeta : ""}`}>
                     <div className={styles.topBarLeft}>
                         <button className={styles.hamburger} onClick={() => setSidebarOpen(!sidebarOpen)}>
                             <List size={24} />
                         </button>
-                        <h1 className={styles.topBarTitle}>
-                            {(user?.role === "SUPER_ADMIN" || user?.role === "CMS_MANAGER")
-                                ? "Welcome Admin!"
-                                : `Welcome ${user?.name?.split(" ")[0]}!`}
-                        </h1>
+                        <div className={styles.topBarTextBlock}>
+                            <h1 className={styles.topBarTitle}>{welcomeTitle}</h1>
+                            {currentDateLabel && currentTimeLabel ? (
+                                <div className={styles.topBarMeta}>
+                                    {currentDateLabel} • {currentTimeLabel}
+                                </div>
+                            ) : null}
+                        </div>
                     </div>
 
                     <div className={styles.topBarActions}>
+                        {showRightDateTime ? (
+                            <div className={styles.topBarMetaRight}>
+                                {currentDateTimeLabel}
+                            </div>
+                        ) : null}
                         {user?.role === "STUDENT" && (
                             <Link
                                 href={buildPortalPath(portal, "/announcements")}

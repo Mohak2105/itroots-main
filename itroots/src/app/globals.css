@@ -116,6 +116,15 @@ body {
   overflow-x: hidden;
 }
 
+.portal-font,
+.portal-font *,
+.portal-font *::before,
+.portal-font *::after,
+.portal-font input::placeholder,
+.portal-font textarea::placeholder {
+  font-family: var(--font-portal), "Poppins", "Segoe UI", "Helvetica Neue", Arial, sans-serif !important;
+}
+
 /* Typography */
 h1,
 h2,

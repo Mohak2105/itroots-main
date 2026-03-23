@@ -8,6 +8,8 @@ import Course from '../models/Course';
 import Enrollment from '../models/Enrollment';
 import Payment from '../models/Payment';
 import Certificate from '../models/Certificate';
+import { resolveUserNameFields } from '../utils/userNames';
+import { buildStudentDashboardPayload } from './studentController';
 
 export const getAdminDashboard = async (req: Request, res: Response) => {
     try {
@@ -141,17 +143,62 @@ export const getUserById = async (req: Request, res: Response) => {
         return res.status(500).json({ message: 'Server error fetching user detail' });
     }
 };
+
+export const getStudentDashboardPreview = async (req: Request, res: Response) => {
+    try {
+        const student = await User.findByPk(req.params.id as string, {
+            attributes: ['id', 'name', 'email', 'isActive', 'role'],
+        });
+
+        if (!student || student.role !== 'STUDENT') {
+            return res.status(404).json({ message: 'Student not found' });
+        }
+
+        const payload = await buildStudentDashboardPayload(student.id);
+
+        return res.json({
+            student: {
+                id: student.id,
+                name: student.name,
+                email: student.email,
+                isActive: student.isActive,
+            },
+            ...payload,
+        });
+    } catch (error) {
+        console.error('Admin student dashboard preview error:', error);
+        return res.status(500).json({ message: 'Server error fetching student dashboard preview' });
+    }
+};
 export const updateUser = async (req: Request, res: Response) => {
     try {
         const { id } = req.params;
-        const { role, isActive, name, email, phone, username, specialization } = req.body;
+        const { role, isActive, name, firstName, middleName, lastName, email, phone, username, specialization } = req.body;
 
         const user = await User.findByPk(id as string);
         if (!user) return res.status(404).json({ message: 'User not found' });
 
         if (role) user.role = role;
         if (isActive !== undefined) user.isActive = isActive;
-        if (name) user.name = name;
+        const hasStructuredNameUpdate = firstName !== undefined || middleName !== undefined || lastName !== undefined;
+        if (hasStructuredNameUpdate || name !== undefined) {
+            const resolvedNames = resolveUserNameFields(
+                { name, firstName, middleName, lastName },
+                {
+                    name: user.name,
+                    firstName: user.firstName,
+                    middleName: user.middleName,
+                    lastName: user.lastName,
+                },
+            );
+
+            if (resolvedNames.name) {
+                user.firstName = resolvedNames.firstName;
+                user.middleName = resolvedNames.middleName;
+                user.lastName = resolvedNames.lastName;
+                user.name = resolvedNames.name;
+            }
+        }
         if (email) user.email = email;
         if (phone !== undefined) user.phone = phone;
         if (username !== undefined) user.username = username;
@@ -164,6 +211,9 @@ export const updateUser = async (req: Request, res: Response) => {
             user: {
                 id: user.id,
                 username: user.username,
+                firstName: user.firstName,
+                middleName: user.middleName,
+                lastName: user.lastName,
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
@@ -370,6 +420,9 @@ export const impersonateUser = async (req: Request, res: Response) => {
             user: {
                 id: user.id,
                 username: user.username,
+                firstName: user.firstName,
+                middleName: user.middleName,
+                lastName: user.lastName,
                 name: user.name,
                 email: user.email,
                 phone: user.phone,
@@ -384,5 +437,3 @@ export const impersonateUser = async (req: Request, res: Response) => {
         res.status(500).json({ message: 'Server error during impersonation' });
     }
 };
-
-

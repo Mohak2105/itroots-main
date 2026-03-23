@@ -34,6 +34,27 @@ const EMPTY_FORM: CourseForm = {
 };
 
 const DURATION_OPTIONS = ["1 Month", "2 Months", "3 Months", "4 Months", "6 Months", "9 Months", "12 Months"];
+const courseCardTitleStyle = {
+    fontFamily: '"Times New Roman", Georgia, serif',
+    fontSize: "1.5rem",
+    fontWeight: 700,
+    color: "#08152f",
+    marginTop: "0.65rem",
+    lineHeight: 1.1,
+    letterSpacing: "0.01em",
+    textTransform: "capitalize" as const,
+};
+const courseCardIconWrapStyle = {
+    width: "52px",
+    height: "52px",
+    borderRadius: "16px",
+    background: "linear-gradient(145deg, rgba(8,129,236,0.16) 0%, rgba(59,130,246,0.12) 35%, rgba(16,185,129,0.14) 70%, rgba(245,158,11,0.16) 100%)",
+    border: "1px solid rgba(8,129,236,0.14)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)",
+};
 
 export default function AdminCoursesPage() {
     const { user, isLoading, token } = useLMSAuth();
@@ -192,14 +213,14 @@ export default function AdminCoursesPage() {
                         courses.map((course: any) => (
                             <div key={course.id} style={{ background: "#fff", borderRadius: "20px", border: "1px solid #e2e8f0", padding: "1.5rem", boxShadow: "0 4px 12px rgba(0,0,0,0.05)", display: "flex", flexDirection: "column" }}>
                                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem" }}>
-                                    <div>
-                                        <span style={{ fontSize: "0.7rem", fontWeight: 800, color: course.status === "ACTIVE" ? "#0881ec" : course.status === "ARCHIVED" ? "#7c3aed" : "#b45309", background: course.status === "ACTIVE" ? "rgba(8,129,236,0.1)" : course.status === "ARCHIVED" ? "rgba(124,58,237,0.12)" : "rgba(180,83,9,0.12)", padding: "3px 10px", borderRadius: "100px", textTransform: "uppercase" }}>
+                                        <div>
+                                            <span style={{ fontSize: "0.7rem", fontWeight: 800, color: course.status === "ACTIVE" ? "#0881ec" : course.status === "ARCHIVED" ? "#7c3aed" : "#b45309", background: course.status === "ACTIVE" ? "rgba(8,129,236,0.1)" : course.status === "ARCHIVED" ? "rgba(124,58,237,0.12)" : "rgba(180,83,9,0.12)", padding: "3px 10px", borderRadius: "100px", textTransform: "uppercase" }}>
                                             {course.status || "DRAFT"}
                                         </span>
-                                        <h3 style={{ fontFamily: "Outfit", fontSize: "1.2rem", fontWeight: 800, color: "#0a0f1e", marginTop: "0.5rem" }}>{course.title}</h3>
+                                        <h3 style={courseCardTitleStyle}>{course.title}</h3>
                                     </div>
-                                    <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                        <BookOpen size={24} color="#0881ec" />
+                                    <div style={courseCardIconWrapStyle}>
+                                        <BookOpen size={26} weight="duotone" color="#0881ec" />
                                     </div>
                                 </div>
 

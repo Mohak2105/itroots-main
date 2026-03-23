@@ -2,14 +2,14 @@
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Camera, CheckCircle, Gear, LockKey, ShieldCheck, User as UserIcon, WarningCircle } from "@phosphor-icons/react";
+import { Camera, CheckCircle, Gear, LockKey, ShieldCheck, User as UserIcon, WarningCircle, X } from "@phosphor-icons/react";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import { API_ORIGIN, ENDPOINTS } from "@/config/api";
-import { FACULTY_LOGIN_PATH, STUDENT_LOGIN_PATH } from "@/utils/portalRoutes";
+import { ADMIN_LOGIN_PATH, FACULTY_LOGIN_PATH, STUDENT_LOGIN_PATH } from "@/utils/portalRoutes";
 import styles from "./profile-settings.module.css";
 
-type SupportedRole = "STUDENT" | "FACULTY";
+type SupportedRole = "STUDENT" | "FACULTY" | "ADMIN";
 
 type Props = {
     requiredRole: SupportedRole;
@@ -41,6 +41,7 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
     const [passwordMessage, setPasswordMessage] = useState<MessageState>(null);
     const [isSavingProfile, setIsSavingProfile] = useState(false);
     const [isSavingPassword, setIsSavingPassword] = useState(false);
+    const [showPasswordModal, setShowPasswordModal] = useState(false);
     const [selectedFileName, setSelectedFileName] = useState("");
     const [profileImagePayload, setProfileImagePayload] = useState("");
     const [imagePreview, setImagePreview] = useState("");
@@ -54,12 +55,19 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
     });
 
     useEffect(() => {
-        const loginPath = requiredRole === "FACULTY" ? FACULTY_LOGIN_PATH : STUDENT_LOGIN_PATH;
+        const loginPath = requiredRole === "ADMIN"
+            ? ADMIN_LOGIN_PATH
+            : requiredRole === "FACULTY"
+                ? FACULTY_LOGIN_PATH
+                : STUDENT_LOGIN_PATH;
 
         if (!isLoading) {
-            const isFacultyRoleRequired = requiredRole === "FACULTY";
-            const isFacultyUser = user?.role?.toUpperCase() === "FACULTY";
-            const hasRole = isFacultyRoleRequired ? isFacultyUser : user?.role === requiredRole;
+            const normalizedRole = user?.role?.toUpperCase();
+            const hasRole = requiredRole === "ADMIN"
+                ? normalizedRole === "SUPER_ADMIN" || normalizedRole === "CMS_MANAGER"
+                : requiredRole === "FACULTY"
+                    ? normalizedRole === "FACULTY"
+                    : user?.role === requiredRole;
 
             if (!user || !hasRole) {
                 router.push(loginPath);
@@ -83,6 +91,10 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
 
     const userInitials = useMemo(() => {
         if (!user?.name) {
+            if (requiredRole === "ADMIN") {
+                return "AD";
+            }
+
             return requiredRole === "FACULTY" ? "TR" : "ST";
         }
 
@@ -94,9 +106,27 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
             .toUpperCase();
     }, [requiredRole, user?.name]);
 
+    const usePasswordModal = requiredRole === "STUDENT" || requiredRole === "FACULTY";
+
     if (isLoading || !user) {
         return null;
     }
+
+    const openPasswordModal = () => {
+        setPasswordMessage(null);
+        setShowPasswordModal(true);
+    };
+
+    const closePasswordModal = () => {
+        setShowPasswordModal(false);
+        setPasswordMessage(null);
+        setFormData((prev) => ({
+            ...prev,
+            currentPassword: "",
+            newPassword: "",
+            confirmPassword: "",
+        }));
+    };
 
     const handleImageChange = (event: ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -296,60 +326,141 @@ export default function ProfileSettingsPanel({ requiredRole, roleLabel, pageTitl
                                 <LockKey size={20} weight="duotone" color="#8b5cf6" />
                                 Change Password
                             </div>
-                            <form onSubmit={handleChangePassword}>
-                                <div className={styles.formGrid}>
-                                    <div className={styles.formGroup}>
-                                        <label>Current Password</label>
-                                        <input
-                                            type="password"
-                                            className={styles.input}
-                                            value={formData.currentPassword}
-                                            onChange={(event) => setFormData((prev) => ({ ...prev, currentPassword: event.target.value }))}
-                                            placeholder="Enter current password"
-                                            required
-                                        />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label>New Password</label>
-                                        <input
-                                            type="password"
-                                            className={styles.input}
-                                            value={formData.newPassword}
-                                            onChange={(event) => setFormData((prev) => ({ ...prev, newPassword: event.target.value }))}
-                                            placeholder="Enter new password"
-                                            required
-                                        />
-                                    </div>
-                                    <div className={styles.formGroup}>
-                                        <label>Confirm Password</label>
-                                        <input
-                                            type="password"
-                                            className={styles.input}
-                                            value={formData.confirmPassword}
-                                            onChange={(event) => setFormData((prev) => ({ ...prev, confirmPassword: event.target.value }))}
-                                            placeholder="Repeat new password"
-                                            required
-                                        />
-                                    </div>
-                                </div>
-
-                                {passwordMessage && (
-                                    <div className={`${styles.message} ${passwordMessage.type === "success" ? styles.messageSuccess : styles.messageError}`}>
-                                        {passwordMessage.type === "success" ? <CheckCircle size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}
-                                        {passwordMessage.text}
-                                    </div>
-                                )}
-
-                                <div className={styles.formFooter}>
-                                    <button type="submit" className={styles.saveBtnSecondary} disabled={isSavingPassword}>
-                                        {isSavingPassword ? "Updating..." : "Update Password"}
+                            {usePasswordModal ? (
+                                <div className={styles.passwordActionWrap}>
+                                    <p className={styles.passwordActionText}>
+                                        Open the password popup to update your current password securely.
+                                    </p>
+                                    <button type="button" className={styles.saveBtnSecondary} onClick={openPasswordModal}>
+                                        Change Password
                                     </button>
                                 </div>
-                            </form>
+                            ) : (
+                                <form onSubmit={handleChangePassword}>
+                                    <div className={styles.formGrid}>
+                                        <div className={styles.formGroup}>
+                                            <label>Current Password</label>
+                                            <input
+                                                type="password"
+                                                className={styles.input}
+                                                value={formData.currentPassword}
+                                                onChange={(event) => setFormData((prev) => ({ ...prev, currentPassword: event.target.value }))}
+                                                placeholder="Enter current password"
+                                                required
+                                            />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label>New Password</label>
+                                            <input
+                                                type="password"
+                                                className={styles.input}
+                                                value={formData.newPassword}
+                                                onChange={(event) => setFormData((prev) => ({ ...prev, newPassword: event.target.value }))}
+                                                placeholder="Enter new password"
+                                                required
+                                            />
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label>Confirm Password</label>
+                                            <input
+                                                type="password"
+                                                className={styles.input}
+                                                value={formData.confirmPassword}
+                                                onChange={(event) => setFormData((prev) => ({ ...prev, confirmPassword: event.target.value }))}
+                                                placeholder="Repeat new password"
+                                                required
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {passwordMessage && (
+                                        <div className={`${styles.message} ${passwordMessage.type === "success" ? styles.messageSuccess : styles.messageError}`}>
+                                            {passwordMessage.type === "success" ? <CheckCircle size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}
+                                            {passwordMessage.text}
+                                        </div>
+                                    )}
+
+                                    <div className={styles.formFooter}>
+                                        <button type="submit" className={styles.saveBtnSecondary} disabled={isSavingPassword}>
+                                            {isSavingPassword ? "Updating..." : "Update Password"}
+                                        </button>
+                                    </div>
+                                </form>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
+
+            {usePasswordModal && showPasswordModal ? (
+                <div className={styles.modalOverlay} onClick={closePasswordModal}>
+                    <div className={styles.modalCard} onClick={(event) => event.stopPropagation()}>
+                        <div className={styles.modalHeader}>
+                            <div>
+                                <div className={styles.modalTitle}>Change Password</div>
+                                <div className={styles.modalSubtext}>Enter your current password and choose a new one.</div>
+                            </div>
+                            <button type="button" className={styles.modalCloseButton} onClick={closePasswordModal} aria-label="Close password popup">
+                                <X size={18} weight="bold" />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleChangePassword}>
+                            <div className={styles.formGrid}>
+                                <div className={styles.formGroup}>
+                                    <label>Current Password</label>
+                                    <input
+                                        type="password"
+                                        className={styles.input}
+                                        value={formData.currentPassword}
+                                        onChange={(event) => setFormData((prev) => ({ ...prev, currentPassword: event.target.value }))}
+                                        placeholder="Enter current password"
+                                        required
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>New Password</label>
+                                    <input
+                                        type="password"
+                                        className={styles.input}
+                                        value={formData.newPassword}
+                                        onChange={(event) => setFormData((prev) => ({ ...prev, newPassword: event.target.value }))}
+                                        placeholder="Enter new password"
+                                        required
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Confirm Password</label>
+                                    <input
+                                        type="password"
+                                        className={styles.input}
+                                        value={formData.confirmPassword}
+                                        onChange={(event) => setFormData((prev) => ({ ...prev, confirmPassword: event.target.value }))}
+                                        placeholder="Repeat new password"
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            {passwordMessage && (
+                                <div className={`${styles.message} ${passwordMessage.type === "success" ? styles.messageSuccess : styles.messageError}`}>
+                                    {passwordMessage.type === "success" ? <CheckCircle size={18} weight="fill" /> : <WarningCircle size={18} weight="fill" />}
+                                    {passwordMessage.text}
+                                </div>
+                            )}
+
+                            <div className={styles.modalFooter}>
+                                <button type="button" className={styles.modalSecondaryButton} onClick={closePasswordModal}>
+                                    Cancel
+                                </button>
+                                <button type="submit" className={styles.saveBtnSecondary} disabled={isSavingPassword}>
+                                    {isSavingPassword ? "Updating..." : "Update Password"}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            ) : null}
         </LMSShell>
     );
 }

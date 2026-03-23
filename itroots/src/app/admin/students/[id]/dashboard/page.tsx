@@ -2,29 +2,40 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useLMSAuth } from "@/app/lms/auth-context";
+import { useParams, useRouter } from "next/navigation";
 import LMSShell from "@/components/lms/LMSShell";
+import { useLMSAuth } from "@/app/lms/auth-context";
 import { ENDPOINTS } from "@/config/api";
+import styles from "@/app/lms/student/dashboard/dashboard.module.css";
 import {
-    buildStudentActionHref,
-    buildStudentContentViewerHref,
-    extractStudentActionUrl,
-    shouldOpenExternally,
-} from "@/utils/studentContentViewer";
-import { fetchStudentUploadedVideos, type StudentVideoRecord } from "@/utils/studentVideos";
-import styles from "./dashboard.module.css";
-import {
-    GraduationCap,
+    ArrowLeft,
     CalendarCheck,
-    ArrowRight,
-    ChartBar,
+    GraduationCap,
     Megaphone,
-    PlayCircle,
+    ShieldCheck,
     VideoCamera,
 } from "@phosphor-icons/react";
 
-type DashboardData = {
+type PreviewStudent = {
+    id: string;
+    name: string;
+    email: string;
+    isActive: boolean;
+};
+
+type UploadedVideoItem = {
+    id: string;
+    title: string;
+    description?: string;
+    contentUrl?: string;
+    fileUrl?: string;
+    createdAt?: string;
+    uploadedAt?: string;
+    subject?: string;
+};
+
+type PreviewPayload = {
+    student: PreviewStudent;
     summary: {
         enrolledBatches: number;
         attendancePercentage: number;
@@ -32,10 +43,9 @@ type DashboardData = {
         pendingAssignments: number;
         upcomingLiveClasses: number;
     };
-    enrollments: any[];
     announcements: any[];
     notifications: any[];
-    liveClasses: any[];
+    uploadedVideos: UploadedVideoItem[];
 };
 
 type FeedItem = {
@@ -43,15 +53,8 @@ type FeedItem = {
     title: string;
     body: string;
     createdAt: string;
-    authorName: string;
     kind: "ANNOUNCEMENT" | "NOTIFICATION";
-    actionUrl?: string;
-    actionLabel?: string;
-    opensInNewTab?: boolean;
-    notificationType?: string;
 };
-
-type UploadedVideoItem = StudentVideoRecord;
 
 const formatDate = (value?: string) => {
     if (!value) return "-";
@@ -100,61 +103,23 @@ const getVideoThumbnail = (video: UploadedVideoItem) => {
     return "";
 };
 
-const buildNotificationAction = (notificationType: string | undefined, title: string, rawActionUrl?: string) => {
-    if (!rawActionUrl) {
-        return { actionUrl: undefined, actionLabel: undefined, opensInNewTab: false };
-    }
-
-    const upperType = String(notificationType || "").toUpperCase();
-    const upperTitle = title.toUpperCase();
-    const actionLabel = upperType === "PLACEMENT"
-        ? "View Placement"
-        : upperTitle.includes("LIVE CLASS")
-            ? "Join"
-            : upperTitle.includes("VIDEO")
-                ? "Watch"
-                : upperTitle.includes("ASSIGNMENT")
-                    ? "View"
-                    : "Open";
-    const opensInNewTab = shouldOpenExternally(title, actionLabel, rawActionUrl);
-
-    return {
-        actionUrl: opensInNewTab ? rawActionUrl : buildStudentActionHref(rawActionUrl, title),
-        actionLabel,
-        opensInNewTab,
-    };
-};
-
 const toFeedItems = (announcements: any[], notifications: any[]): FeedItem[] => {
     const announcementItems = announcements.map((item: any) => ({
         id: `announcement-${item.id}`,
         title: item.title || "Announcement",
         body: item.content || "",
         createdAt: item.createdAt,
-        authorName: item.author?.name || "Admin",
         kind: "ANNOUNCEMENT" as const,
     }));
 
     const notificationItems = notifications.map((item: any) => {
         const notification = item.notification || {};
-        const title = notification.title || "Notification";
-        const { actionUrl, actionLabel, opensInNewTab } = buildNotificationAction(
-            notification.type,
-            title,
-            extractStudentActionUrl(notification.message)
-        );
-
         return {
             id: `notification-${item.id}`,
-            title,
+            title: notification.title || "Notification",
             body: notification.message || "",
             createdAt: notification.createdAt || item.createdAt,
-            authorName: notification.creator?.name || "Admin",
             kind: "NOTIFICATION" as const,
-            actionUrl,
-            actionLabel,
-            opensInNewTab,
-            notificationType: notification.type,
         };
     });
 
@@ -163,90 +128,102 @@ const toFeedItems = (announcements: any[], notifications: any[]): FeedItem[] => 
         .slice(0, 3);
 };
 
-export default function StudentDashboard() {
+export default function AdminStudentDashboardPreviewPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
-
-    const [dashboard, setDashboard] = useState<DashboardData>({
-        summary: {
-            enrolledBatches: 0,
-            attendancePercentage: 0,
-            averageTestScore: 0,
-            pendingAssignments: 0,
-            upcomingLiveClasses: 0,
-        },
-        enrollments: [],
-        announcements: [],
-        notifications: [],
-        liveClasses: [],
-    });
+    const params = useParams<{ id: string }>();
+    const studentId = typeof params?.id === "string" ? params.id : "";
+    const [payload, setPayload] = useState<PreviewPayload | null>(null);
     const [loading, setLoading] = useState(true);
     const [fetchError, setFetchError] = useState<string | null>(null);
-    const [uploadedVideos, setUploadedVideos] = useState<UploadedVideoItem[]>([]);
 
     useEffect(() => {
-        if (!isLoading && (!user || user.role !== "STUDENT")) {
-            router.push("/student/login");
+        if (!isLoading && (!user || user.role !== "SUPER_ADMIN")) {
+            router.push("/admin/login");
         }
     }, [user, isLoading, router]);
 
     useEffect(() => {
-        if (!token) return;
+        if (!token || !studentId) {
+            return;
+        }
 
-        fetch(ENDPOINTS.STUDENT.DASHBOARD, {
+        setLoading(true);
+        fetch(ENDPOINTS.ADMIN.STUDENT_DASHBOARD_PREVIEW(studentId), {
             headers: { Authorization: `Bearer ${token}` },
         })
-            .then((r) => r.json())
-            .then(async (dashboardData) => {
-                if (dashboardData?.summary) {
-                    setDashboard(dashboardData);
-                    setFetchError(null);
-                } else {
-                    const msg = dashboardData?.message || "Failed to load dashboard data.";
-                    const detail = dashboardData?.detail ? ` (${dashboardData.detail})` : "";
-                    setFetchError(msg + detail);
+            .then(async (response) => {
+                const data = await response.json().catch(() => null);
+                if (!response.ok) {
+                    throw new Error(data?.message || "Failed to load student dashboard preview.");
                 }
-
-                const enrollmentList = Array.isArray(dashboardData?.enrollments) ? dashboardData.enrollments : [];
-                const videos = await fetchStudentUploadedVideos(token, enrollmentList);
-                setUploadedVideos(videos);
+                setPayload(data);
+                setFetchError(null);
             })
-            .catch(() => setFetchError("Could not reach the server. Please check your connection."))
+            .catch((error) => {
+                setFetchError(error instanceof Error ? error.message : "Failed to load student dashboard preview.");
+            })
             .finally(() => setLoading(false));
-    }, [token]);
+    }, [studentId, token]);
 
     const feedItems = useMemo(
-        () => toFeedItems(dashboard.announcements || [], dashboard.notifications || []),
-        [dashboard.announcements, dashboard.notifications]
+        () => toFeedItems(payload?.announcements || [], payload?.notifications || []),
+        [payload?.announcements, payload?.notifications]
     );
-    const batchNameById = useMemo(
-        () =>
-            Object.fromEntries(
-                (dashboard.enrollments || []).map((enrollment: any) => [
-                    enrollment.batchId,
-                    enrollment.batch?.name || "Batch",
-                ])
-            ),
-        [dashboard.enrollments]
-    );
-    const recentVideos = useMemo(() => uploadedVideos.slice(0, 3), [uploadedVideos]);
 
-    if (isLoading || !user) return null;
+    if (isLoading || !user) {
+        return null;
+    }
 
     return (
-        <LMSShell pageTitle="Dashboard">
+        <LMSShell pageTitle="Student Dashboard Preview">
             <div className={styles.page}>
+                <Link
+                    href="/admin/students"
+                    style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "0.45rem",
+                        color: "#0881ec",
+                        fontWeight: 700,
+                        textDecoration: "none",
+                        width: "fit-content",
+                    }}
+                >
+                    <ArrowLeft size={16} weight="bold" />
+                    Back to Student Records
+                </Link>
+
                 <div className={styles.banner}>
                     <div>
-                        <div className={styles.bannerTitle}>Dashboard</div>
-                        <div className={styles.bannerSub}>Track your batches, attendance, scores, and notifications.</div>
+                        <div className={styles.bannerTitle}>Student Dashboard Preview</div>
+                        <div className={styles.bannerSub}>
+                            {payload?.student ? `${payload.student.name} • ${payload.student.email}` : "Loading student dashboard..."}
+                        </div>
+                        <div
+                            style={{
+                                marginTop: "0.85rem",
+                                display: "inline-flex",
+                                alignItems: "center",
+                                gap: "0.4rem",
+                                padding: "0.45rem 0.8rem",
+                                borderRadius: "999px",
+                                background: "rgba(255,255,255,0.16)",
+                                color: "#ffffff",
+                                fontSize: "0.8rem",
+                                fontWeight: 700,
+                            }}
+                        >
+                            <ShieldCheck size={14} weight="fill" />
+                            Read-only admin view
+                        </div>
                     </div>
                     <GraduationCap size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
 
                 {fetchError && (
                     <div style={{ background: "#fef2f2", border: "1px solid #fecaca", color: "#b91c1c", borderRadius: "10px", padding: "0.85rem 1.2rem", fontSize: "0.9rem" }}>
-                        <strong>Dashboard Error:</strong> {fetchError}
+                        <strong>Preview Error:</strong> {fetchError}
                     </div>
                 )}
 
@@ -256,7 +233,7 @@ export default function StudentDashboard() {
                             <GraduationCap size={22} weight="duotone" />
                         </div>
                         <div className={styles.statInfo}>
-                            <div className={styles.statValue}>{loading ? "-" : dashboard.summary.enrolledBatches}</div>
+                            <div className={styles.statValue}>{loading ? "-" : payload?.summary.enrolledBatches ?? 0}</div>
                             <div className={styles.statLabel}>Enrolled Batches</div>
                         </div>
                     </div>
@@ -265,31 +242,28 @@ export default function StudentDashboard() {
                             <CalendarCheck size={22} weight="duotone" />
                         </div>
                         <div className={styles.statInfo}>
-                            <div className={styles.statValue}>{loading ? "-" : `${dashboard.summary.attendancePercentage}%`}</div>
+                            <div className={styles.statValue}>{loading ? "-" : `${payload?.summary.attendancePercentage ?? 0}%`}</div>
                             <div className={styles.statLabel}>Attendance</div>
                         </div>
                     </div>
-
                     <div className={styles.statCard}>
-                        <div className={`${styles.statIcon} ${styles.statIconPurple}`}>
-                            <ChartBar size={22} weight="duotone" />
+                        <div className={`${styles.statIcon} ${styles.statIconOrange}`}>
+                            <Megaphone size={22} weight="duotone" />
                         </div>
                         <div className={styles.statInfo}>
-                            <div className={styles.statValue}>{loading ? "-" : `${dashboard.summary.averageTestScore}%`}</div>
-                            <div className={styles.statLabel}>Avg. Score</div>
+                            <div className={styles.statValue}>{loading ? "-" : feedItems.length}</div>
+                            <div className={styles.statLabel}>Notifications</div>
                         </div>
                     </div>
                 </div>
+
                 <div className={styles.singleCol}>
                     <div className={styles.section}>
                         <div className={styles.sectionHeader}>
                             <div>
                                 <span className={styles.sectionTitle}>Uploaded Videos</span>
-                                <div className={styles.sectionSub}>
-                                    Showing {recentVideos.length} of {uploadedVideos.length} videos in this view
-                                </div>
+                                <div className={styles.sectionSub}>Read-only preview of the student dashboard video area.</div>
                             </div>
-                            <Link href="/student/my-learning" className={styles.viewAll}>View More <ArrowRight size={14} /></Link>
                         </div>
 
                         {loading ? (
@@ -298,46 +272,32 @@ export default function StudentDashboard() {
                                     <div key={item} className={styles.videoSkeletonCard} />
                                 ))}
                             </div>
-                        ) : recentVideos.length === 0 ? (
+                        ) : (payload?.uploadedVideos || []).length === 0 ? (
                             <div className={styles.emptyState}>
                                 <VideoCamera size={40} color="#cbd5e1" weight="duotone" />
-                                <p>No uploaded videos yet.</p>
+                                <p>No uploaded videos found for this student.</p>
                             </div>
                         ) : (
                             <div className={styles.videoCardGrid}>
-                                {recentVideos.map((video) => {
-                                    const viewerUrl = buildStudentContentViewerHref(video.contentUrl || video.fileUrl || "", video.title);
+                                {(payload?.uploadedVideos || []).map((video) => {
                                     const thumbnail = getVideoThumbnail(video);
                                     return (
-                                        <Link key={video.id} href={viewerUrl} className={styles.videoPreviewCard}>
+                                        <div key={video.id} className={styles.videoPreviewCard} style={{ cursor: "default" }}>
                                             <div className={styles.videoPreviewThumb}>
                                                 {thumbnail ? (
-                                                    <img
-                                                        src={thumbnail}
-                                                        alt={video.title}
-                                                        className={styles.videoPreviewImage}
-                                                    />
+                                                    <img src={thumbnail} alt={video.title} className={styles.videoPreviewImage} />
                                                 ) : (
                                                     <div className={styles.videoPreviewFallback}>
                                                         <VideoCamera size={28} weight="duotone" />
                                                     </div>
                                                 )}
-                                                <div className={styles.videoPreviewPlay}>
-                                                    <PlayCircle size={56} weight="fill" />
-                                                </div>
                                             </div>
                                             <div className={styles.videoPreviewBody}>
                                                 <div className={styles.videoPreviewTitle}>{video.title || "Untitled Video"}</div>
-                                                <div className={styles.videoPreviewMeta}>
-                                                    {video.subject || "Course"}
-                                                    {"  "}
-                                                    {batchNameById[video.batchId || ""] || "Assigned Batch"}
-                                                </div>
-                                                <div className={styles.videoPreviewDate}>
-                                                    {formatDate(video.uploadedAt || video.createdAt)}
-                                                </div>
+                                                <div className={styles.videoPreviewMeta}>{video.subject || "Course"}</div>
+                                                <div className={styles.videoPreviewDate}>{formatDate(video.uploadedAt || video.createdAt)}</div>
                                             </div>
-                                        </Link>
+                                        </div>
                                     );
                                 })}
                             </div>
@@ -348,19 +308,18 @@ export default function StudentDashboard() {
                         <div className={styles.sectionHeader}>
                             <div>
                                 <span className={styles.sectionTitle}>Recent Notifications</span>
-                                <div className={styles.sectionSub}>Showing the latest 3 updates from your LMS feed.</div>
+                                <div className={styles.sectionSub}>Latest updates shown on the student dashboard.</div>
                             </div>
-                            <Link href="/student/announcements" className={styles.viewAll}>View More <ArrowRight size={14} /></Link>
                         </div>
 
                         {loading ? (
                             <div className={styles.skeletonList}>
-                                {[1, 2, 3].map((i) => <div key={i} className={styles.skeleton} />)}
+                                {[1, 2, 3].map((item) => <div key={item} className={styles.skeleton} />)}
                             </div>
                         ) : feedItems.length === 0 ? (
                             <div className={styles.emptyState}>
                                 <Megaphone size={40} color="#cbd5e1" weight="duotone" />
-                                <p>No notifications yet.</p>
+                                <p>No notifications found for this student.</p>
                             </div>
                         ) : (
                             <div className={styles.annList}>
@@ -372,19 +331,6 @@ export default function StudentDashboard() {
                                         <div className={styles.annContent}>
                                             <div className={styles.annTitle}>{item.title}</div>
                                             <div className={styles.annBody} style={{ whiteSpace: "pre-line" }}>{item.body}</div>
-                                            {item.actionUrl ? (
-                                                item.opensInNewTab ? (
-                                                    <a href={item.actionUrl} target="_blank" rel="noreferrer" className={styles.annAction}>
-                                                        {item.actionLabel || "Open"}
-                                                        <ArrowRight size={14} />
-                                                    </a>
-                                                ) : (
-                                                    <Link href={item.actionUrl} className={styles.annAction}>
-                                                        {item.actionLabel || "Open"}
-                                                        <ArrowRight size={14} />
-                                                    </Link>
-                                                )
-                                            ) : null}
                                             <div className={styles.annMeta}>{formatDate(item.createdAt)}</div>
                                         </div>
                                     </div>

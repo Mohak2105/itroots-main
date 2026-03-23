@@ -29,6 +29,7 @@ export default function StudentCalendarPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
     const [liveClasses, setLiveClasses] = useState<LiveClassItem[]>([]);
+    const [nowTick, setNowTick] = useState(() => Date.now());
     const [error, setError] = useState("");
 
     useEffect(() => {
@@ -78,19 +79,25 @@ export default function StudentCalendarPage() {
         return () => window.clearInterval(intervalId);
     }, [token]);
 
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            setNowTick(Date.now());
+        }, 1000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
+
     const visibleClasses = useMemo(
-        () => liveClasses.filter((item) => item.status !== "COMPLETED"),
-        [liveClasses],
+        () => liveClasses.filter((item) => {
+            const accessState = getLiveClassAccessState(item, nowTick);
+            return accessState === "AVAILABLE" || accessState === "NOT_STARTED";
+        }),
+        [liveClasses, nowTick],
     );
 
     const sortedClasses = useMemo(
         () => [...visibleClasses].sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime()),
         [visibleClasses],
-    );
-
-    const availableClasses = useMemo(
-        () => sortedClasses.filter((item) => getLiveClassAccessState(item) === "AVAILABLE"),
-        [sortedClasses],
     );
 
     if (isLoading || !user) return null;
@@ -101,20 +108,9 @@ export default function StudentCalendarPage() {
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Live Classes</div>
-                        <div className={styles.bannerSub}>See your scheduled classes and use the join link directly from the LMS.</div>
+                        <div className={styles.bannerSub}>See your Live classes and use the join link.</div>
                     </div>
                     <VideoCamera size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
-                </div>
-
-                <div className={styles.summaryGrid}>
-                    <div className={styles.summaryCard}>
-                        <div className={styles.summaryValue}>{availableClasses.length}</div>
-                        <div className={styles.summaryLabel}>Available To Join</div>
-                    </div>
-                    <div className={styles.summaryCard}>
-                        <div className={styles.summaryValue}>{sortedClasses.length}</div>
-                        <div className={styles.summaryLabel}>Total Live Classes</div>
-                    </div>
                 </div>
 
                 {error ? <div className={styles.errorBanner}>{error}</div> : null}
@@ -138,7 +134,7 @@ export default function StudentCalendarPage() {
                                 const scheduledDate = new Date(event.scheduledAt);
                                 const isCancelled = event.status === "CANCELLED";
                                 const joinTarget = resolveLiveClassJoinTarget(event, "STUDENT");
-                                const accessState = getLiveClassAccessState(event);
+                                const accessState = getLiveClassAccessState(event, nowTick);
                                 const joinDisabledLabel = accessState === "NOT_STARTED"
                                     ? "Starts at Scheduled Time"
                                     : accessState === "EXPIRED"

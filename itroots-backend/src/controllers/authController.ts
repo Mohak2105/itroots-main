@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { Op } from 'sequelize';
 import User from '../models/User';
+import { resolveUserNameFields } from '../utils/userNames';
 
 interface AuthenticatedRequest extends Request {
     user?: User;
@@ -16,6 +17,9 @@ function buildUserPayload(user: User) {
     return {
         id: user.id,
         username: user.username,
+        firstName: user.firstName,
+        middleName: user.middleName,
+        lastName: user.lastName,
         name: user.name,
         email: user.email,
         phone: user.phone,
@@ -63,7 +67,12 @@ function saveProfileImage(fileData: string, fileName?: string) {
 
 export const register = async (req: Request, res: Response) => {
     try {
-        const { name, email, password, role, username, phone, specialization } = req.body;
+        const { name, firstName, middleName, lastName, email, password, role, username, phone, specialization } = req.body;
+        const resolvedNames = resolveUserNameFields({ name, firstName, middleName, lastName });
+
+        if (!resolvedNames.name) {
+            return res.status(400).json({ message: 'Name is required' });
+        }
 
         const existingUser = await User.findOne({
             where: {
@@ -80,7 +89,10 @@ export const register = async (req: Request, res: Response) => {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const user = await User.create({
-            name,
+            firstName: resolvedNames.firstName,
+            middleName: resolvedNames.middleName,
+            lastName: resolvedNames.lastName,
+            name: resolvedNames.name,
             email,
             username,
             phone,
@@ -166,16 +178,39 @@ export const updateProfile = async (req: AuthenticatedRequest, res: Response) =>
         }
 
         const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+        const hasStructuredNameUpdate = req.body.firstName !== undefined || req.body.middleName !== undefined || req.body.lastName !== undefined;
         const phone = typeof req.body.phone === 'string' ? req.body.phone.trim() : '';
         const fileData = typeof req.body.fileData === 'string' ? req.body.fileData : '';
         const fileName = typeof req.body.fileName === 'string' ? req.body.fileName : undefined;
 
-        if (!name) {
+        if (!name && !hasStructuredNameUpdate) {
             return res.status(400).json({ message: 'Name is required' });
         }
 
-        const updates: Partial<{ name: string; phone: string | null; profileImage: string }> = {
-            name,
+        const resolvedNames = resolveUserNameFields(
+            {
+                name,
+                firstName: req.body.firstName,
+                middleName: req.body.middleName,
+                lastName: req.body.lastName,
+            },
+            {
+                name: req.user.name,
+                firstName: req.user.firstName,
+                middleName: req.user.middleName,
+                lastName: req.user.lastName,
+            },
+        );
+
+        if (!resolvedNames.name) {
+            return res.status(400).json({ message: 'Name is required' });
+        }
+
+        const updates: Partial<{ firstName: string | null; middleName: string | null; lastName: string | null; name: string; phone: string | null; profileImage: string }> = {
+            firstName: resolvedNames.firstName,
+            middleName: resolvedNames.middleName,
+            lastName: resolvedNames.lastName,
+            name: resolvedNames.name,
             phone: phone || null,
         };
 
@@ -231,4 +266,3 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response) =
         res.status(500).json({ message: 'Unable to update password' });
     }
 };
-

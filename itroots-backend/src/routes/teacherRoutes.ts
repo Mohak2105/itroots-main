@@ -3,6 +3,7 @@ import {
     getFacultyDashboard,
     getMyBatches,
     getBatchData,
+    getBatchAnalytics,
     addBatchContent,
     updateBatchContent,
     deleteBatchContent,
@@ -39,6 +40,7 @@ router.use(authorizeRole('Faculty', 'TEACHER'));
 router.get('/dashboard', getFacultyDashboard);
 router.get('/my-batches', getMyBatches);
 router.get('/batch-data/:batchId', getBatchData);
+router.get('/batch-analytics/:batchId', getBatchAnalytics);
 router.post('/batch-content', addBatchContent);
 router.patch('/batch-content/:contentId', updateBatchContent);
 router.delete('/batch-content/:contentId', deleteBatchContent);

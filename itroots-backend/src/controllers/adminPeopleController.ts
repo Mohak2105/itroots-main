@@ -9,10 +9,14 @@ import Enrollment from '../models/Enrollment';
 import Payment from '../models/Payment';
 import { generateRandomPassword } from '../utils/credentials';
 import { sendWelcomeEmail } from '../services/mailer';
+import { resolveUserNameFields } from '../utils/userNames';
 
 const sanitizeUser = (user: any) => ({
     id: user.id,
     username: user.username,
+    firstName: user.firstName,
+    middleName: user.middleName,
+    lastName: user.lastName,
     name: user.name,
     email: user.email,
     phone: user.phone,
@@ -159,10 +163,11 @@ const issueWelcomeCredentials = async (user: any) => {
 export const createStudent = async (req: Request, res: Response) => {
     const transaction = await sequelize.transaction();
     try {
-        const { name, email, phone, courseId, batchId } = req.body;
-        if (!name || !email || !phone) {
+        const { name, firstName, middleName, lastName, email, phone, courseId, batchId } = req.body;
+        const resolvedNames = resolveUserNameFields({ name, firstName, middleName, lastName });
+        if (!resolvedNames.firstName || !email || !phone) {
             await transaction.rollback();
-            return res.status(400).json({ message: 'name, email and phone are required' });
+            return res.status(400).json({ message: 'firstName, email and phone are required' });
         }
 
         const normalizedEmail = normalizeEmail(email);
@@ -177,11 +182,22 @@ export const createStudent = async (req: Request, res: Response) => {
         const hashedPassword = await bcrypt.hash(plainPassword, 10);
         const { resolvedCourseId, batch } = await resolveCourseAndBatch(courseId, batchId);
 
-        const student = await User.create({ username, name, email: normalizedEmail, phone, password: hashedPassword, role: 'STUDENT', isActive: true }, { transaction });
+        const student = await User.create({
+            username,
+            firstName: resolvedNames.firstName,
+            middleName: resolvedNames.middleName,
+            lastName: resolvedNames.lastName,
+            name: resolvedNames.name,
+            email: normalizedEmail,
+            phone,
+            password: hashedPassword,
+            role: 'STUDENT',
+            isActive: true,
+        }, { transaction });
         await assignStudentToBatch(student.id, batch?.id, transaction);
         await transaction.commit();
 
-        await sendWelcomeEmail({ to: normalizedEmail, name, username, password: plainPassword, role: 'STUDENT' });
+        await sendWelcomeEmail({ to: normalizedEmail, name: resolvedNames.name, username, password: plainPassword, role: 'STUDENT' });
 
         res.status(201).json({
             message: 'Student created successfully',
@@ -215,10 +231,11 @@ export const assignStudentBatch = async (req: Request, res: Response) => {
 export const createFaculty = async (req: Request, res: Response) => {
     const transaction = await sequelize.transaction();
     try {
-        const { name, email, phone, specialization, assignedCourseId, assignedBatchId } = req.body;
-        if (!name || !email || !phone) {
+        const { name, firstName, middleName, lastName, email, phone, specialization, assignedCourseId, assignedBatchId } = req.body;
+        const resolvedNames = resolveUserNameFields({ name, firstName, middleName, lastName });
+        if (!resolvedNames.firstName || !email || !phone) {
             await transaction.rollback();
-            return res.status(400).json({ message: 'name, email and phone are required' });
+            return res.status(400).json({ message: 'firstName, email and phone are required' });
         }
 
         const normalizedEmail = normalizeEmail(email);
@@ -232,11 +249,23 @@ export const createFaculty = async (req: Request, res: Response) => {
         const plainPassword = generateRandomPassword();
         const hashedPassword = await bcrypt.hash(plainPassword, 10);
 
-        const Faculty = await User.create({ username, name, email: normalizedEmail, phone, password: hashedPassword, role: 'Faculty', specialization: specialization || 'General', isActive: true }, { transaction });
+        const Faculty = await User.create({
+            username,
+            firstName: resolvedNames.firstName,
+            middleName: resolvedNames.middleName,
+            lastName: resolvedNames.lastName,
+            name: resolvedNames.name,
+            email: normalizedEmail,
+            phone,
+            password: hashedPassword,
+            role: 'Faculty',
+            specialization: specialization || 'General',
+            isActive: true,
+        }, { transaction });
         const assignment = await assignFacultyToResources(Faculty.id, assignedCourseId, assignedBatchId, transaction);
         await transaction.commit();
 
-        await sendWelcomeEmail({ to: normalizedEmail, name, username, password: plainPassword, role: 'Faculty' });
+        await sendWelcomeEmail({ to: normalizedEmail, name: resolvedNames.name, username, password: plainPassword, role: 'Faculty' });
 
         res.status(201).json({
             message: 'Faculty created successfully',

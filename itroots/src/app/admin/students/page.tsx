@@ -14,6 +14,7 @@ import {
 } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
+import { createImpersonationTransfer } from "@/utils/impersonation";
 import styles from "./admin-students.module.css";
 import toast from "react-hot-toast";
 import { showStatusConfirmation } from "@/utils/toastUtils";
@@ -34,6 +35,9 @@ interface BatchInfo {
 interface Student {
     id: string;
     username?: string;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
     name: string;
     email: string;
     phone: string;
@@ -50,12 +54,44 @@ interface IssuedCredentials {
 }
 
 const EMPTY_FORM = {
-    name: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
     email: "",
     phone: "",
     courseId: "",
     batchId: "",
 };
+
+const splitNameParts = (value?: string) => {
+    const normalized = String(value || "").trim();
+    if (!normalized) {
+        return { firstName: "", middleName: "", lastName: "" };
+    }
+
+    const parts = normalized.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+        return { firstName: parts[0], middleName: "", lastName: "" };
+    }
+
+    if (parts.length === 2) {
+        return { firstName: parts[0], middleName: "", lastName: parts[1] };
+    }
+
+    return {
+        firstName: parts[0],
+        middleName: parts.slice(1, -1).join(" "),
+        lastName: parts[parts.length - 1],
+    };
+};
+
+const buildFullName = (firstName: string, middleName: string, lastName: string) =>
+    [firstName, middleName, lastName]
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
 
 const formatDate = (value: string) =>
     new Date(value).toLocaleDateString("en-IN", {
@@ -171,7 +207,9 @@ export default function AdminStudentsPage() {
         setIsEditing(true);
         setSelectedStudentId(student.id);
         setFormData({
-            name: student.name,
+            firstName: student.firstName || splitNameParts(student.name).firstName,
+            middleName: student.middleName || splitNameParts(student.name).middleName,
+            lastName: student.lastName || splitNameParts(student.name).lastName,
             email: student.email,
             phone: student.phone || "",
             courseId: primaryBatch?.courseId || "",
@@ -185,6 +223,8 @@ export default function AdminStudentsPage() {
         if (!token) return;
 
         try {
+            const fullName = buildFullName(formData.firstName, formData.middleName, formData.lastName);
+
             if (isEditing && selectedStudentId) {
                 const updateRes = await fetch(`${ENDPOINTS.ADMIN.USERS}/${selectedStudentId}`, {
                     method: "PUT",
@@ -193,7 +233,10 @@ export default function AdminStudentsPage() {
                         Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        name: formData.name.trim(),
+                        firstName: formData.firstName.trim(),
+                        middleName: formData.middleName.trim(),
+                        lastName: formData.lastName.trim(),
+                        name: fullName,
                         email: formData.email,
                         phone: formData.phone,
                     }),
@@ -231,7 +274,10 @@ export default function AdminStudentsPage() {
                         Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
-                        name: formData.name.trim(),
+                        firstName: formData.firstName.trim(),
+                        middleName: formData.middleName.trim(),
+                        lastName: formData.lastName.trim(),
+                        name: fullName,
                         email: formData.email,
                         phone: formData.phone,
                         courseId: formData.courseId,
@@ -245,7 +291,7 @@ export default function AdminStudentsPage() {
                 }
 
                 setIssuedCredentials({
-                    name: created?.student?.name || formData.name,
+                    name: created?.student?.name || fullName,
                     username: created?.credentials?.username || "",
                     password: created?.credentials?.password || "",
                     loginWith: created?.credentials?.loginWith || [],
@@ -304,6 +350,46 @@ export default function AdminStudentsPage() {
         }
     };
 
+    const handleImpersonate = async (student: Student) => {
+        if (!token) return;
+        const targetTab = typeof window !== "undefined" ? window.open("", "_blank") : null;
+
+        if (targetTab) {
+            targetTab.document.write("<title>Opening student dashboard...</title><p style=\"font-family: sans-serif; padding: 24px;\">Opening student dashboard...</p>");
+        }
+
+        try {
+            const res = await fetch(ENDPOINTS.ADMIN.IMPERSONATE(student.id), {
+                method: "POST",
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data?.message || "Impersonation failed");
+            }
+
+            const bridgeKey = createImpersonationTransfer(data.user, data.token);
+            if (!bridgeKey) {
+                throw new Error("Unable to open student dashboard");
+            }
+
+            const targetUrl = `/student/dashboard?impersonationKey=${encodeURIComponent(bridgeKey)}`;
+            if (targetTab && !targetTab.closed) {
+                targetTab.location.href = targetUrl;
+            } else if (typeof window !== "undefined") {
+                window.open(targetUrl, "_blank");
+            }
+
+            toast.success(`Opened ${data.user.name}'s dashboard in a new tab`);
+        } catch (err) {
+            if (targetTab && !targetTab.closed) {
+                targetTab.close();
+            }
+            console.error("Impersonation error:", err);
+            toast.error(err instanceof Error ? err.message : "Impersonation failed");
+        }
+    };
+
     const renderRows = (records: Student[]) => {
         if (loadingData) {
             return (
@@ -331,9 +417,16 @@ export default function AdminStudentsPage() {
                         <div className={styles.studentInfo}>
                             <div className={styles.avatar}>{getInitials(student.name)}</div>
                             <div>
-                                <Link href={`/admin/students/${student.id}`} className={styles.nameLink}>
+                                <a
+                                    href="#"
+                                    onClick={(event) => {
+                                        event.preventDefault();
+                                        void handleImpersonate(student);
+                                    }}
+                                    className={styles.nameLink}
+                                >
                                     {student.name}
-                                </Link>
+                                </a>
                             </div>
                         </div>
                     </td>
@@ -460,14 +553,32 @@ export default function AdminStudentsPage() {
                             <button onClick={resetModal}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className={styles.form}>
-                            <div className={styles.formGroup}>
-                                <label>Full Name</label>
-                                <input
-                                    required
-                                    value={formData.name}
-                                    onChange={(event) => setFormData({ ...formData, name: event.target.value })}
-                                    placeholder="e.g. Rahul Sharma"
-                                />
+                            <div className={styles.formGrid}>
+                                <div className={styles.formGroup}>
+                                    <label>First Name</label>
+                                    <input
+                                        required
+                                        value={formData.firstName}
+                                        onChange={(event) => setFormData({ ...formData, firstName: event.target.value })}
+                                        placeholder="Rahul"
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Middle Name</label>
+                                    <input
+                                        value={formData.middleName}
+                                        onChange={(event) => setFormData({ ...formData, middleName: event.target.value })}
+                                        placeholder="Kumar"
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Last Name</label>
+                                    <input
+                                        value={formData.lastName}
+                                        onChange={(event) => setFormData({ ...formData, lastName: event.target.value })}
+                                        placeholder="Sharma"
+                                    />
+                                </div>
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Email Address</label>

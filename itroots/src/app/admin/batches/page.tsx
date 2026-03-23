@@ -314,6 +314,27 @@ const calendarOverrideCSS = `
     text-decoration: none !important;
 }
 `;
+const batchCardTitleStyle = {
+    fontFamily: '"Times New Roman", Georgia, serif',
+    fontSize: "1.45rem",
+    fontWeight: 700,
+    color: "#08152f",
+    marginTop: "0.65rem",
+    lineHeight: 1.1,
+    letterSpacing: "0.01em",
+    textTransform: "capitalize" as const,
+};
+const batchCardIconWrapStyle = {
+    width: "52px",
+    height: "52px",
+    borderRadius: "16px",
+    background: "linear-gradient(145deg, rgba(8,129,236,0.16) 0%, rgba(59,130,246,0.12) 35%, rgba(16,185,129,0.14) 70%, rgba(245,158,11,0.16) 100%)",
+    border: "1px solid rgba(8,129,236,0.14)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.7)",
+};
 
 export default function AdminBatchesPage() {
     const { user, isLoading, token } = useLMSAuth();
@@ -515,10 +536,10 @@ export default function AdminBatchesPage() {
                                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.25rem" }}>
                                         <div>
                                             <span style={{ fontSize: "0.7rem", fontWeight: 800, color: "#0881ec", background: "rgba(8,129,236,0.1)", padding: "3px 10px", borderRadius: "100px", textTransform: "uppercase" }}>{batch.course?.title || "Unknown Course"}</span>
-                                            <h3 style={{ fontFamily: "Outfit", fontSize: "1.2rem", fontWeight: 800, color: "#0a0f1e", marginTop: "0.5rem" }}>{batch.name}</h3>
+                                            <h3 style={batchCardTitleStyle}>{batch.name}</h3>
                                         </div>
-                                        <div style={{ width: "40px", height: "40px", borderRadius: "10px", background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                                            <CalendarIcon size={24} color="#0881ec" />
+                                        <div style={batchCardIconWrapStyle}>
+                                            <CalendarIcon size={26} weight="duotone" color="#0881ec" />
                                         </div>
                                     </div>
 

@@ -270,8 +270,8 @@ export default function AdminPlacementsPage() {
             <div className={styles.container}>
                 <div className={styles.headerCard}>
                     <div className={styles.headerInfo}>
-                        <h1>Placements & Jobs</h1>
-                        <p>Manage job placements, drives, due dates, and student access.</p>
+                        <h1>Placements</h1>
+                        <p>Manage job placements, drives, due dates.</p>
                     </div>
                     <div className={styles.headerActions}>
                         <div className={styles.searchBox}>

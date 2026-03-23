@@ -48,36 +48,6 @@
     color: rgba(255, 255, 255, 0.82);
 }
 
-.summaryGrid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
-    gap: 1rem;
-}
-
-.summaryCard {
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 16px;
-    padding: 1.25rem 1.35rem;
-    display: flex;
-    flex-direction: column;
-    gap: 0.4rem;
-}
-
-.summaryValue {
-    font-size: 1.75rem;
-    font-weight: 800;
-    color: #0f172a;
-}
-
-.summaryLabel {
-    font-size: 0.84rem;
-    font-weight: 700;
-    color: #64748b;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-}
-
 .errorBanner {
     border-radius: 16px;
     border: 1px solid #fecaca;
@@ -262,10 +232,6 @@
 }
 
 @media (max-width: 900px) {
-    .summaryGrid {
-        grid-template-columns: 1fr;
-    }
-
     .liveClassCard {
         flex-direction: column;
         align-items: stretch;

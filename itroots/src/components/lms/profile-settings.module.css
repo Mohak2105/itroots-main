@@ -230,6 +230,22 @@
     gap: 0.75rem;
 }
 
+.passwordActionWrap {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.passwordActionText {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    max-width: 440px;
+}
+
 .saveBtn,
 .saveBtnSecondary {
     padding: 0.75rem 1.7rem;
@@ -263,6 +279,82 @@
     transform: none;
 }
 
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(15, 23, 42, 0.42);
+    backdrop-filter: blur(8px);
+}
+
+.modalCard {
+    width: min(100%, 640px);
+    background: #fff;
+    border-radius: 24px;
+    border: 1px solid #e6edf5;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
+    padding: 1.5rem;
+}
+
+.modalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+
+.modalTitle {
+    font-family: 'Outfit', 'Inter', sans-serif;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #111827;
+}
+
+.modalSubtext {
+    margin-top: 0.3rem;
+    color: #64748b;
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+
+.modalCloseButton {
+    width: 38px;
+    height: 38px;
+    border: 1px solid #dbe3ee;
+    border-radius: 12px;
+    background: #f8fafc;
+    color: #475569;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.modalFooter {
+    margin-top: 1.25rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.modalSecondaryButton {
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    border: 1px solid #dbe3ee;
+    background: #fff;
+    color: #475569;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+}
+
 @media (max-width: 900px) {
     .layout {
         grid-template-columns: 1fr;
@@ -290,5 +382,11 @@
     .profileCard {
         flex-direction: column;
         text-align: center;
+    }
+
+    .passwordActionWrap,
+    .modalFooter {
+        flex-direction: column;
+        align-items: stretch;
     }
 }

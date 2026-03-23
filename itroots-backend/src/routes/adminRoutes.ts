@@ -11,7 +11,8 @@ import {
     deleteUser,
     getAllFaculty,
     getAdminDashboard,
-    impersonateUser
+    impersonateUser,
+    getStudentDashboardPreview
 } from '../controllers/adminController';
 import {
     createStudent,
@@ -78,6 +79,7 @@ router.delete('/batches/:id', deleteBatch);
 router.get('/students', getAllStudents);
 router.post('/students', createStudent);
 router.post('/students/enroll', enrollNewStudent);
+router.get('/students/:id/dashboard-preview', getStudentDashboardPreview);
 router.put('/students/:id/assignments', assignStudentBatch);
 router.get('/students/:id/payments', getStudentPayments);
 

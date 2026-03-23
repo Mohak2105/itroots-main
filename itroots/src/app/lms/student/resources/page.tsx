@@ -82,7 +82,7 @@ export default function ResourcesPage() {
                 <div className={styles.banner}>
                     <div>
                         <div className={styles.bannerTitle}>Study Material</div>
-                        <div className={styles.bannerSub}>View images, PDFs, slides, and documents for your enrolled courses inside the LMS.</div>
+                        <div className={styles.bannerSub}>View images, PDFs, slides, and documents for your enrolled courses.</div>
                     </div>
                     <Folder size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>

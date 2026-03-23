@@ -87,6 +87,7 @@ export const ENDPOINTS = {
         get COURSES() { return withApiBase("/admin/courses"); },
         get BATCHES() { return withApiBase("/admin/batches"); },
         get STUDENTS() { return withApiBase("/admin/students"); },
+        STUDENT_DASHBOARD_PREVIEW: (studentId: string) => withApiBase(`/admin/students/${studentId}/dashboard-preview`),
         STUDENT_ASSIGNMENTS: (studentId: string) => withApiBase(`/admin/students/${studentId}/assignments`),
         STUDENT_PAYMENTS: (studentId: string) => withApiBase(`/admin/students/${studentId}/payments`),
         get ENROLL_STUDENT() { return withApiBase("/admin/students/enroll"); },
@@ -106,6 +107,7 @@ export const ENDPOINTS = {
         get DASHBOARD() { return withApiBase("/Faculty/dashboard"); },
         get MY_BATCHES() { return withApiBase("/Faculty/my-batches"); },
         get BATCH_DATA() { return withApiBase("/Faculty/batch-data"); },
+        BATCH_ANALYTICS: (batchId: string) => withApiBase(`/Faculty/batch-analytics/${batchId}`),
         get ATTENDANCE() { return withApiBase("/Faculty/attendance"); },
         BATCH_ATTENDANCE: (batchId: string, date?: string) =>
             withApiBase(`/Faculty/attendance/${batchId}${date ? `?date=${encodeURIComponent(date)}` : ""}`),

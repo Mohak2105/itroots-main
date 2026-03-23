@@ -10,6 +10,7 @@ import Enrollment from '../models/Enrollment';
 import Notification from '../models/Notification';
 import NotificationRecipient from '../models/NotificationRecipient';
 import { isLiveClassTableReady } from '../utils/liveClassSchema';
+import { clearStudentNotificationsForLiveClass } from '../utils/liveClassNotifications';
 import { createZoomMeetingSignature, parseZoomMeetingDetails } from '../utils/zoom';
 
 const asTrimmedString = (value: any) => String(value ?? '').trim();
@@ -104,6 +105,12 @@ const createStudentNotification = async ({
     liveClass: any;
     action: 'created' | 'updated' | 'cancelled' | 'completed';
 }) => {
+    await clearStudentNotificationsForLiveClass(liveClass);
+
+    if (action === 'cancelled' || action === 'completed') {
+        return;
+    }
+
     const enrollments = await Enrollment.findAll({
         where: { batchId: liveClass.batchId },
         include: [{ model: User, as: 'student', attributes: ['id', 'name', 'email'] }],
@@ -115,34 +122,19 @@ const createStudentNotification = async ({
 
     if (!recipients.length) return;
 
-    const scheduledAt = new Date(liveClass.scheduledAt).toLocaleString('en-IN', {
-        day: 'numeric',
-        month: 'short',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-    });
-
     const titlePrefix = action === 'created'
-        ? 'New Live Class'
+        ? 'Live Class Started'
         : action === 'updated'
             ? 'Live Class Updated'
-            : action === 'completed'
-                ? 'Live Class Ended'
-                : 'Live Class Cancelled';
+            : 'Live Class Started';
     const title = `${titlePrefix}: ${liveClass.title}`;
-    const joinLine = action === 'cancelled'
-        ? 'Status: Cancelled'
-        : action === 'completed'
-            ? 'Status: Completed'
-        : isEmbeddedLiveClassProvider(String(liveClass.provider || '').toUpperCase()) && liveClass.joinPath
-            ? `Join in LMS: ${liveClass.joinPath}`
-            : `Meeting Link: ${liveClass.meetingLink}`;
+    const joinLine = isEmbeddedLiveClassProvider(String(liveClass.provider || '').toUpperCase()) && liveClass.joinPath
+        ? `Join in LMS: ${liveClass.joinPath}`
+        : `Meeting Link: ${liveClass.meetingLink}`;
     const message = [
         `${liveClass.title}`,
         `Course: ${liveClass.course?.title || 'Course'}`,
         `Batch: ${liveClass.batch?.name || 'Batch'}`,
-        `Scheduled At: ${scheduledAt}`,
         joinLine,
         liveClass.description ? `Agenda: ${liveClass.description}` : null,
     ].filter(Boolean).join('\n');
@@ -197,7 +189,9 @@ export const createLiveClass = async (req: any, res: Response) => {
         const { title, courseId, batchId, scheduledAt, meetingLink, description, provider, passcode } = req.body;
         const normalizedTitle = asTrimmedString(title);
         const normalizedDescription = asTrimmedString(description) || null;
-        const normalizedScheduledAt = parseScheduledAt(scheduledAt);
+        const normalizedScheduledAt = asTrimmedString(scheduledAt)
+            ? parseScheduledAt(scheduledAt)
+            : new Date();
         const normalizedProvider = resolveLiveClassProvider(provider);
         const resolvedMeetingLink = normalizedProvider === 'JITSI'
             ? ''
@@ -355,7 +349,11 @@ export const getStudentLiveClasses = async (req: any, res: Response) => {
         }
 
         const liveClasses = await LiveClass.findAll({
-            where: { batchId: { [Op.in]: batchIds } },
+            where: {
+                batchId: { [Op.in]: batchIds },
+                status: 'SCHEDULED',
+                scheduledAt: { [Op.gte]: new Date(Date.now() - LIVE_CLASS_SESSION_WINDOW_MS) },
+            },
             include: liveClassInclude,
             order: [['scheduledAt', 'ASC']],
         });

@@ -666,9 +666,9 @@
     text-align: center;
     color: #111827;
     font-size: 3.2rem;
-    font-weight: 500;
-    font-family: "Times New Roman", Georgia, serif;
-    font-style: italic;
+    font-weight: 400;
+    font-family: "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive;
+    font-style: normal;
     line-height: 1.1;
     position: relative;
     z-index: 2;
@@ -785,8 +785,7 @@
 .certificateMetaFooter {
     margin-top: 2rem;
     display: flex;
-    justify-content: space-between;
-    gap: 1rem;
+    justify-content: flex-start;
     color: #526173;
     font-size: 0.86rem;
     position: relative;

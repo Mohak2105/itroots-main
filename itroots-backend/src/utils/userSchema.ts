@@ -45,6 +45,30 @@ export const ensureUserProfileImageColumn = async () => {
         nextColumns.add('profileImage');
     }
 
+    if (!availableColumns.has('firstName')) {
+        await queryInterface.addColumn('users', 'firstName', {
+            type: DataTypes.STRING,
+            allowNull: true,
+        });
+        nextColumns.add('firstName');
+    }
+
+    if (!availableColumns.has('middleName')) {
+        await queryInterface.addColumn('users', 'middleName', {
+            type: DataTypes.STRING,
+            allowNull: true,
+        });
+        nextColumns.add('middleName');
+    }
+
+    if (!availableColumns.has('lastName')) {
+        await queryInterface.addColumn('users', 'lastName', {
+            type: DataTypes.STRING,
+            allowNull: true,
+        });
+        nextColumns.add('lastName');
+    }
+
     userColumnsPromise = Promise.resolve(nextColumns);
     return nextColumns;
 };

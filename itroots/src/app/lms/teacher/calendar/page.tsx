@@ -1,22 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
-import ReactDateTimePicker from "@/components/lms/ReactDateTimePicker";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
-import { CaretLeft, CaretRight, CalendarDots, Plus, Clock, BookOpen, Link as LinkIcon, PencilSimple, X } from "@phosphor-icons/react";
+import Calendar from "react-calendar";
+import "react-calendar/dist/Calendar.css";
+import { Plus, BookOpen, Link as LinkIcon, PencilSimple, X, VideoCamera, Bell, CalendarBlank, CaretDown } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import { getLiveClassAccessState, getLiveClassProviderLabel, resolveLiveClassJoinTarget } from "@/utils/liveClasses";
 import styles from "./calendar.module.css";
 
-const MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
-];
-const WEEK_DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const BATCH_COLORS = ["#0881ec", "#10b981", "#f59e0b", "#8b5cf6", "#ef4444"];
 const isBrowser = typeof window !== "undefined";
 
@@ -40,27 +36,36 @@ const toInputDateTime = (value?: string) => {
     return local.toISOString().slice(0, 16);
 };
 
-const buildDefaultScheduledAt = (selectedDate: Date) => {
-    const nextDate = new Date(selectedDate);
-    const now = new Date();
-    nextDate.setHours(now.getHours(), now.getMinutes(), 0, 0);
-    return toInputDateTime(nextDate.toISOString());
+const buildImmediateScheduledAt = () => toInputDateTime(new Date().toISOString());
+const toDateValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
 };
 
-const sameDate = (date: Date, value: string) => {
-    const eventDate = new Date(value);
-    return eventDate.getFullYear() === date.getFullYear()
-        && eventDate.getMonth() === date.getMonth()
-        && eventDate.getDate() === date.getDate();
+const parseLocalDate = (value: string) => {
+    const [year, month, day] = value.split("-").map(Number);
+    return new Date(year, (month || 1) - 1, day || 1);
 };
+
+const formatDate = (value: string) =>
+    parseLocalDate(value).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
 
 export default function FacultyCalendarPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
-    const [currentDate, setCurrentDate] = useState(new Date());
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const datePickerRef = useRef<HTMLDivElement>(null);
+    const [nowTick, setNowTick] = useState(() => Date.now());
     const [batches, setBatches] = useState<any[]>([]);
     const [liveClasses, setLiveClasses] = useState<any[]>([]);
+    const [selectedDate, setSelectedDate] = useState(() => toDateValue(new Date()));
+    const [showDatePicker, setShowDatePicker] = useState(false);
+    const [datePopoverDirection, setDatePopoverDirection] = useState<"down" | "up">("down");
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState(emptyForm);
 
@@ -69,6 +74,33 @@ export default function FacultyCalendarPage() {
             router.push("/faculty/login");
         }
     }, [user, isLoading, router]);
+
+    useEffect(() => {
+        const handlePointerDown = (event: PointerEvent) => {
+            if (!datePickerRef.current?.contains(event.target as Node)) {
+                setShowDatePicker(false);
+            }
+        };
+
+        if (showDatePicker) {
+            document.addEventListener("pointerdown", handlePointerDown);
+        }
+
+        return () => {
+            document.removeEventListener("pointerdown", handlePointerDown);
+        };
+    }, [showDatePicker]);
+
+    useEffect(() => {
+        if (!showDatePicker || !datePickerRef.current) return;
+
+        const bounds = datePickerRef.current.getBoundingClientRect();
+        const estimatedPopoverHeight = 360;
+        const spaceBelow = window.innerHeight - bounds.bottom;
+        const spaceAbove = bounds.top;
+
+        setDatePopoverDirection(spaceBelow < estimatedPopoverHeight && spaceAbove > spaceBelow ? "up" : "down");
+    }, [showDatePicker]);
 
     const fetchData = async () => {
         if (!token) return;
@@ -89,6 +121,14 @@ export default function FacultyCalendarPage() {
         void fetchData();
     }, [token]);
 
+    useEffect(() => {
+        const intervalId = window.setInterval(() => {
+            setNowTick(Date.now());
+        }, 1000);
+
+        return () => window.clearInterval(intervalId);
+    }, []);
+
     const courses = useMemo(() => {
         const seen = new Map<string, any>();
         batches.forEach((batch) => {
@@ -101,7 +141,7 @@ export default function FacultyCalendarPage() {
 
     const filteredBatches = useMemo(
         () => batches.filter((batch) => !formData.courseId || batch.courseId === formData.courseId),
-        [batches, formData.courseId]
+        [batches, formData.courseId],
     );
 
     const colorByBatchId = useMemo(() => {
@@ -112,38 +152,24 @@ export default function FacultyCalendarPage() {
         return map;
     }, [batches]);
 
+    const liveClassItems = useMemo(
+        () =>
+            liveClasses
+                .filter((item) => {
+                    const scheduledDate = new Date(item.scheduledAt);
+                    if (Number.isNaN(scheduledDate.getTime())) return false;
+                    return toDateValue(scheduledDate) === selectedDate;
+                })
+                .slice()
+                .sort((a, b) => new Date(b.scheduledAt).getTime() - new Date(a.scheduledAt).getTime())
+                .map((item) => ({
+                    ...item,
+                    color: colorByBatchId.get(item.batchId) || BATCH_COLORS[0],
+                })),
+        [liveClasses, colorByBatchId, selectedDate],
+    );
+
     if (isLoading || !user) return null;
-
-    const year = currentDate.getFullYear();
-    const month = currentDate.getMonth();
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
-    const firstDay = new Date(year, month, 1).getDay();
-    const today = new Date();
-
-    const prev = () => setCurrentDate(new Date(year, month - 1, 1));
-    const next = () => setCurrentDate(new Date(year, month + 1, 1));
-    const goToday = () => {
-        const now = new Date();
-        setCurrentDate(now);
-        setSelectedDate(now);
-    };
-
-    const isToday = (day: number) =>
-        day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-
-    const isSelected = (day: number) =>
-        day === selectedDate.getDate() && month === selectedDate.getMonth() && year === selectedDate.getFullYear();
-
-    const getEventsForDate = (date: Date) => liveClasses
-        .filter((item) => sameDate(date, item.scheduledAt))
-        .sort((a, b) => new Date(a.scheduledAt).getTime() - new Date(b.scheduledAt).getTime())
-        .map((item) => ({
-            ...item,
-            time: new Date(item.scheduledAt).toLocaleTimeString("en-IN", { hour: "numeric", minute: "2-digit" }),
-            color: colorByBatchId.get(item.batchId) || BATCH_COLORS[0],
-        }));
-
-    const selectedEvents = getEventsForDate(selectedDate);
 
     const openCreateModal = () => {
         const defaultBatch = batches[0];
@@ -151,7 +177,7 @@ export default function FacultyCalendarPage() {
             ...emptyForm,
             courseId: defaultBatch?.courseId || "",
             batchId: defaultBatch?.id || "",
-            scheduledAt: buildDefaultScheduledAt(selectedDate),
+            scheduledAt: buildImmediateScheduledAt(),
             provider: "JITSI",
         });
         setShowModal(true);
@@ -163,7 +189,7 @@ export default function FacultyCalendarPage() {
             title: event.title,
             courseId: event.courseId,
             batchId: event.batchId,
-            scheduledAt: toInputDateTime(event.scheduledAt),
+            scheduledAt: buildImmediateScheduledAt(),
             provider: event.provider || "EXTERNAL",
             meetingLink: event.meetingLink || "",
             passcode: event.zoomPasscode || "",
@@ -177,17 +203,18 @@ export default function FacultyCalendarPage() {
         setFormData(emptyForm);
     };
 
-    const handleSave = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSave = async (event: React.FormEvent) => {
+        event.preventDefault();
         try {
             const endpoint = formData.id ? `${ENDPOINTS.Faculty.LIVE_CLASSES}/${formData.id}` : ENDPOINTS.Faculty.LIVE_CLASSES;
             const method = formData.id ? "PUT" : "POST";
             const payload = {
                 ...formData,
+                scheduledAt: new Date().toISOString(),
                 meetingLink: formData.provider === "JITSI" ? "" : formData.meetingLink,
                 passcode: formData.provider === "ZOOM" ? formData.passcode : "",
             };
-            const res = await fetch(endpoint, {
+            const response = await fetch(endpoint, {
                 method,
                 headers: {
                     Authorization: `Bearer ${token}`,
@@ -195,8 +222,8 @@ export default function FacultyCalendarPage() {
                 },
                 body: JSON.stringify(payload),
             });
-            const data = await res.json();
-            if (!res.ok) {
+            const data = await response.json();
+            if (!response.ok) {
                 throw new Error(data?.message || "Unable to save live class");
             }
             closeModal();
@@ -210,11 +237,11 @@ export default function FacultyCalendarPage() {
     const handleCancelClass = async (liveClassId: string) => {
         if (!confirm("Cancel this live class?")) return;
         try {
-            const res = await fetch(ENDPOINTS.Faculty.CANCEL_LIVE_CLASS(liveClassId), {
+            const response = await fetch(ENDPOINTS.Faculty.CANCEL_LIVE_CLASS(liveClassId), {
                 method: "PATCH",
                 headers: { Authorization: `Bearer ${token}` },
             });
-            if (res.ok) {
+            if (response.ok) {
                 void fetchData();
             }
         } catch (error) {
@@ -225,178 +252,209 @@ export default function FacultyCalendarPage() {
     const compactModalLayout = isBrowser && window.innerWidth <= 640;
 
     return (
-        <LMSShell pageTitle="Event Calendar">
+        <LMSShell pageTitle="Live Classes">
             <div className={styles.page}>
                 <div className={styles.banner}>
                     <div>
-                        <div className={styles.bannerTitle}>Live Class Calendar</div>
-                        <div className={styles.bannerSub}>Schedule, edit, and cancel live classes for your assigned batches.</div>
+                        <div className={styles.bannerTitle}>Live Classes</div>
+                        <div className={styles.bannerSub}>Create, edit, and start live classes.</div>
                     </div>
-                    <CalendarDots size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
+                    <VideoCamera size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
                 </div>
 
-                <div className={styles.calLayout}>
-                    <div className={styles.calendarCard}>
-                        <div className={styles.calHeader}>
-                            <button className={styles.navBtn} onClick={prev}>
-                                <CaretLeft size={18} weight="bold" />
-                            </button>
-                            <div className={styles.calMonthGroup}>
-                                <span className={styles.calMonth}>{MONTH_NAMES[month]} {year}</span>
-                                <button className={styles.todayBtn} onClick={goToday}>Today</button>
-                            </div>
-                            <button className={styles.navBtn} onClick={next}>
-                                <CaretRight size={18} weight="bold" />
-                            </button>
+                
+
+                <div className={styles.classesCard}>
+                    <div className={styles.classesHeader}>
+                        <div>
+                            <div className={styles.classesTitle}>Live class sessions</div>
+                            <div className={styles.classesSub}>Select a date to view the live classes scheduled for that day.</div>
                         </div>
-
-                        <div className={styles.weekRow}>
-                            {WEEK_DAYS.map((day) => (
-                                <div key={day} className={styles.weekLabel}>{day}</div>
-                            ))}
-                        </div>
-
-                        <div className={styles.daysGrid}>
-                            {Array.from({ length: firstDay }).map((_, index) => (
-                                <div key={`empty-${index}`} className={styles.dayCell} />
-                            ))}
-
-                            {Array.from({ length: daysInMonth }).map((_, index) => {
-                                const day = index + 1;
-                                const date = new Date(year, month, day);
-                                const events = getEventsForDate(date);
-                                const todayCell = isToday(day);
-                                const selectedCell = isSelected(day) && !todayCell;
-
-                                return (
-                                    <div
-                                        key={day}
-                                        className={`${styles.dayCell} ${styles.dayCellClickable} ${todayCell ? styles.todayCell : ""} ${selectedCell ? styles.selectedCell : ""}`}
-                                        onClick={() => setSelectedDate(new Date(year, month, day))}
-                                    >
-                                        <span className={styles.dayNum}>{day}</span>
-                                        {events.length > 0 ? (
-                                            <div className={styles.eventDots}>
-                                                {events.slice(0, 3).map((event, dotIndex) => (
-                                                    <span key={`${event.id}-${dotIndex}`} className={styles.dot} style={{ background: event.status === "CANCELLED" ? "#ef4444" : event.color }} />
-                                                ))}
-                                            </div>
-                                        ) : null}
+                        <div className={styles.filterBar}>
+                        <div className={styles.dateWrap}>
+                            
+                            <div className={styles.datePickerWrap} ref={datePickerRef}>
+                                <button
+                                    type="button"
+                                    className={styles.dateField}
+                                    onClick={() => setShowDatePicker((current) => !current)}
+                                    aria-expanded={showDatePicker}
+                                >
+                                    <CalendarBlank size={18} weight="duotone" />
+                                    <span className={styles.dateValue}>{formatDate(selectedDate)}</span>
+                                    <CaretDown size={16} weight="bold" className={styles.dateCaret} />
+                                </button>
+                                {showDatePicker ? (
+                                    <div className={`${styles.datePopover} ${datePopoverDirection === "up" ? styles.datePopoverUp : ""}`}>
+                                        <Calendar
+                                            onChange={(value) => {
+                                                const nextDate = Array.isArray(value) ? value[0] : value;
+                                                if (nextDate instanceof Date && !Number.isNaN(nextDate.getTime())) {
+                                                    setSelectedDate(toDateValue(nextDate));
+                                                    setShowDatePicker(false);
+                                                }
+                                            }}
+                                            value={parseLocalDate(selectedDate)}
+                                            maxDetail="month"
+                                            className={styles.reactCalendar}
+                                        />
                                     </div>
-                                );
-                            })}
-                        </div>
-
-                        {batches.length > 0 ? (
-                            <div className={styles.legend}>
-                                {batches.map((batch) => (
-                                    <div key={batch.id} className={styles.legendItem}>
-                                        <span className={styles.legendDot} style={{ background: colorByBatchId.get(batch.id) || BATCH_COLORS[0] }} />
-                                        <span className={styles.legendLabel}>{batch.name}</span>
-                                    </div>
-                                ))}
+                                ) : null}
                             </div>
-                        ) : null}
+                        </div>
+                    </div>
+                        <button
+                            className={styles.addEventBtn}
+                            onClick={openCreateModal}
+                            data-testid="open-live-class-modal"
+                            disabled={!batches.length}
+                        >
+                            <Plus size={14} weight="bold" /> Create Live Class
+                        </button>
                     </div>
 
-                    <div className={styles.eventsPanel}>
-                        <div className={styles.eventsPanelHeader}>
-                            <div>
-                                <div className={styles.eventsPanelDay}>{selectedDate.toLocaleDateString("en-IN", { weekday: "long" })}</div>
-                                <div className={styles.eventsPanelDate}>{selectedDate.toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })}</div>
-                            </div>
-                            <button className={styles.addEventBtn} onClick={openCreateModal} data-testid="open-live-class-modal">
-                                <Plus size={14} weight="bold" /> Add
-                            </button>
-                        </div>
+                    
 
-                        <div className={styles.eventsBody}>
-                            {selectedEvents.length === 0 ? (
-                                <div className={styles.noEvents}>
-                                    <CalendarDots size={44} color="#cbd5e1" weight="duotone" />
-                                    <p>No live classes on this day</p>
-                                </div>
-                            ) : (
-                                <div className={styles.eventsList}>
-                                    {selectedEvents.map((event) => (
-                                        <div key={event.id} className={styles.eventItem}>
-                                            <div className={styles.eventAccent} style={{ background: event.status === "CANCELLED" ? "#ef4444" : event.color }} />
-                                            <div className={styles.eventInfo} style={{ width: "100%" }}>
-                                                {(() => {
-                                                    const joinTarget = resolveLiveClassJoinTarget(event, "TEACHER");
-                                                    const accessState = getLiveClassAccessState(event);
-                                                    const joinDisabledLabel = accessState === "NOT_STARTED"
-                                                        ? "Starts at Scheduled Time"
-                                                        : accessState === "EXPIRED"
-                                                            ? "Session Expired"
-                                                            : accessState === "COMPLETED"
-                                                                ? "Class Ended"
-                                                                : event.status === "CANCELLED"
-                                                                    ? "Class Cancelled"
-                                                                    : "Join Unavailable";
-                                                    return (
-                                                        <>
-                                                <div style={{ display: "flex", justifyContent: "space-between", gap: "0.5rem", alignItems: "flex-start", flexWrap: "wrap" }}>
-                                                    <div className={styles.eventTitle}>{event.title}</div>
-                                                    <span style={{ fontSize: "0.68rem", fontWeight: 700, padding: "0.25rem 0.5rem", borderRadius: "999px", background: event.status === "CANCELLED" ? "#fee2e2" : "#dcfce7", color: event.status === "CANCELLED" ? "#b91c1c" : "#166534" }}>{event.status}</span>
-                                                </div>
-                                                <div className={styles.eventMeta}><BookOpen size={12} /><span>{event.course?.title} / {event.batch?.name}</span></div>
-                                                <div className={styles.eventMeta}><Clock size={12} /><span>{event.time}</span></div>
-                                                <div className={styles.eventMeta}><LinkIcon size={12} /><span>{getLiveClassProviderLabel(event.provider)}</span></div>
-                                                {event.description ? <div className={styles.eventMeta}><span>{event.description}</span></div> : null}
-                                                <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.65rem", flexWrap: "wrap" }}>
-                                                    {accessState === "AVAILABLE" && joinTarget.href ? (
-                                                        joinTarget.external ? (
-                                                            <a href={joinTarget.href} target="_blank" rel="noreferrer" style={{ border: "1px solid #bfdbfe", background: "#eff6ff", color: "#2563eb", borderRadius: "8px", padding: "0.4rem 0.7rem", fontWeight: 600, fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem", cursor: "pointer", textDecoration: "none" }}>
-                                                                <LinkIcon size={14} /> Join Class
-                                                            </a>
-                                                        ) : (
-                                                            <Link href={joinTarget.href} style={{ border: "1px solid #bfdbfe", background: "#eff6ff", color: "#2563eb", borderRadius: "8px", padding: "0.4rem 0.7rem", fontWeight: 600, fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem", cursor: "pointer", textDecoration: "none" }}>
-                                                                <LinkIcon size={14} /> Join in LMS
-                                                            </Link>
-                                                        )
-                                                    ) : (
-                                                        <span style={{ border: "1px solid #e2e8f0", background: "#f8fafc", color: "#64748b", borderRadius: "8px", padding: "0.4rem 0.7rem", fontWeight: 600, fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                                                            <LinkIcon size={14} /> {joinDisabledLabel}
+                    <div className={styles.classesBody}>
+                        {liveClassItems.length === 0 ? (
+                            <div className={styles.noEvents}>
+                                <VideoCamera size={44} color="#cbd5e1" weight="duotone" />
+                                <p>No live classes found for {formatDate(selectedDate)}.</p>
+                            </div>
+                        ) : (
+                            <div className={styles.tableWrapper}>
+                                <table className={styles.classesTable}>
+                                    <thead>
+                                        <tr>
+                                            <th>Live Class</th>
+                                            <th>Provider</th>
+                                            <th>Status</th>
+                                           
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {liveClassItems.map((event) => {
+                                            const joinTarget = resolveLiveClassJoinTarget(event, "TEACHER");
+                                            const accessState = getLiveClassAccessState(event, nowTick);
+                                            const joinDisabledLabel = accessState === "NOT_STARTED"
+                                                ? "Join opens after start"
+                                                : accessState === "EXPIRED"
+                                                    ? "Session Expired"
+                                                    : accessState === "COMPLETED"
+                                                        ? "Class Ended"
+                                                        : event.status === "CANCELLED"
+                                                            ? "Class Cancelled"
+                                                            : "Join Unavailable";
+
+                                            return (
+                                                <tr key={event.id}>
+                                                    <td>
+                                                        <div className={styles.titleCell}>
+                                                            <span
+                                                                className={styles.titleAccent}
+                                                                style={{ background: event.status === "CANCELLED" ? "#ef4444" : event.color }}
+                                                            />
+                                                            <div>
+                                                                <div className={styles.eventTitle}>{event.title}</div>
+                                                                <div className={styles.courseMeta}>
+                                                                    <BookOpen size={13} />
+                                                                    <span>{event.course?.title} / {event.batch?.name}</span>
+                                                                </div>
+                                                                {event.description ? (
+                                                                    <div className={styles.descriptionMeta}>{event.description}</div>
+                                                                ) : null}
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <div className={styles.providerCell}>
+                                                            <LinkIcon size={13} />
+                                                            <span>{getLiveClassProviderLabel(event.provider)}</span>
+                                                        </div>
+                                                    </td>
+                                                    <td>
+                                                        <span
+                                                            className={`${styles.statusBadge} ${event.status === "CANCELLED" ? styles.statusDanger : event.status === "COMPLETED" ? styles.statusMuted : styles.statusSuccess}`}
+                                                        >
+                                                            {event.status}
                                                         </span>
-                                                    )}
-                                                    <button onClick={() => openEditModal(event)} style={{ border: "1px solid #bfdbfe", background: "#eff6ff", color: "#2563eb", borderRadius: "8px", padding: "0.4rem 0.7rem", fontWeight: 600, fontSize: "0.75rem", display: "inline-flex", alignItems: "center", gap: "0.35rem", cursor: "pointer" }}>
-                                                        <PencilSimple size={14} /> Edit
-                                                    </button>
-                                                    {event.status !== "CANCELLED" ? (
-                                                        <button onClick={() => handleCancelClass(event.id)} style={{ border: "1px solid #fecaca", background: "#fef2f2", color: "#dc2626", borderRadius: "8px", padding: "0.4rem 0.7rem", fontWeight: 600, fontSize: "0.75rem", cursor: "pointer" }}>
-                                                            Cancel
-                                                        </button>
-                                                    ) : null}
-                                                </div>
-                                                        </>
-                                                    );
-                                                })()}
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
+                                                    </td>
+                                                    
+                                                    <td>
+                                                        <div className={styles.eventActions}>
+                                                            {accessState === "AVAILABLE" && joinTarget.href ? (
+                                                                joinTarget.external ? (
+                                                                    <a href={joinTarget.href} target="_blank" rel="noreferrer" className={styles.joinBtn}>
+                                                                        <LinkIcon size={14} /> Open
+                                                                    </a>
+                                                                ) : (
+                                                                    <Link href={joinTarget.href} className={styles.joinBtn}>
+                                                                        <LinkIcon size={14} /> Open
+                                                                    </Link>
+                                                                )
+                                                            ) : (
+                                                                <span className={styles.disabledJoinBtn}>
+                                                                    <LinkIcon size={14} /> {joinDisabledLabel}
+                                                                </span>
+                                                            )}
+
+                                                            <button onClick={() => openEditModal(event)} className={styles.editBtn}>
+                                                                <PencilSimple size={14} /> Edit
+                                                            </button>
+
+                                                            {event.status !== "CANCELLED" ? (
+                                                                <button onClick={() => handleCancelClass(event.id)} className={styles.cancelBtn}>
+                                                                    Cancel
+                                                                </button>
+                                                            ) : null}
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>
 
             {showModal ? (
-                <div style={{ position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.55)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, padding: "1rem" }}>
-                    <div data-testid="live-class-form-modal" style={{ width: "100%", maxWidth: "560px", background: "#fff", borderRadius: compactModalLayout ? "16px" : "22px", padding: compactModalLayout ? "1.15rem" : "2rem", position: "relative", boxShadow: "0 20px 50px rgba(15, 23, 42, 0.25)", maxHeight: "90vh", overflowY: "auto" }}>
-                        <button onClick={closeModal} style={{ position: "absolute", top: "1.25rem", right: "1.25rem", border: "none", background: "#f8fafc", width: "38px", height: "38px", borderRadius: "999px", cursor: "pointer", color: "#64748b" }}>
+                <div className={styles.modalOverlay}>
+                    <div
+                        data-testid="live-class-form-modal"
+                        className={styles.modalCard}
+                        style={{
+                            borderRadius: compactModalLayout ? "16px" : "22px",
+                            padding: compactModalLayout ? "1.15rem" : "2rem",
+                        }}
+                    >
+                        <button onClick={closeModal} className={styles.modalCloseBtn}>
                             <X size={20} />
                         </button>
-                        <h3 style={{ fontSize: "1.45rem", fontWeight: 800, color: "#0f172a", marginBottom: "1.5rem" }}>{formData.id ? "Edit Live Class" : "Create Live Class"}</h3>
-                        <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+                        <h3 className={styles.modalTitle}>{formData.id ? "Edit Live Class" : "Create Live Class"}</h3>
+
+                        <div className={styles.modalInfo}>
+                            This live class will start immediately after you save it, and students will get a notification right away.
+                        </div>
+
+                        <form onSubmit={handleSave} className={styles.modalForm}>
                             <div>
-                                <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Class Title</label>
-                                <input data-testid="live-class-title-input" required value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })} style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1" }} />
+                                <label className={styles.inputLabel}>Class Title</label>
+                                <input
+                                    data-testid="live-class-title-input"
+                                    required
+                                    value={formData.title}
+                                    onChange={(event) => setFormData({ ...formData, title: event.target.value })}
+                                    className={styles.inputField}
+                                />
                             </div>
-                            <div style={{ display: "grid", gridTemplateColumns: compactModalLayout ? "1fr" : "1fr 1fr", gap: "1rem" }}>
+
+                            <div className={styles.twoColumnGrid}>
                                 <div>
-                                    <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Select Course</label>
+                                    <label className={styles.inputLabel}>Select Course</label>
                                     <CustomSelect
                                         value={formData.courseId}
                                         onChange={(value) => setFormData({ ...formData, courseId: value, batchId: "" })}
@@ -409,8 +467,9 @@ export default function FacultyCalendarPage() {
                                         ]}
                                     />
                                 </div>
+
                                 <div>
-                                    <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Select Batch</label>
+                                    <label className={styles.inputLabel}>Select Batch</label>
                                     <CustomSelect
                                         value={formData.batchId}
                                         onChange={(value) => setFormData({ ...formData, batchId: value })}
@@ -424,15 +483,9 @@ export default function FacultyCalendarPage() {
                                     />
                                 </div>
                             </div>
-                            <ReactDateTimePicker
-                                label="Date and Time"
-                                required
-                                value={formData.scheduledAt}
-                                onChange={(value) => setFormData({ ...formData, scheduledAt: value })}
-                                testId="live-class-scheduled-at"
-                            />
+
                             <div>
-                                <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Meeting Provider</label>
+                                <label className={styles.inputLabel}>Meeting Provider</label>
                                 <CustomSelect
                                     value={formData.provider}
                                     onChange={(value) => setFormData({ ...formData, provider: value })}
@@ -444,27 +497,50 @@ export default function FacultyCalendarPage() {
                                     ]}
                                 />
                             </div>
+
                             {formData.provider === "JITSI" ? (
-                                <div style={{ border: "1px solid #dbeafe", background: "#eff6ff", color: "#1d4ed8", borderRadius: "14px", padding: "0.9rem 1rem", fontSize: "0.9rem", lineHeight: 1.6 }}>
-                                    A secure Jitsi room will be created automatically inside the LMS. Teachers and students will join from the live class page at the scheduled time.
+                                <div className={styles.providerNotice}>
+                                    A secure Jitsi room will be created automatically inside the LMS. Teachers and students join from the live class page as soon as this class is saved.
                                 </div>
                             ) : (
                                 <div>
-                                    <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>{formData.provider === "ZOOM" ? "Zoom Join Link" : "Meeting Link"}</label>
-                                    <input data-testid="live-class-meeting-link-input" required value={formData.meetingLink} onChange={(e) => setFormData({ ...formData, meetingLink: e.target.value })} placeholder={formData.provider === "ZOOM" ? "https://us06web.zoom.us/j/..." : "https://meet.google.com/..."} style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1" }} />
+                                    <label className={styles.inputLabel}>{formData.provider === "ZOOM" ? "Zoom Join Link" : "Meeting Link"}</label>
+                                    <input
+                                        data-testid="live-class-meeting-link-input"
+                                        required
+                                        value={formData.meetingLink}
+                                        onChange={(event) => setFormData({ ...formData, meetingLink: event.target.value })}
+                                        placeholder={formData.provider === "ZOOM" ? "https://us06web.zoom.us/j/..." : "https://meet.google.com/..."}
+                                        className={styles.inputField}
+                                    />
                                 </div>
                             )}
+
                             {formData.provider === "ZOOM" ? (
                                 <div>
-                                    <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Passcode</label>
-                                    <input data-testid="live-class-passcode-input" value={formData.passcode} onChange={(e) => setFormData({ ...formData, passcode: e.target.value })} placeholder="Optional if your Zoom link already includes it" style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1" }} />
+                                    <label className={styles.inputLabel}>Passcode</label>
+                                    <input
+                                        data-testid="live-class-passcode-input"
+                                        value={formData.passcode}
+                                        onChange={(event) => setFormData({ ...formData, passcode: event.target.value })}
+                                        placeholder="Optional if your Zoom link already includes it"
+                                        className={styles.inputField}
+                                    />
                                 </div>
                             ) : null}
+
                             <div>
-                                <label style={{ display: "block", fontWeight: 700, fontSize: "0.9rem", color: "#475569", marginBottom: "0.5rem" }}>Description / Agenda</label>
-                                <textarea data-testid="live-class-description-input" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} rows={2} style={{ width: "100%", padding: "0.85rem 1rem", borderRadius: "12px", border: "1px solid #cbd5e1", resize: "vertical" }} />
+                                <label className={styles.inputLabel}>Description / Agenda</label>
+                                <textarea
+                                    data-testid="live-class-description-input"
+                                    value={formData.description}
+                                    onChange={(event) => setFormData({ ...formData, description: event.target.value })}
+                                    rows={2}
+                                    className={styles.textareaField}
+                                />
                             </div>
-                            <button data-testid="save-live-class" type="submit" style={{ marginTop: "0.5rem", border: "none", background: "linear-gradient(135deg, #0c2d4c 0%, #0881ec 100%)", color: "#fff", borderRadius: "999px", padding: "0.95rem", fontWeight: 700, cursor: "pointer", width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", transition: "transform 0.2s ease, box-shadow 0.2s ease" }}>
+
+                            <button data-testid="save-live-class" type="submit" className={styles.saveBtn}>
                                 {formData.id ? "Save Live Class" : "Create Live Class"}
                             </button>
                         </form>

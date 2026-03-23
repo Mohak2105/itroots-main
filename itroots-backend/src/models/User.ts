@@ -4,6 +4,9 @@ import sequelize from '../config/database';
 export interface UserAttributes {
     id: string;
     username?: string | null;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
     name: string;
     email: string;
     phone?: string | null;
@@ -16,11 +19,14 @@ export interface UserAttributes {
     updatedAt?: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'username' | 'phone' | 'profileImage' | 'specialization' | 'isActive' | 'createdAt' | 'updatedAt'> { }
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'username' | 'firstName' | 'middleName' | 'lastName' | 'phone' | 'profileImage' | 'specialization' | 'isActive' | 'createdAt' | 'updatedAt'> { }
 
 class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
     public id!: string;
     public username?: string | null;
+    public firstName?: string | null;
+    public middleName?: string | null;
+    public lastName?: string | null;
     public name!: string;
     public email!: string;
     public phone?: string | null;
@@ -45,6 +51,18 @@ User.init(
             type: DataTypes.STRING,
             allowNull: true,
             unique: true,
+        },
+        firstName: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        middleName: {
+            type: DataTypes.STRING,
+            allowNull: true,
+        },
+        lastName: {
+            type: DataTypes.STRING,
+            allowNull: true,
         },
         name: {
             type: DataTypes.STRING,

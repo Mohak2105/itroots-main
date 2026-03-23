@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
-import { UsersThree, ChatTeardropText, ArrowLineDown, ChartBar, Warning } from "@phosphor-icons/react";
+import { UsersThree, ChartBar } from "@phosphor-icons/react";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./analytics.module.css";
 
@@ -43,20 +43,13 @@ export default function FacultyAnalyticsPage() {
     useEffect(() => {
         if (!token || !selectedBatchId) return;
         setLoadingStudents(true);
-        // Fix: BATCH_DATA is a string base URL, append the batchId
-        fetch(`${ENDPOINTS.Faculty.BATCH_DATA}/${selectedBatchId}`, {
+        fetch(ENDPOINTS.Faculty.BATCH_ANALYTICS(selectedBatchId), {
             headers: { Authorization: `Bearer ${token}` },
         })
             .then(r => r.json())
             .then(data => {
-                if (data.success && data.data?.enrollments) {
-                    const enriched = data.data.enrollments.map((e: any) => ({
-                        ...e.student,
-                        attendance: Math.floor(Math.random() * 40) + 60,
-                        completion: Math.floor(Math.random() * 60) + 40,
-                        score: Math.floor(Math.random() * 50) + 50,
-                    }));
-                    setStudents(enriched);
+                if (data.success && Array.isArray(data.data?.students)) {
+                    setStudents(data.data.students);
                 } else {
                     setStudents([]);
                 }
@@ -67,21 +60,13 @@ export default function FacultyAnalyticsPage() {
 
     if (isLoading || !user) return null;
 
-    const atRisk = students.filter(s => s.attendance < 75).length;
-    const avgAttendance = students.length
-        ? Math.round(students.reduce((s, st) => s + st.attendance, 0) / students.length)
-        : 0;
-    const avgScore = students.length
-        ? Math.round(students.reduce((s, st) => s + st.score, 0) / students.length)
-        : 0;
-
     return (
         <LMSShell pageTitle="Analytics & Reporting">
             <div className={styles.page}>
                 {/* Banner */}
                 <div className={styles.banner}>
                     <div>
-                        <div className={styles.bannerTitle}>Analytics & Reporting</div>
+                        <div className={styles.bannerTitle}>Student Overview </div>
                         <div className={styles.bannerSub}>Monitor individual student progress, attendance, and assessments.</div>
                     </div>
                     <ChartBar size={60} color="rgba(255,255,255,0.2)" weight="duotone" />
@@ -108,46 +93,7 @@ export default function FacultyAnalyticsPage() {
                             />
                         </div>
                     </div>
-                    <button className={styles.exportBtn}>
-                        <ArrowLineDown size={16} /> Export CSV
-                    </button>
                 </div>
-
-                {/* Summary Cards */}
-                {students.length > 0 && (
-                    <div className={styles.summaryGrid}>
-                        <div className={styles.summaryCard}>
-                            <div className={styles.summaryIcon} style={{ background: "#eff6ff", color: "#0881ec" }}>
-                                <UsersThree size={20} weight="duotone" />
-                            </div>
-                            <div className={styles.summaryValue}>{students.length}</div>
-                            <div className={styles.summaryLabel}>Total Students</div>
-                        </div>
-                        <div className={styles.summaryCard}>
-                            <div className={styles.summaryIcon} style={{ background: "#f0fdf4", color: "#10b981" }}>
-                                <ChartBar size={20} weight="duotone" />
-                            </div>
-                            <div className={styles.summaryValue}>{avgAttendance}%</div>
-                            <div className={styles.summaryLabel}>Avg. Attendance</div>
-                        </div>
-                        <div className={styles.summaryCard}>
-                            <div className={styles.summaryIcon} style={{ background: "#faf5ff", color: "#8b5cf6" }}>
-                                <ChartBar size={20} weight="duotone" />
-                            </div>
-                            <div className={styles.summaryValue}>{avgScore}%</div>
-                            <div className={styles.summaryLabel}>Avg. Score</div>
-                        </div>
-                        {atRisk > 0 && (
-                            <div className={styles.summaryCard} style={{ borderColor: "#fee2e2" }}>
-                                <div className={styles.summaryIcon} style={{ background: "#fee2e2", color: "#ef4444" }}>
-                                    <Warning size={20} weight="duotone" />
-                                </div>
-                                <div className={styles.summaryValue} style={{ color: "#ef4444" }}>{atRisk}</div>
-                                <div className={styles.summaryLabel}>At Risk (&lt;75%)</div>
-                            </div>
-                        )}
-                    </div>
-                )}
 
                 {/* Student Table */}
                 <div className={styles.tableContainer}>
@@ -170,15 +116,12 @@ export default function FacultyAnalyticsPage() {
                                     <th>Attendance</th>
                                     <th>Completion</th>
                                     <th>Avg. Score</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {students.map((student, idx) => {
-                                    const isAtRisk = student.attendance < 75;
                                     return (
-                                        <tr key={student.id || idx} className={isAtRisk ? styles.rowAtRisk : ""}>
+                                        <tr key={student.id || idx}>
                                             <td>
                                                 <div className={styles.studentInfo}>
                                                     <div className={styles.avatar}>
@@ -216,21 +159,6 @@ export default function FacultyAnalyticsPage() {
                                                 <span style={{ fontWeight: 700, color: student.score >= 70 ? "#10b981" : "#f59e0b" }}>
                                                     {student.score}%
                                                 </span>
-                                            </td>
-                                            <td>
-                                                {isAtRisk ? (
-                                                    <span className={`${styles.statusBadge} ${styles.statusRisk}`}>At Risk</span>
-                                                ) : (
-                                                    <span className={`${styles.statusBadge} ${styles.statusOk}`}>On Track</span>
-                                                )}
-                                            </td>
-                                            <td>
-                                                <button
-                                                    className={styles.actionBtn}
-                                                    onClick={() => alert(`Feedback sent to ${student.name}`)}
-                                                >
-                                                    <ChatTeardropText size={15} /> Feedback
-                                                </button>
                                             </td>
                                         </tr>
                                     );

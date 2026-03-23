@@ -28,7 +28,6 @@ export async function createJitsiLiveClassFromTeacherCalendar(page: Page, input:
     await selectCustomSelectOption(page, "live-class-course", input.courseTitle);
     await selectCustomSelectOption(page, "live-class-batch", input.batchName);
     await selectCustomSelectOption(page, "live-class-provider", "Jitsi Meeting");
-    await setCurrentDateTime(page);
 
     if (input.description) {
         await page.getByTestId("live-class-description-input").fill(input.description);

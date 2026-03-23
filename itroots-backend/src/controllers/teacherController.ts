@@ -6,6 +6,7 @@ import Batch from '../models/Batch';
 import BatchContent, { ensureBatchContentOptionalColumns, getBatchContentReadableAttributes } from '../models/BatchContent';
 import Test from '../models/Test';
 import TestResult, { TEST_RESULT_BASE_ATTRIBUTES } from '../models/TestResult';
+import Attendance from '../models/Attendance';
 import User from '../models/User';
 import Enrollment from '../models/Enrollment';
 import Course from '../models/Course';
@@ -98,6 +99,11 @@ const resolveAssignmentMaxMarks = (value: any, fallback = 100) => {
         return parsed;
     }
     return fallback;
+};
+
+const calculatePercentage = (score: number, totalMarks: number) => {
+    if (!Number.isFinite(totalMarks) || totalMarks <= 0) return 0;
+    return Math.round((Number(score || 0) / totalMarks) * 100);
 };
 
 const resolveQuestionText = (question: any) =>
@@ -315,6 +321,169 @@ export const getBatchData = async (req: any, res: Response) => {
     } catch (error) {
         console.error('Fetch batch data error:', error);
         res.status(500).json({ message: 'Error fetching batch data' });
+    }
+};
+
+export const getBatchAnalytics = async (req: any, res: Response) => {
+    try {
+        const { batchId } = req.params;
+        const FacultyId = req.user.id;
+
+        const batch = await Batch.findOne({
+            where: { id: batchId, FacultyId },
+            include: [{ model: Course, as: 'course', attributes: ['id', 'title', 'slug'] }],
+        });
+
+        if (!batch) {
+            return res.status(404).json({ message: 'Batch not found' });
+        }
+
+        const [enrollments, attendanceRecords, tests, assignments] = await Promise.all([
+            Enrollment.findAll({
+                where: { batchId },
+                include: [{ model: User, as: 'student', attributes: ['id', 'username', 'name', 'email'] }],
+                order: [['createdAt', 'ASC']],
+            }),
+            Attendance.findAll({
+                where: { batchId },
+                attributes: ['studentId', 'status'],
+            }),
+            Test.findAll({
+                where: { batchId },
+                attributes: ['id', 'totalMarks'],
+            }),
+            BatchContent.findAll({
+                where: { batchId, type: 'ASSIGNMENT' },
+                attributes: ['id', 'maxMarks'],
+            }),
+        ]);
+
+        const testIds = tests.map((test: any) => test.id);
+        const assignmentIds = assignments.map((assignment: any) => assignment.id);
+
+        const [testResults, assignmentSubmissions] = await Promise.all([
+            testIds.length
+                ? TestResult.findAll({
+                    where: { testId: { [Op.in]: testIds } },
+                    attributes: TEST_RESULT_BASE_ATTRIBUTES as unknown as string[],
+                    order: [['submittedAt', 'DESC']],
+                })
+                : [],
+            assignmentIds.length
+                ? AssignmentSubmission.findAll({
+                    where: { batchId, assignmentId: { [Op.in]: assignmentIds } },
+                    attributes: ['studentId', 'assignmentId', 'grade', 'status', 'submittedAt'],
+                    order: [['submittedAt', 'DESC']],
+                })
+                : [],
+        ]);
+
+        const testsById = new Map<string, any>();
+        tests.forEach((test: any) => testsById.set(test.id, test));
+
+        const assignmentsById = new Map<string, any>();
+        assignments.forEach((assignment: any) => assignmentsById.set(assignment.id, assignment));
+
+        const attendanceByStudentId = new Map<string, any[]>();
+        attendanceRecords.forEach((record: any) => {
+            const list = attendanceByStudentId.get(record.studentId) || [];
+            list.push(record);
+            attendanceByStudentId.set(record.studentId, list);
+        });
+
+        const latestTestResultByKey = new Map<string, any>();
+        testResults.forEach((result: any) => {
+            const key = `${result.studentId}:${result.testId}`;
+            if (!latestTestResultByKey.has(key)) {
+                latestTestResultByKey.set(key, result);
+            }
+        });
+
+        const latestAssignmentSubmissionByKey = new Map<string, any>();
+        assignmentSubmissions.forEach((submission: any) => {
+            const key = `${submission.studentId}:${submission.assignmentId}`;
+            if (!latestAssignmentSubmissionByKey.has(key)) {
+                latestAssignmentSubmissionByKey.set(key, submission);
+            }
+        });
+
+        const totalTrackableItems = tests.length + assignments.length;
+
+        const students = enrollments.map((enrollment: any) => {
+            const student = enrollment.student;
+            const studentId = student?.id;
+
+            const studentAttendance = attendanceByStudentId.get(studentId) || [];
+            const presentCount = studentAttendance.filter((record: any) => record.status === 'PRESENT').length;
+            const attendancePercentage = studentAttendance.length
+                ? Math.round((presentCount / studentAttendance.length) * 100)
+                : 0;
+
+            const studentTestResults = tests
+                .map((test: any) => latestTestResultByKey.get(`${studentId}:${test.id}`))
+                .filter(Boolean);
+            const studentAssignmentSubmissions = assignments
+                .map((assignment: any) => latestAssignmentSubmissionByKey.get(`${studentId}:${assignment.id}`))
+                .filter(Boolean);
+
+            const completionPercentage = totalTrackableItems
+                ? Math.round(((studentTestResults.length + studentAssignmentSubmissions.length) / totalTrackableItems) * 100)
+                : 0;
+
+            const scoreValues = [
+                ...studentTestResults.map((result: any) => {
+                    if (Number.isFinite(Number(result.percentage))) {
+                        return Number(result.percentage);
+                    }
+                    const totalMarks = Number(testsById.get(result.testId)?.totalMarks || 0);
+                    return calculatePercentage(Number(result.score || 0), totalMarks);
+                }),
+                ...studentAssignmentSubmissions
+                    .filter((submission: any) => submission.grade !== null && submission.grade !== undefined)
+                    .map((submission: any) => {
+                        const maxMarks = resolveAssignmentMaxMarks(assignmentsById.get(submission.assignmentId)?.maxMarks, 100);
+                        return calculatePercentage(Number(submission.grade || 0), maxMarks);
+                    }),
+            ];
+
+            const averageScore = scoreValues.length
+                ? Math.round(scoreValues.reduce((sum, value) => sum + value, 0) / scoreValues.length)
+                : 0;
+
+            return {
+                id: studentId,
+                name: student?.name || 'Student',
+                email: student?.email || '',
+                attendance: attendancePercentage,
+                completion: completionPercentage,
+                score: averageScore,
+            };
+        });
+
+        const summary = {
+            totalStudents: students.length,
+            averageAttendance: students.length
+                ? Math.round(students.reduce((sum, student) => sum + student.attendance, 0) / students.length)
+                : 0,
+            averageCompletion: students.length
+                ? Math.round(students.reduce((sum, student) => sum + student.completion, 0) / students.length)
+                : 0,
+            averageScore: students.length
+                ? Math.round(students.reduce((sum, student) => sum + student.score, 0) / students.length)
+                : 0,
+        };
+
+        return res.json({
+            success: true,
+            data: {
+                batch,
+                summary,
+                students,
+            },
+        });
+    } catch (error) {
+        console.error('Fetch batch analytics error:', error);
+        return res.status(500).json({ message: 'Error fetching batch analytics' });
     }
 };
 

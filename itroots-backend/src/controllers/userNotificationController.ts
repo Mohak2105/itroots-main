@@ -4,6 +4,7 @@ import Notification from '../models/Notification';
 import User from '../models/User';
 import Batch from '../models/Batch';
 import Course from '../models/Course';
+import { filterCurrentLiveClassNotificationRecipients } from '../utils/liveClassNotifications';
 
 export const getMyNotifications = async (req: any, res: Response) => {
     try {
@@ -21,7 +22,9 @@ export const getMyNotifications = async (req: any, res: Response) => {
             order: [['createdAt', 'DESC']],
         });
 
-        res.json(notifications);
+        const filteredNotifications = await filterCurrentLiveClassNotificationRecipients(notifications as any[]);
+
+        res.json(filteredNotifications);
     } catch (error) {
         res.status(500).json({ message: 'Server error fetching notifications' });
     }

@@ -197,7 +197,8 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
         pathname?.startsWith("/lms") ||
         pathname?.startsWith("/admin") ||
         pathname?.startsWith("/student") ||
-        pathname?.startsWith("/faculty");
+        pathname?.startsWith("/faculty") ||
+        pathname?.startsWith("/content-viewer");
 
     // Hostname-based detection (admin / student / Faculty subdomains)
     const [isAppHost, setIsAppHost] = useState<boolean | null>(null);
@@ -928,7 +929,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     }, []);
 
     if (isAppPath || isAppHost) {
-        return <main>{children}</main>;
+        return <main className="portal-font">{children}</main>;
     }
 
     // Still detecting hostname (first render) — don't flash header/footer

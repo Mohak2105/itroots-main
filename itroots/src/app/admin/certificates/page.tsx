@@ -439,7 +439,7 @@ export default function AdminCertificatesPage() {
                     .ornament span { flex: 1; height: 1px; background: #1f2937; }
                     .ornament i { width: 6px; height: 6px; border-radius: 999px; background: #1f2937; display: block; }
                     .lead { text-align: center; margin-top: 30px; color: #3f4a59; font-size: 19px; font-family: "Times New Roman", Georgia, serif; letter-spacing: 0.12em; position: relative; z-index: 2; }
-                    .name { text-align: center; margin-top: 26px; color: #111827; font-size: 58px; line-height: 1.08; font-family: "Times New Roman", Georgia, serif; font-style: italic; position: relative; z-index: 2; }
+                    .name { text-align: center; margin-top: 26px; color: #111827; font-size: 58px; line-height: 1.08; font-family: "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive; font-style: normal; font-weight: 400; position: relative; z-index: 2; }
                     .name-line { width: 470px; height: 1px; background: #c7d5e4; margin: 10px auto 0; position: relative; z-index: 2; }
                     .body { text-align: center; margin-top: 18px; color: #475569; font-size: 21px; line-height: 1.6; position: relative; z-index: 2; }
                     .course { color: #12395b; font-weight: 800; font-size: 34px; display: block; margin-top: 12px; }
@@ -453,7 +453,7 @@ export default function AdminCertificatesPage() {
                     .label { color: #64748b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; }
                     .seal { width: 110px; height: 110px; margin: 0 auto; border-radius: 999px; border: 1px solid #b9cce0; box-shadow: inset 0 0 0 6px #f4f8fc, inset 0 0 0 7px #d8e3ef; display: flex; align-items: center; justify-content: center; background: rgba(255, 255, 255, 0.96); }
                     .seal img { width: 54px; height: 54px; object-fit: contain; }
-                    .meta-row { display: flex; justify-content: space-between; align-items: center; margin-top: 34px; color: #526173; font-size: 17px; position: relative; z-index: 2; }
+                    .meta-row { display: flex; justify-content: flex-start; align-items: center; margin-top: 34px; color: #526173; font-size: 17px; position: relative; z-index: 2; }
                 </style>
             </head>
             <body>
@@ -490,7 +490,6 @@ export default function AdminCertificatesPage() {
                         </div>
                         <div class="meta-row">
                             <div>Certificate No: ${escapeHtml(previewCertificate.certificateNumber)}</div>
-                            <div>Issued On: ${escapeHtml(formatDate(previewCertificate.issueDate))}</div>
                         </div>
                     </div>
                 </div>
@@ -587,7 +586,6 @@ export default function AdminCertificatesPage() {
                                     </div>
                                     <div className={styles.certificateMetaFooter}>
                                         <div>Certificate No: {previewCertificate.certificateNumber}</div>
-                                        <div>Issued On: {formatDate(previewCertificate.issueDate)}</div>
                                     </div>
                                 </div>
                             </div>

@@ -7,3 +7,7 @@ build/
 .gemini/
 test-output.*
 lint_output.txt
+.env
+.env.local
+.env.*.local
+*.env

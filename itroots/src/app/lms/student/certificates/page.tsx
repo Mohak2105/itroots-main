@@ -4,17 +4,20 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
+import CertificatePreview, { type CertificatePreviewRecord } from "@/components/certificates/CertificatePreview";
 import { ENDPOINTS } from "@/config/api";
 import styles from "./certificates.module.css";
-import { DownloadSimple, Eye, Scroll, SealCheck, X } from "@phosphor-icons/react";
+import { DownloadSimple, Scroll, SealCheck } from "@phosphor-icons/react";
+
+type CertificateRecord = CertificatePreviewRecord & {
+    id: string;
+};
 
 export default function StudentCertificatesPage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
-    const [certificates, setCertificates] = useState<any[]>([]);
+    const [certificates, setCertificates] = useState<CertificateRecord[]>([]);
     const [loadingData, setLoadingData] = useState(true);
-    const [viewUrl, setViewUrl] = useState<string | null>(null);
-    const [viewLoading, setViewLoading] = useState(false);
     const [selectedCertificateId, setSelectedCertificateId] = useState<string | null>(null);
 
     useEffect(() => {
@@ -35,43 +38,16 @@ export default function StudentCertificatesPage() {
     }, [token]);
 
     useEffect(() => {
-        if (!token || certificates.length === 0) return;
+        if (certificates.length === 0) {
+            setSelectedCertificateId(null);
+            return;
+        }
 
-        const initialCertificate = certificates[0];
-        if (!initialCertificate?.id) return;
-        if (selectedCertificateId === initialCertificate.id && viewUrl) return;
-
-        let isCancelled = false;
-
-        const loadInitialPreview = async () => {
-            setViewLoading(true);
-            try {
-                const blob = await fetchCertificateBlob(initialCertificate.id);
-                if (!blob || isCancelled) return;
-
-                const url = window.URL.createObjectURL(blob);
-                setSelectedCertificateId(initialCertificate.id);
-                setViewUrl((previousUrl) => {
-                    if (previousUrl) {
-                        window.URL.revokeObjectURL(previousUrl);
-                    }
-                    return url;
-                });
-            } catch (error) {
-                console.error("Initial certificate preview failed:", error);
-            } finally {
-                if (!isCancelled) {
-                    setViewLoading(false);
-                }
-            }
-        };
-
-        loadInitialPreview();
-
-        return () => {
-            isCancelled = true;
-        };
-    }, [certificates, token, selectedCertificateId, viewUrl]);
+        const hasSelectedCertificate = certificates.some((certificate) => certificate.id === selectedCertificateId);
+        if (!selectedCertificateId || !hasSelectedCertificate) {
+            setSelectedCertificateId(certificates[0].id);
+        }
+    }, [certificates, selectedCertificateId]);
 
     const fetchCertificateBlob = async (certificateId: string) => {
         if (!token) return null;
@@ -98,41 +74,9 @@ export default function StudentCertificatesPage() {
         }
     };
 
-    const handleView = async (certificateId: string) => {
-        setViewLoading(true);
-        try {
-            const blob = await fetchCertificateBlob(certificateId);
-            if (!blob) return;
-            const url = window.URL.createObjectURL(blob);
-            setSelectedCertificateId(certificateId);
-            setViewUrl((previousUrl) => {
-                if (previousUrl) {
-                    window.URL.revokeObjectURL(previousUrl);
-                }
-                return url;
-            });
-        } catch (error) {
-            console.error(error);
-            alert(error instanceof Error ? error.message : "Unable to view certificate");
-        } finally {
-            setViewLoading(false);
-        }
-    };
-
-    const closeViewer = () => {
-        if (viewUrl) {
-            window.URL.revokeObjectURL(viewUrl);
-            setViewUrl(null);
-        }
-        setSelectedCertificateId(null);
-    };
-
-    const buildInlinePreviewUrl = (url: string) =>
-        `${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&zoom=page-fit`;
+    const selectedCertificate = certificates.find((certificate) => certificate.id === selectedCertificateId) ?? certificates[0] ?? null;
 
     if (isLoading || !user) return null;
-
-    const selectedCertificate = certificates.find((certificate) => certificate.id === selectedCertificateId) ?? certificates[0] ?? null;
 
     return (
         <LMSShell pageTitle="Certificates">
@@ -171,38 +115,15 @@ export default function StudentCertificatesPage() {
                                     </div>
                                 </div>
                                 <div className={styles.previewBody}>
-                                    <div className={styles.previewMeta}>
-                                        <span className={styles.badge}>{new Date(selectedCertificate.issueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
-                                        <div className={styles.metaLine}>Certificate No: {selectedCertificate.certificateNumber}</div>
-                                        <div className={styles.metaLine}>Duration: {selectedCertificate.duration}</div>
-                                        
-                                    </div>
                                     <div className={styles.previewCanvas}>
-                                        {viewUrl && selectedCertificateId === selectedCertificate.id ? (
-                                            <iframe
-                                                src={buildInlinePreviewUrl(viewUrl)}
-                                                className={styles.inlinePreviewFrame}
-                                                title="Certificate Preview"
-                                                scrolling="no"
-                                            />
-                                        ) : (
-                                            <div className={styles.previewPlaceholder}>
-                                                <Scroll size={52} color="#94a3b8" weight="duotone" />
-                                                <div className={styles.previewPlaceholderTitle}>{selectedCertificate.course?.title || "Certificate"}</div>
-                                                <p>{viewLoading ? "Loading certificate preview..." : "Preview will appear here automatically."}</p>
-                                            </div>
-                                        )}
+                                        <CertificatePreview certificate={selectedCertificate} />
                                     </div>
                                 </div>
                             </section>
                         ) : null}
-
-                        
                     </>
                 )}
             </div>
-
-            
         </LMSShell>
     );
 }

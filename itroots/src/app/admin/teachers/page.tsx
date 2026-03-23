@@ -33,6 +33,9 @@ interface BatchInfo {
 interface Faculty {
     id: string;
     username?: string;
+    firstName?: string | null;
+    middleName?: string | null;
+    lastName?: string | null;
     name: string;
     email: string;
     phone: string;
@@ -51,13 +54,45 @@ interface IssuedCredentials {
 }
 
 const EMPTY_FORM = {
-    name: "",
+    firstName: "",
+    middleName: "",
+    lastName: "",
     email: "",
     phone: "",
     specialization: "",
     assignedCourseId: "",
     assignedBatchId: "",
 };
+
+const splitNameParts = (value?: string) => {
+    const normalized = String(value || "").trim();
+    if (!normalized) {
+        return { firstName: "", middleName: "", lastName: "" };
+    }
+
+    const parts = normalized.split(/\s+/).filter(Boolean);
+    if (parts.length === 1) {
+        return { firstName: parts[0], middleName: "", lastName: "" };
+    }
+
+    if (parts.length === 2) {
+        return { firstName: parts[0], middleName: "", lastName: parts[1] };
+    }
+
+    return {
+        firstName: parts[0],
+        middleName: parts.slice(1, -1).join(" "),
+        lastName: parts[parts.length - 1],
+    };
+};
+
+const buildFullName = (firstName: string, middleName: string, lastName: string) =>
+    [firstName, middleName, lastName]
+        .map((part) => part.trim())
+        .filter(Boolean)
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
 
 const formatDate = (value: string) => new Date(value).toLocaleDateString("en-IN", {
     day: "2-digit",
@@ -77,7 +112,10 @@ const getInitials = (name: string) =>
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const sanitizeFormValues = (values: typeof EMPTY_FORM) => ({
-    name: values.name.trim(),
+    firstName: values.firstName.trim(),
+    middleName: values.middleName.trim(),
+    lastName: values.lastName.trim(),
+    name: buildFullName(values.firstName, values.middleName, values.lastName),
     email: values.email.trim().toLowerCase(),
     phone: values.phone.replace(/\D/g, ""),
     specialization: values.specialization.trim(),
@@ -169,8 +207,16 @@ export default function AdminFacultyPage() {
     const handleEditClick = (Faculty: Faculty) => {
         setIssuedCredentials(null);
         setSelectedFacultyId(Faculty.id);
+        const parsedNames = {
+            firstName: Faculty.firstName,
+            middleName: Faculty.middleName,
+            lastName: Faculty.lastName,
+        };
+        const fallbackNames = splitNameParts(Faculty.name);
         setFormData({
-            name: Faculty.name,
+            firstName: parsedNames.firstName || fallbackNames.firstName,
+            middleName: parsedNames.middleName || fallbackNames.middleName,
+            lastName: parsedNames.lastName || fallbackNames.lastName,
             email: Faculty.email,
             phone: Faculty.phone || "",
             specialization: Faculty.specialization || "",
@@ -205,6 +251,9 @@ export default function AdminFacultyPage() {
                         Authorization: `Bearer ${token}`,
                     },
                     body: JSON.stringify({
+                        firstName: payload.firstName,
+                        middleName: payload.middleName,
+                        lastName: payload.lastName,
                         name: payload.name,
                         email: payload.email,
                         phone: payload.phone,
@@ -250,7 +299,7 @@ export default function AdminFacultyPage() {
                 }
 
                 setIssuedCredentials({
-                    name: created?.Faculty?.name || formData.name,
+                    name: created?.Faculty?.name || payload.name,
                     username: created?.credentials?.username || "",
                     password: created?.credentials?.password || "",
                 });
@@ -498,9 +547,19 @@ export default function AdminFacultyPage() {
                             <button onClick={resetModal}><X size={20} /></button>
                         </div>
                         <form onSubmit={handleSubmit} className={styles.form}>
-                            <div className={styles.formGroup}>
-                                <label>Full Name</label>
-                                <input required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} placeholder="e.g. Demo Faculty" />
+                            <div className={styles.formGrid}>
+                                <div className={styles.formGroup}>
+                                    <label>First Name</label>
+                                    <input required value={formData.firstName} onChange={(e) => setFormData({ ...formData, firstName: e.target.value })} placeholder="Demo" />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Middle Name</label>
+                                    <input value={formData.middleName} onChange={(e) => setFormData({ ...formData, middleName: e.target.value })} placeholder="Kumar" />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label>Last Name</label>
+                                    <input value={formData.lastName} onChange={(e) => setFormData({ ...formData, lastName: e.target.value })} placeholder="Faculty" />
+                                </div>
                             </div>
                             <div className={styles.formGroup}>
                                 <label>Email Address</label>

@@ -1,0 +1,343 @@
+.canvas {
+    padding: 1rem;
+    display: flex;
+    justify-content: center;
+}
+
+.inner {
+    width: min(100%, 980px);
+    min-height: 560px;
+    border-radius: 18px;
+    border: 1.5px solid #b7cbe0;
+    background: #f8fbff;
+    box-shadow: 0 14px 28px rgba(18, 57, 91, 0.08);
+    padding: 2rem 2.75rem 1.75rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.frame {
+    position: absolute;
+    inset: 18px;
+    border: 1px solid #d9e4ef;
+    pointer-events: none;
+}
+
+.cornerTop,
+.cornerTopSecondary,
+.cornerTopTertiary,
+.cornerBottom {
+    position: absolute;
+    border-radius: 999px;
+    pointer-events: none;
+}
+
+.cornerTop {
+    width: 360px;
+    height: 250px;
+    top: -178px;
+    left: -186px;
+    background: #0d3f74;
+}
+
+.cornerTopSecondary {
+    width: 310px;
+    height: 220px;
+    top: -146px;
+    left: -152px;
+    background: #0f5ca8;
+}
+
+.cornerTopTertiary {
+    width: 255px;
+    height: 184px;
+    top: -116px;
+    left: -114px;
+    background: #2a86dc;
+}
+
+.cornerBottom {
+    width: 320px;
+    height: 220px;
+    right: -154px;
+    bottom: -136px;
+    background: #0d3f74;
+}
+
+.cornerBottom::before,
+.cornerBottom::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+}
+
+.cornerBottom::before {
+    inset: 26px;
+    background: #0f5ca8;
+}
+
+.cornerBottom::after {
+    inset: 54px;
+    background: #2a86dc;
+}
+
+.logoWrap {
+    text-align: center;
+    position: relative;
+    z-index: 2;
+}
+
+.logoImage {
+    width: 210px;
+    max-width: 100%;
+}
+
+.titleMain {
+    margin-top: 1.45rem;
+    text-align: center;
+    color: #111827;
+    font-size: 3.65rem;
+    line-height: 1;
+    font-weight: 700;
+    font-family: "Times New Roman", Georgia, serif;
+    letter-spacing: 0.03em;
+    position: relative;
+    z-index: 2;
+}
+
+.titleSecondary {
+    margin-top: 0.5rem;
+    text-align: center;
+    color: #111827;
+    font-size: 1.42rem;
+    font-weight: 700;
+    font-family: "Times New Roman", Georgia, serif;
+    letter-spacing: 0.36em;
+    position: relative;
+    z-index: 2;
+}
+
+.ornament {
+    width: 140px;
+    margin: 1rem auto 0;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    position: relative;
+    z-index: 2;
+}
+
+.ornament span {
+    flex: 1;
+    height: 1px;
+    background: #1f2937;
+}
+
+.ornament i {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #1f2937;
+    display: block;
+}
+
+.presented {
+    margin-top: 1.45rem;
+    text-align: center;
+    color: #3f4a59;
+    font-size: 0.98rem;
+    font-family: "Times New Roman", Georgia, serif;
+    letter-spacing: 0.12em;
+    position: relative;
+    z-index: 2;
+}
+
+.recipient {
+    margin-top: 1.1rem;
+    text-align: center;
+    color: #111827;
+    font-size: 3.2rem;
+    font-weight: 400;
+    font-family: "Brush Script MT", "Segoe Script", "Lucida Handwriting", cursive;
+    font-style: normal;
+    line-height: 1.1;
+    position: relative;
+    z-index: 2;
+}
+
+.recipientLine {
+    width: 470px;
+    max-width: calc(100% - 8rem);
+    height: 1px;
+    margin: 0.9rem auto 0;
+    background: #c7d5e4;
+    position: relative;
+    z-index: 2;
+}
+
+.statement {
+    margin-top: 1.25rem;
+    text-align: center;
+    color: #475569;
+    font-size: 1.28rem;
+    line-height: 1.7;
+    position: relative;
+    z-index: 2;
+}
+
+.courseName {
+    margin-top: 1rem;
+    text-align: center;
+    color: #12395b;
+    font-size: 2.15rem;
+    font-weight: 800;
+    line-height: 1.15;
+    position: relative;
+    z-index: 2;
+}
+
+.metaLine {
+    margin-top: 0.7rem;
+    text-align: center;
+    color: #526173;
+    font-size: 1.18rem;
+    position: relative;
+    z-index: 2;
+}
+
+.footer {
+    display: grid;
+    grid-template-columns: 1fr 130px 1fr;
+    align-items: end;
+    gap: 1.5rem;
+    margin-top: 3.4rem;
+    position: relative;
+    z-index: 2;
+}
+
+.signatureBlock {
+    text-align: center;
+}
+
+.signatureScript {
+    font-size: 2.1rem;
+    font-family: "Brush Script MT", "Times New Roman", serif;
+    color: #111827;
+    line-height: 1;
+    margin-bottom: 0.85rem;
+}
+
+.signatureImageWrap {
+    height: 58px;
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+}
+
+.signatureImage {
+    max-width: 180px;
+    max-height: 58px;
+    object-fit: contain;
+}
+
+.signatureLine {
+    border-top: 1px solid #12395b;
+    margin-bottom: 0.6rem;
+}
+
+.signatureRole {
+    color: #64748b;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.sealBlock {
+    width: 110px;
+    height: 110px;
+    margin: 0 auto;
+    border-radius: 999px;
+    border: 1px solid #b9cce0;
+    box-shadow: inset 0 0 0 6px #f4f8fc, inset 0 0 0 7px #d8e3ef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.96);
+}
+
+.sealLogo {
+    width: 54px;
+    height: 54px;
+    object-fit: contain;
+}
+
+.metaFooter {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    margin-top: 2.4rem;
+    color: #526173;
+    font-size: 1rem;
+    position: relative;
+    z-index: 2;
+}
+
+@media (max-width: 900px) {
+    .canvas {
+        padding: 0;
+    }
+
+    .inner {
+        padding: 1.5rem 1.4rem 1.25rem;
+        min-height: auto;
+    }
+
+    .frame {
+        inset: 12px;
+    }
+
+    .titleMain {
+        font-size: 2.65rem;
+    }
+
+    .titleSecondary {
+        font-size: 1rem;
+        letter-spacing: 0.22em;
+    }
+
+    .presented {
+        font-size: 0.82rem;
+    }
+
+    .recipient {
+        font-size: 2.35rem;
+    }
+
+    .statement {
+        font-size: 1rem;
+    }
+
+    .courseName {
+        font-size: 1.6rem;
+    }
+
+    .metaLine {
+        font-size: 0.95rem;
+    }
+
+    .footer {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        margin-top: 2.5rem;
+    }
+
+    .metaFooter {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-top: 1.8rem;
+        font-size: 0.9rem;
+    }
+}

@@ -67,60 +67,6 @@
 }
 .selectLabel { font-size: 0.78rem; font-weight: 600; color: #6b7280; }
 
-.exportBtn {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.6rem 1.25rem;
-    background: #f8fafc;
-    border: 1px solid #e5e7eb;
-    border-radius: 8px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    color: #374151;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s;
-}
-.exportBtn:hover { background: #f3f4f6; border-color: #d1d5db; }
-
-/* Summary Cards */
-.summaryGrid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 1rem;
-}
-
-.summaryCard {
-    background: #fff;
-    border-radius: 14px;
-    padding: 1.25rem;
-    border: 1px solid #f0f4f8;
-    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.summaryIcon {
-    width: 42px;
-    height: 42px;
-    border-radius: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.summaryValue {
-    font-family: 'Outfit', 'Inter', sans-serif;
-    font-size: 1.75rem;
-    font-weight: 700;
-    color: #111827;
-    line-height: 1;
-}
-
-.summaryLabel { font-size: 0.78rem; color: #6b7280; font-weight: 500; }
-
 /* Table */
 .tableContainer {
     background: #fff;
@@ -154,8 +100,6 @@
 
 .table tr:last-child td { border-bottom: none; }
 .table tbody tr:hover { background: #f8fafc; }
-
-.rowAtRisk { background: #fffbfb !important; }
 
 .studentInfo { display: flex; align-items: center; gap: 0.75rem; }
 
@@ -195,33 +139,6 @@
 
 .progressFill { height: 100%; border-radius: 99px; }
 .progressPct { font-size: 0.78rem; font-weight: 600; color: #374151; }
-
-.statusBadge {
-    padding: 3px 10px;
-    border-radius: 99px;
-    font-size: 0.7rem;
-    font-weight: 700;
-}
-
-.statusOk { background: #dcfce7; color: #166534; }
-.statusRisk { background: #fee2e2; color: #991b1b; }
-
-.actionBtn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    padding: 0.4rem 0.875rem;
-    border-radius: 7px;
-    border: 1px solid #e5e7eb;
-    background: #fff;
-    color: #374151;
-    font-size: 0.78rem;
-    font-weight: 600;
-    cursor: pointer;
-    font-family: inherit;
-    transition: all 0.15s;
-}
-.actionBtn:hover { background: #eff6ff; border-color: #bfdbfe; color: #0881ec; }
 
 .emptyState {
     padding: 4rem 2rem;
