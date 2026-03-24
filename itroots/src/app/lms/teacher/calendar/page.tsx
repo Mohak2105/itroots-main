@@ -43,6 +43,7 @@ const toDateValue = (date: Date) => {
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
 };
+const getTodayDateValue = () => toDateValue(new Date());
 
 const parseLocalDate = (value: string) => {
     const [year, month, day] = value.split("-").map(Number);
@@ -68,6 +69,7 @@ export default function FacultyCalendarPage() {
     const [datePopoverDirection, setDatePopoverDirection] = useState<"down" | "up">("down");
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState(emptyForm);
+    const todayDateValue = getTodayDateValue();
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
@@ -286,11 +288,16 @@ export default function FacultyCalendarPage() {
                                             onChange={(value) => {
                                                 const nextDate = Array.isArray(value) ? value[0] : value;
                                                 if (nextDate instanceof Date && !Number.isNaN(nextDate.getTime())) {
-                                                    setSelectedDate(toDateValue(nextDate));
+                                                    const nextDateValue = toDateValue(nextDate);
+                                                    if (nextDateValue < todayDateValue) {
+                                                        return;
+                                                    }
+                                                    setSelectedDate(nextDateValue);
                                                     setShowDatePicker(false);
                                                 }
                                             }}
                                             value={parseLocalDate(selectedDate)}
+                                            minDate={parseLocalDate(todayDateValue)}
                                             maxDetail="month"
                                             className={styles.reactCalendar}
                                         />

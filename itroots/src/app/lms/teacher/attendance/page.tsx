@@ -1,15 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useLMSAuth } from "@/app/lms/auth-context";
 import LMSShell from "@/components/lms/LMSShell";
 import CustomSelect from "@/components/ui/CustomSelect/CustomSelect";
 import { ENDPOINTS } from "@/config/api";
-import Calendar from "react-calendar";
 import {
     CalendarCheck,
-    CaretDown,
     CheckCircle,
     MagnifyingGlass,
     WarningCircle,
@@ -45,17 +43,17 @@ type AttendanceRecord = {
     remarks?: string;
 };
 
-const formatDate = (value: string) =>
-    new Date(value).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-    });
-
 const parseLocalDate = (value: string) => {
     const [year, month, day] = value.split("-").map(Number);
     return new Date(year, (month || 1) - 1, day || 1);
 };
+
+const formatDate = (value: string) =>
+    parseLocalDate(value).toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
 
 const toDateValue = (date: Date) => {
     const year = date.getFullYear();
@@ -64,43 +62,27 @@ const toDateValue = (date: Date) => {
     return `${year}-${month}-${day}`;
 };
 
+const getTodayDateValue = () => toDateValue(new Date());
+
 export default function TeacherAttendancePage() {
     const { user, isLoading, token } = useLMSAuth();
     const router = useRouter();
-    const datePickerRef = useRef<HTMLDivElement>(null);
 
     const [batches, setBatches] = useState<Batch[]>([]);
     const [selectedBatchId, setSelectedBatchId] = useState("");
-    const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]);
-    const [showDatePicker, setShowDatePicker] = useState(false);
     const [search, setSearch] = useState("");
     const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
     const [attendanceRecords, setAttendanceRecords] = useState<Record<string, AttendanceStatus>>({});
     const [loadingData, setLoadingData] = useState(true);
     const [saving, setSaving] = useState(false);
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+    const currentDateValue = getTodayDateValue();
 
     useEffect(() => {
         if (!isLoading && (!user || user?.role?.toUpperCase() !== "FACULTY")) {
             router.push("/faculty/login");
         }
     }, [user, isLoading, router]);
-
-    useEffect(() => {
-        const handlePointerDown = (event: PointerEvent) => {
-            if (!datePickerRef.current?.contains(event.target as Node)) {
-                setShowDatePicker(false);
-            }
-        };
-
-        if (showDatePicker) {
-            document.addEventListener("pointerdown", handlePointerDown);
-        }
-
-        return () => {
-            document.removeEventListener("pointerdown", handlePointerDown);
-        };
-    }, [showDatePicker]);
 
     const selectedBatch = useMemo(
         () => batches.find((batch) => batch.id === selectedBatchId) || null,
@@ -135,9 +117,12 @@ export default function TeacherAttendancePage() {
         setMessage(null);
 
         try {
-            const attendanceResponse = await fetch(ENDPOINTS.Faculty.BATCH_ATTENDANCE(selectedBatchId, selectedDate), {
-                headers: { Authorization: `Bearer ${token}` },
-            });
+            const attendanceResponse = await fetch(
+                ENDPOINTS.Faculty.BATCH_ATTENDANCE(selectedBatchId, currentDateValue),
+                {
+                    headers: { Authorization: `Bearer ${token}` },
+                }
+            );
             const attendanceJson = await attendanceResponse.json().catch(() => null);
             if (!attendanceResponse.ok) {
                 throw new Error(attendanceJson?.message || "Unable to load batch attendance.");
@@ -167,7 +152,7 @@ export default function TeacherAttendancePage() {
         } finally {
             setLoadingData(false);
         }
-    }, [selectedBatchId, selectedDate, token]);
+    }, [currentDateValue, selectedBatchId, token]);
 
     useEffect(() => {
         if (token) {
@@ -191,15 +176,6 @@ export default function TeacherAttendancePage() {
             return name.includes(query) || email.includes(query) || username.includes(query);
         });
     }, [enrollments, search]);
-
-    const summary = useMemo(() => {
-        const statuses = enrollments.map((enrollment) => attendanceRecords[enrollment.student.id] || "ABSENT");
-        return {
-            total: enrollments.length,
-            present: statuses.filter((status) => status === "PRESENT").length,
-            absent: statuses.filter((status) => status === "ABSENT").length,
-        };
-    }, [attendanceRecords, enrollments]);
 
     const updateStudentStatus = (studentId: string, status: AttendanceStatus) => {
         setAttendanceRecords((current) => ({
@@ -228,7 +204,7 @@ export default function TeacherAttendancePage() {
                 },
                 body: JSON.stringify({
                     batchId: selectedBatchId,
-                    date: selectedDate,
+                    date: currentDateValue,
                     records,
                 }),
             });
@@ -260,13 +236,10 @@ export default function TeacherAttendancePage() {
                     <div>
                         <div className={styles.bannerTitle}>Attendance</div>
                         <div className={styles.bannerSub}>
-                            Select a batch, view every student, and mark attendance with one click.
+                            Select a batch and mark attendance for the current date only.
                         </div>
                     </div>
-                    
                 </div>
-
-                
 
                 <div className={styles.controls}>
                     <div className={styles.filterWrap}>
@@ -281,37 +254,15 @@ export default function TeacherAttendancePage() {
                             placeholder="Select batch"
                         />
                     </div>
+
                     <div className={styles.dateWrap}>
                         <label className={styles.controlLabel}>Attendance Date</label>
-                        <div className={styles.datePickerWrap} ref={datePickerRef}>
-                            <button
-                                type="button"
-                                className={styles.dateField}
-                                onClick={() => setShowDatePicker((current) => !current)}
-                                aria-expanded={showDatePicker}
-                            >
-                                <CalendarCheck size={18} weight="duotone" />
-                                <span className={styles.dateValue}>{formatDate(selectedDate)}</span>
-                                <CaretDown size={16} weight="bold" className={styles.dateCaret} />
-                            </button>
-                            {showDatePicker ? (
-                                <div className={styles.datePopover}>
-                                    <Calendar
-                                        onChange={(value) => {
-                                            const nextDate = Array.isArray(value) ? value[0] : value;
-                                            if (nextDate instanceof Date && !Number.isNaN(nextDate.getTime())) {
-                                                setSelectedDate(toDateValue(nextDate));
-                                                setShowDatePicker(false);
-                                            }
-                                        }}
-                                        value={parseLocalDate(selectedDate)}
-                                        maxDetail="month"
-                                        className={styles.reactCalendar}
-                                    />
-                                </div>
-                            ) : null}
+                        <div className={`${styles.dateField} ${styles.dateFieldLocked}`}>
+                            <CalendarCheck size={18} weight="duotone" />
+                            <span className={styles.dateValue}>{formatDate(currentDateValue)}</span>
                         </div>
                     </div>
+
                     <div className={styles.searchWrap}>
                         <label className={styles.controlLabel}>Search Student</label>
                         <div className={styles.searchField}>
@@ -322,10 +273,9 @@ export default function TeacherAttendancePage() {
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
                             />
-                            
                         </div>
-                        
                     </div>
+
                     <div className={styles.actionWrap}>
                         <span className={styles.controlLabel}>&nbsp;</span>
                         <button
@@ -352,7 +302,7 @@ export default function TeacherAttendancePage() {
                             <h2>Batch Attendance</h2>
                             <p>
                                 {selectedBatch
-                                    ? `${selectedBatch.name}${selectedBatch.course?.title ? ` • ${selectedBatch.course.title}` : ""} • ${formatDate(selectedDate)}`
+                                    ? `${selectedBatch.name}${selectedBatch.course?.title ? ` - ${selectedBatch.course.title}` : ""} - ${formatDate(currentDateValue)}`
                                     : "Choose a batch to start marking attendance."}
                             </p>
                         </div>
@@ -378,13 +328,13 @@ export default function TeacherAttendancePage() {
                                 <tbody>
                                     {filteredEnrollments.map((enrollment) => {
                                         const currentStatus = attendanceRecords[enrollment.student.id] || "ABSENT";
+
                                         return (
                                             <tr key={enrollment.student.id}>
                                                 <td>
                                                     <div className={styles.studentCell}>
                                                         <div>
                                                             <div className={styles.studentName}>{enrollment.student.name}</div>
-                                                            
                                                         </div>
                                                     </div>
                                                 </td>
@@ -444,7 +394,7 @@ export default function TeacherAttendancePage() {
                 <div className={styles.helpCard}>
                     <WarningCircle size={18} weight="fill" />
                     <span>
-                        Students default to <strong>Absent</strong> for the selected date until you mark them as <strong>Present</strong>.
+                        Attendance can only be marked for <strong>today</strong>. Students default to <strong>Absent</strong> until you mark them as <strong>Present</strong>.
                     </span>
                 </div>
             </div>

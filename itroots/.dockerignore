@@ -1,5 +1,8 @@
 node_modules
 .next
+data
+tests
+playwright-report
 tsconfig.tsbuildinfo
 .env
 .env.*

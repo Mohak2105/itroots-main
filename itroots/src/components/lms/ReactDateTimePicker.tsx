@@ -18,6 +18,9 @@ type ReactDateTimePickerProps = {
     disabled?: boolean;
     variant?: "default" | "soft";
     testId?: string;
+    mode?: "date-time" | "date";
+    minDate?: string;
+    maxDate?: string;
 };
 
 const HOUR_OPTIONS = Array.from({ length: 12 }, (_, index) => {
@@ -36,6 +39,18 @@ const PERIOD_OPTIONS = [
 ];
 
 const cloneDate = (date: Date) => new Date(date.getTime());
+
+const parseDateValue = (value?: string) => {
+    if (!value) return null;
+
+    const [year, month, day] = value.split("-").map(Number);
+    if (!year || !month || !day) {
+        return null;
+    }
+
+    const parsed = new Date(year, month - 1, day, 12, 0, 0, 0);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
 
 const parseDateTimeValue = (value?: string) => {
     if (!value) return null;
@@ -59,6 +74,23 @@ const formatDateTimeValue = (date: Date) => {
     const hours = String(date.getHours()).padStart(2, "0");
     const minutes = String(date.getMinutes()).padStart(2, "0");
     return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+const formatDateValue = (date: Date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+};
+
+const formatDateDisplayValue = (date?: Date | null) => {
+    if (!date) return "";
+
+    return date.toLocaleDateString("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+    });
 };
 
 const formatDisplayValue = (date?: Date | null) => {
@@ -91,9 +123,17 @@ export default function ReactDateTimePicker({
     disabled = false,
     variant = "default",
     testId,
+    mode = "date-time",
+    minDate,
+    maxDate,
 }: ReactDateTimePickerProps) {
     const wrapperRef = useRef<HTMLDivElement>(null);
-    const parsedValue = useMemo(() => parseDateTimeValue(value), [value]);
+    const parsedValue = useMemo(
+        () => (mode === "date" ? parseDateValue(value) : parseDateTimeValue(value)),
+        [mode, value],
+    );
+    const minCalendarDate = useMemo(() => parseDateValue(minDate), [minDate]);
+    const maxCalendarDate = useMemo(() => parseDateValue(maxDate), [maxDate]);
     const [isOpen, setIsOpen] = useState(false);
     const [draftDate, setDraftDate] = useState<Date>(() => parsedValue ? cloneDate(parsedValue) : new Date());
 
@@ -118,23 +158,31 @@ export default function ReactDateTimePicker({
     }, [isOpen]);
 
     const activeDate = parsedValue || draftDate;
-    const displayValue = parsedValue ? formatDisplayValue(parsedValue) : "";
+    const displayValue = parsedValue
+        ? (mode === "date" ? formatDateDisplayValue(parsedValue) : formatDisplayValue(parsedValue))
+        : "";
     const triggerClassName = [
         styles.trigger,
         variant === "soft" ? styles.triggerSoft : "",
         disabled ? styles.triggerDisabled : "",
+    ].filter(Boolean).join(" ");
+    const panelClassName = [
+        styles.panel,
+        mode === "date" ? styles.panelDateOnly : "",
     ].filter(Boolean).join(" ");
 
     const applyChange = (nextDate: Date) => {
         const normalized = cloneDate(nextDate);
         normalized.setSeconds(0, 0);
         setDraftDate(normalized);
-        onChange(formatDateTimeValue(normalized));
+        onChange(mode === "date" ? formatDateValue(normalized) : formatDateTimeValue(normalized));
     };
 
     const handleDateChange = (nextValue: CalendarValue) => {
         const nextDate = Array.isArray(nextValue) ? nextValue[0] : nextValue;
         if (!nextDate) return;
+        if (minCalendarDate && nextDate < minCalendarDate) return;
+        if (maxCalendarDate && nextDate > maxCalendarDate) return;
 
         const mergedDate = cloneDate(activeDate);
         mergedDate.setFullYear(nextDate.getFullYear(), nextDate.getMonth(), nextDate.getDate());
@@ -195,71 +243,90 @@ export default function ReactDateTimePicker({
             ) : null}
 
             {isOpen ? (
-                <div className={styles.panel} data-testid={testId ? `${testId}-panel` : undefined}>
+                <div className={panelClassName} data-testid={testId ? `${testId}-panel` : undefined}>
                     <div className={styles.calendarSection}>
-                        <div className={styles.selectionSummary}>
-                            <span className={styles.selectionEyebrow}>Selected schedule</span>
-                            <strong>{formatDisplayValue(activeDate)}</strong>
-                        </div>
+                        {mode === "date-time" ? (
+                            <div className={styles.selectionSummary}>
+                                <span className={styles.selectionEyebrow}>Selected schedule</span>
+                                <strong>{formatDisplayValue(activeDate)}</strong>
+                            </div>
+                        ) : null}
 
                         <div className={styles.calendarWrap}>
                             <Calendar
-                                calendarType="gregory"
-                                next2Label={null}
-                                prev2Label={null}
+                                calendarType={mode === "date" ? "iso8601" : "gregory"}
+                                next2Label={mode === "date" ? ">>" : null}
+                                prev2Label={mode === "date" ? "<<" : null}
+                                nextLabel={mode === "date" ? ">" : undefined}
+                                prevLabel={mode === "date" ? "<" : undefined}
                                 onChange={handleDateChange}
                                 value={activeDate}
+                                minDate={minCalendarDate || undefined}
+                                maxDate={maxCalendarDate || undefined}
                             />
                         </div>
                     </div>
 
-                    <div className={styles.timePanel}>
-                        <div className={styles.timeHeader}>
-                            <Clock size={16} />
-                            <span>Time</span>
+                    {mode === "date-time" ? (
+                        <div className={styles.timePanel}>
+                            <div className={styles.timeHeader}>
+                                <Clock size={16} />
+                                <span>Time</span>
+                            </div>
+
+                            <div className={styles.timeGrid}>
+                                <div className={styles.timeField}>
+                                    <span className={styles.timeLabel}>Hour</span>
+                                    <CustomSelect
+                                        value={String(getHour12(activeDate))}
+                                        onChange={(next) => updateTime({ hour12: Number(next) })}
+                                        options={HOUR_OPTIONS}
+                                        testId={testId ? `${testId}-hour` : undefined}
+                                    />
+                                </div>
+
+                                <div className={styles.timeField}>
+                                    <span className={styles.timeLabel}>Minute</span>
+                                    <CustomSelect
+                                        value={String(activeDate.getMinutes())}
+                                        onChange={(next) => updateTime({ minute: Number(next) })}
+                                        options={MINUTE_OPTIONS}
+                                        testId={testId ? `${testId}-minute` : undefined}
+                                    />
+                                </div>
+
+                                <div className={styles.timeField}>
+                                    <span className={styles.timeLabel}>Period</span>
+                                    <CustomSelect
+                                        value={getPeriod(activeDate)}
+                                        onChange={(next) => updateTime({ period: next as "AM" | "PM" })}
+                                        options={PERIOD_OPTIONS}
+                                        testId={testId ? `${testId}-period` : undefined}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className={styles.footer}>
+                                <button
+                                    type="button"
+                                    className={styles.secondaryBtn}
+                                    onClick={useCurrentTime}
+                                    data-testid={testId ? `${testId}-use-current-time` : undefined}
+                                >
+                                    Use current time
+                                </button>
+                                <button
+                                    type="button"
+                                    className={styles.primaryBtn}
+                                    onClick={() => setIsOpen(false)}
+                                    data-testid={testId ? `${testId}-done` : undefined}
+                                >
+                                    Done
+                                </button>
+                            </div>
                         </div>
-
-                        <div className={styles.timeGrid}>
-                            <div className={styles.timeField}>
-                                <span className={styles.timeLabel}>Hour</span>
-                                <CustomSelect
-                                    value={String(getHour12(activeDate))}
-                                    onChange={(next) => updateTime({ hour12: Number(next) })}
-                                    options={HOUR_OPTIONS}
-                                    testId={testId ? `${testId}-hour` : undefined}
-                                />
-                            </div>
-
-                            <div className={styles.timeField}>
-                                <span className={styles.timeLabel}>Minute</span>
-                                <CustomSelect
-                                    value={String(activeDate.getMinutes())}
-                                    onChange={(next) => updateTime({ minute: Number(next) })}
-                                    options={MINUTE_OPTIONS}
-                                    testId={testId ? `${testId}-minute` : undefined}
-                                />
-                            </div>
-
-                            <div className={styles.timeField}>
-                                <span className={styles.timeLabel}>Period</span>
-                                <CustomSelect
-                                    value={getPeriod(activeDate)}
-                                    onChange={(next) => updateTime({ period: next as "AM" | "PM" })}
-                                    options={PERIOD_OPTIONS}
-                                    testId={testId ? `${testId}-period` : undefined}
-                                />
-                            </div>
-                        </div>
-
-                        <div className={styles.footer}>
-                            <button
-                                type="button"
-                                className={styles.secondaryBtn}
-                                onClick={useCurrentTime}
-                                data-testid={testId ? `${testId}-use-current-time` : undefined}
-                            >
-                                Use current time
-                            </button>
+                    ) : (
+                        <div className={styles.dateOnlyFooter}>
                             <button
                                 type="button"
                                 className={styles.primaryBtn}
@@ -269,7 +336,7 @@ export default function ReactDateTimePicker({
                                 Done
                             </button>
                         </div>
-                    </div>
+                    )}
                 </div>
             ) : null}
         </div>

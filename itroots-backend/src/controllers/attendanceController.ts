@@ -4,23 +4,41 @@ import Batch from '../models/Batch';
 import User from '../models/User';
 import Enrollment from '../models/Enrollment';
 
+const normalizeDateOnly = (value: unknown) => String(value ?? '').trim().slice(0, 10);
+
+const getTodayDateValue = () => {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
 export const markAttendance = async (req: Request, res: Response) => {
     try {
         const { batchId, date, records } = req.body;
-        // records: [{ studentId: 'uuid', status: 'PRESENT', remarks: '' }]
         const FacultyId = (req as any).user.id;
+        const todayDate = getTodayDateValue();
+        const normalizedDate = normalizeDateOnly(date);
 
-        // Verify Faculty owns the batch
+        if (!batchId || !normalizedDate || !Array.isArray(records)) {
+            return res.status(400).json({ success: false, message: 'Batch, date, and attendance records are required' });
+        }
+
+        if (normalizedDate !== todayDate) {
+            return res.status(400).json({ success: false, message: 'Attendance can only be marked for the current date' });
+        }
+
         const batch = await Batch.findOne({ where: { id: batchId, FacultyId } });
         if (!batch && (req as any).user.role !== 'SUPER_ADMIN') {
-            return res.status(403).json({ message: 'Not authorized for this batch' });
+            return res.status(403).json({ success: false, message: 'Not authorized for this batch' });
         }
 
         const attendancePromises = records.map((record: any) =>
             Attendance.upsert({
                 studentId: record.studentId,
                 batchId,
-                date,
+                date: normalizedDate,
                 status: record.status,
                 remarks: record.remarks
             })
@@ -37,8 +55,13 @@ export const markAttendance = async (req: Request, res: Response) => {
 export const getBatchAttendance = async (req: Request, res: Response) => {
     try {
         const { batchId } = req.params;
-        const { date } = req.query; // optional filter by date
+        const requestedDate = normalizeDateOnly(req.query.date);
+        const todayDate = getTodayDateValue();
         const FacultyId = (req as any).user.id;
+
+        if (requestedDate && requestedDate !== todayDate) {
+            return res.status(400).json({ success: false, message: 'Attendance can only be viewed for the current date' });
+        }
 
         const batch = await Batch.findOne({
             where: { id: batchId, FacultyId },
@@ -49,12 +72,9 @@ export const getBatchAttendance = async (req: Request, res: Response) => {
             return res.status(403).json({ success: false, message: 'Not authorized for this batch' });
         }
 
-        const whereClause: any = { batchId };
-        if (date) whereClause.date = date;
-
         const [attendance, enrollments] = await Promise.all([
             Attendance.findAll({
-                where: whereClause,
+                where: { batchId, date: todayDate },
                 include: [{ model: User, as: 'student', attributes: ['id', 'name', 'email', 'username'] }],
                 order: [['date', 'DESC'], [{ model: User, as: 'student' }, 'name', 'ASC']]
             }),
@@ -85,7 +105,6 @@ export const getStudentAttendance = async (req: Request, res: Response) => {
             order: [['date', 'DESC']]
         });
 
-        // Group by batch for easier frontend consumption
         const groupedByBatch = attendance.reduce((acc: any, record: any) => {
             const batchName = record.batch?.name || 'Unknown Batch';
             if (!acc[batchName]) {

@@ -153,6 +153,10 @@
     outline: none;
 }
 
+.dateFieldLocked {
+    cursor: default;
+}
+
 .datePickerWrap {
     position: relative;
 }

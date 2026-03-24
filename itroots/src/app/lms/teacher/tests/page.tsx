@@ -139,44 +139,39 @@ const parseBulkMcqQuestions = (raw: string) => {
 };
 
 const formatDate = (value: string) => new Date(value).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-const formatDateTime = (value?: string | null) => {
+const formatDueDate = (value?: string | null) => {
     if (!value) return "";
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleString("en-IN", {
+    return date.toLocaleDateString("en-IN", {
         day: "2-digit",
         month: "short",
         year: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
     });
 };
 
-const formatLocalDateTimeValue = (date: Date) => {
+const formatLocalDateValue = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    return `${year}-${month}-${day}`;
 };
 
 const getDefaultDueAt = () => {
-    const nextHour = new Date();
-    nextHour.setHours(nextHour.getHours() + 1, 0, 0, 0);
-    return formatLocalDateTimeValue(nextHour);
+    const today = new Date();
+    return formatLocalDateValue(today);
 };
 
-const parseLocalDateTime = (value: string) => {
-    const [datePart, timePart = "00:00"] = value.split("T");
-    const [year, month, day] = datePart.split("-").map(Number);
-    const [hours, minutes] = timePart.split(":").map(Number);
+const getTodayDateValue = () => formatLocalDateValue(new Date());
 
-    if (!year || !month || !day || Number.isNaN(hours) || Number.isNaN(minutes)) {
+const parseLocalDueDate = (value: string) => {
+    const [year, month, day] = value.split("-").map(Number);
+
+    if (!year || !month || !day) {
         return null;
     }
 
-    const parsed = new Date(year, month - 1, day, hours, minutes, 0, 0);
+    const parsed = new Date(year, month - 1, day, 23, 59, 59, 999);
     return Number.isNaN(parsed.getTime()) ? null : parsed;
 };
 
@@ -308,7 +303,11 @@ export default function TeacherTestsPage() {
             description: test.description || "",
             totalMarks: test.totalMarks,
             durationMinutes: test.durationMinutes,
-            dueAt: test.dueAt ? formatLocalDateTimeValue(new Date(test.dueAt)) : getDefaultDueAt(),
+            dueAt: (() => {
+                if (!test.dueAt) return getDefaultDueAt();
+                const dueDateValue = formatLocalDateValue(new Date(test.dueAt));
+                return dueDateValue < getTodayDateValue() ? getTodayDateValue() : dueDateValue;
+            })(),
             questions: mapQuestionsForForm(test.questions),
         });
         setShowCreateModal(true);
@@ -388,12 +387,12 @@ export default function TeacherTestsPage() {
         setTestError(null);
         try {
             if (!testForm.dueAt) {
-                throw new Error("Due date and time are required");
+                throw new Error("Due date is required");
             }
 
-            const normalizedDueAt = parseLocalDateTime(testForm.dueAt);
+            const normalizedDueAt = parseLocalDueDate(testForm.dueAt);
             if (!normalizedDueAt) {
-                throw new Error("Enter a valid due date and time");
+                throw new Error("Enter a valid due date");
             }
 
             const questions = testInputMode === "BULK"
@@ -539,7 +538,7 @@ export default function TeacherTestsPage() {
                                         <td>{test.totalQuestions}</td>
                                         <td>{test.totalMarks}</td>
                                         <td>{test.durationMinutes} min</td>
-                                        <td>{test.dueAt ? formatDateTime(test.dueAt) : "-"}</td>
+                                        <td>{test.dueAt ? formatDueDate(test.dueAt) : "-"}</td>
                                         <td>{test.attemptedStudents}/{test.totalStudents}</td>
                                         <td>{test.pendingStudents}</td>
                                         <td>{formatDate(test.createdAt)}</td>
@@ -548,24 +547,28 @@ export default function TeacherTestsPage() {
                                                 <Link href={`/faculty/tests/${test.id}/results`} className={styles.viewBtn}>
                                                     View Results <ArrowRight size={14} />
                                                 </Link>
-                                                <button
-                                                    type="button"
-                                                    className={styles.editBtn}
-                                                    onClick={() => openEditModal(test)}
-                                                    disabled={test.attemptedStudents > 0}
-                                                    title={test.attemptedStudents > 0 ? "Tests with attempts cannot be edited" : "Edit test"}
-                                                >
-                                                    <PencilSimple size={14} /> Edit
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className={styles.deleteBtn}
-                                                    onClick={() => handleDeleteTest(test)}
-                                                    disabled={test.attemptedStudents > 0 || deletingTestId === test.id}
-                                                    title={test.attemptedStudents > 0 ? "Tests with attempts cannot be deleted" : "Delete test"}
-                                                >
-                                                    <Trash size={14} /> {deletingTestId === test.id ? "Deleting..." : "Delete"}
-                                                </button>
+                                                <div className={styles.actionIconRow}>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.editBtn}
+                                                        onClick={() => openEditModal(test)}
+                                                        disabled={test.attemptedStudents > 0}
+                                                        title={test.attemptedStudents > 0 ? "Tests with attempts cannot be edited" : "Edit test"}
+                                                        aria-label="Edit test"
+                                                    >
+                                                        <PencilSimple size={18} />
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        className={styles.deleteBtn}
+                                                        onClick={() => handleDeleteTest(test)}
+                                                        disabled={test.attemptedStudents > 0 || deletingTestId === test.id}
+                                                        title={test.attemptedStudents > 0 ? "Tests with attempts cannot be deleted" : deletingTestId === test.id ? "Deleting test" : "Delete test"}
+                                                        aria-label={deletingTestId === test.id ? "Deleting test" : "Delete test"}
+                                                    >
+                                                        <Trash size={18} />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </td>
                                     </tr>
@@ -585,35 +588,25 @@ export default function TeacherTestsPage() {
                         </div>
                         <form className={styles.modalForm} onSubmit={handleSaveTest}>
                             {testError ? <div className={styles.modalError}>{testError}</div> : null}
-                            <div className={styles.testIntroCard}>
-                                <div>
-                                    <div className={styles.testEyebrow}>Assessment Builder</div>
-                                    <div className={styles.testLead}>{testForm.id ? "Update your timed MCQ test." : "Design a timed MCQ test for this batch."}</div>
-                                    <p className={styles.testNote}>{testForm.id ? "Adjust the batch, due time, marks, and questions before students attempt it." : "Add clear questions, define one correct answer for each option set, and publish the test for students."}</p>
-                                </div>
-                                <div className={styles.testMetricGrid}>
-                                    <div className={styles.testMetricCard}>
-                                        <span className={styles.testMetricValue}>{testInputMode === "BULK" ? bulkPreview.count : testForm.questions.length}</span>
-                                        <span className={styles.testMetricLabel}>Questions</span>
-                                    </div>
-                                    <div className={styles.testMetricCard}>
-                                        <span className={styles.testMetricValue}>{testForm.totalMarks}</span>
-                                        <span className={styles.testMetricLabel}>Marks</span>
-                                    </div>
-                                    <div className={styles.testMetricCard}>
-                                        <span className={styles.testMetricValue}>{testForm.durationMinutes}</span>
-                                        <span className={styles.testMetricLabel}>Minutes</span>
-                                    </div>
-                                </div>
-                            </div>
                             <div className={styles.formGroup}>
-                                <label className={styles.fieldLabel}>Batch </label>
-                                <CustomSelect value={testForm.batchId} onChange={(value) => setTestForm((current) => ({ ...current, batchId: value }))} options={[{ value: "", label: "Select batch" }, ...batches.map((batch) => ({ value: batch.id, label: batch.name }))]} />
+                                <label className={styles.fieldLabel}>Test Title </label>
+                                <input className={styles.input} required value={testForm.title} onChange={(event) => setTestForm((current) => ({ ...current, title: event.target.value }))} placeholder="e.g. Module 1 Practice Test" />
                             </div>
                             <div className={styles.metaGrid}>
                                 <div className={styles.formGroup}>
-                                    <label className={styles.fieldLabel}>Test Title </label>
-                                    <input className={styles.input} required value={testForm.title} onChange={(event) => setTestForm((current) => ({ ...current, title: event.target.value }))} placeholder="e.g. Module 1 Practice Test" />
+                                    <label className={styles.fieldLabel}>Due Date </label>
+                                    <ReactDateTimePicker
+                                        required
+                                        variant="soft"
+                                        mode="date"
+                                        value={testForm.dueAt}
+                                        minDate={getTodayDateValue()}
+                                        onChange={(value) => setTestForm((current) => ({ ...current, dueAt: value }))}
+                                    />
+                                </div>
+                                <div className={styles.formGroup}>
+                                    <label className={styles.fieldLabel}>Batch </label>
+                                    <CustomSelect value={testForm.batchId} onChange={(value) => setTestForm((current) => ({ ...current, batchId: value }))} options={[{ value: "", label: "Select batch" }, ...batches.map((batch) => ({ value: batch.id, label: batch.name }))]} />
                                 </div>
                                 <div className={styles.formGroup}>
                                     <label className={styles.fieldLabel}>Total Marks </label>
@@ -622,15 +615,6 @@ export default function TeacherTestsPage() {
                                 <div className={styles.formGroup}>
                                     <label className={styles.fieldLabel}>Duration (Minutes) </label>
                                     <input className={styles.input} type="number" min="1" required value={testForm.durationMinutes} onChange={(event) => setTestForm((current) => ({ ...current, durationMinutes: parseInt(event.target.value || "0", 10) }))} />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.fieldLabel}>Due Date & Time </label>
-                                    <ReactDateTimePicker
-                                        required
-                                        variant="soft"
-                                        value={testForm.dueAt}
-                                        onChange={(value) => setTestForm((current) => ({ ...current, dueAt: value }))}
-                                    />
                                 </div>
                             </div>
                             <div className={styles.formGroup}>
