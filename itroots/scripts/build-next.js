@@ -6,9 +6,21 @@ const nextBuildModule = require("next/dist/cli/next-build");
 
 const nextBuildOutputDir = path.join(process.cwd(), ".next");
 
-// Clear stale route validator files before building so removed app routes do not
-// keep failing production type generation in Docker builds.
-fs.rmSync(nextBuildOutputDir, { recursive: true, force: true });
+// Clear stale Next build artifacts before building so removed app routes do not
+// keep failing production type generation. Preserve ".next/cache" because
+// Coolify/Nixpacks mounts it as a Docker cache volume and deleting it causes EBUSY.
+if (fs.existsSync(nextBuildOutputDir)) {
+  for (const entry of fs.readdirSync(nextBuildOutputDir)) {
+    if (entry === "cache") {
+      continue;
+    }
+
+    fs.rmSync(path.join(nextBuildOutputDir, entry), {
+      recursive: true,
+      force: true,
+    });
+  }
+}
 
 function sanitizeForWorker(value, seen = new WeakMap()) {
   if (typeof value === "function") {
