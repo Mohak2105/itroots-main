@@ -1,6 +1,14 @@
+const fs = require("fs");
+const path = require("path");
 const exportModulePath = require.resolve("next/dist/export");
 const exportModule = require(exportModulePath);
 const nextBuildModule = require("next/dist/cli/next-build");
+
+const nextBuildOutputDir = path.join(process.cwd(), ".next");
+
+// Clear stale route validator files before building so removed app routes do not
+// keep failing production type generation in Docker builds.
+fs.rmSync(nextBuildOutputDir, { recursive: true, force: true });
 
 function sanitizeForWorker(value, seen = new WeakMap()) {
   if (typeof value === "function") {

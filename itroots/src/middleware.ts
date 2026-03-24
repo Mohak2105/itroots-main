@@ -10,6 +10,16 @@ function isStaticPath(pathname: string) {
     );
 }
 
+function isPortalPath(pathname: string) {
+    return (
+        pathname.startsWith("/admin") ||
+        pathname.startsWith("/student") ||
+        pathname.startsWith("/faculty") ||
+        pathname.startsWith("/lms") ||
+        pathname.startsWith("/content-viewer")
+    );
+}
+
 function cloneWithPathname(request: NextRequest, pathname: string) {
     const url = request.nextUrl.clone();
     url.pathname = pathname;
@@ -135,6 +145,10 @@ export function middleware(request: NextRequest) {
                 mapSubdomainPathToPortal("faculty", pathname)
             )
         );
+    }
+
+    if (!isPortalPath(pathname)) {
+        return NextResponse.redirect(cloneWithPathname(request, "/student/login"));
     }
 
     if (pathname === "/admin") {
